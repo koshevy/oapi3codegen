@@ -1,0 +1,32 @@
+{
+  "name": "oapi3codegen",
+  "version": "1.0.0",
+  "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node ./dist/index.js",
+    "build": "tsc",
+    "build:start": "tsc && node ./dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "openapi",
+    "oapi",
+    "openapi3",
+    "swagger",
+    "ts",
+    "typescript"
+  ],
+  "author": "koshevy",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^6.4.0",
+    "lodash": "^4.17.5",
+    "prettier": "^1.12.1",
+    "typescript": "^2.8.1"
+  },
+  "devDependencies": {
+    "fs-extra": "^5.0.0",
+    "path": "^0.12.7"
+  }
+}
