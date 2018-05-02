@@ -150,7 +150,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             (propertySet) => `{ ${_.values(_.map(
                 propertySet,
                 (descr: PropertyDescriptor, name) =>
-                    `\n\n${descr.comment}${name}${!descr.required?'?':''}: ${
+                    `\n\n${descr.comment}'${name}'${!descr.required?'?':''}: ${
                         _.map(
                             descr.typeContainer,
                             type => type.render(false)

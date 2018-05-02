@@ -7,8 +7,14 @@ import { SchemaString } from "./schema-string";
 
 export interface Response extends ObjectWithRef {
     $ref: string;
+    headers: SchemaArray
+           | SchemaObject
+           | SchemaInteger
+           | SchemaNumber
+           | SchemaObject
+           | SchemaString;
     content: {
-        [header: string]: {
+        [contentType: string]: {
             schema: SchemaArray
                   | SchemaObject
                   | SchemaInteger

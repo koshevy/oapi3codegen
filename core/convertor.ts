@@ -5,7 +5,6 @@ import {
     DataTypeContainer,
     DataTypeDescriptor
 } from '../core';
-import * as prettier from 'prettier';
 
 import {
     Schema,
@@ -49,29 +48,49 @@ export abstract class BaseConvertor {
      * Получение входных точек для 'вытаскивания' типов данных.
      * @returns {DataTypeContainer}
      */
-    public start(): void {
-        let result: DataTypeContainer[] = [];
-
-        let context = {};
+    public getEntryPoints(context = {}): DataTypeContainer {
+        let alreadyConverted = [];
 
         //параметры
         const methodsSchemes = this._getMethodsSchemes();
 
         const dataTypeContainers = _.map(
             methodsSchemes,
-            (schema, modelName) => this.convert(
-                schema,
-                context,
-                modelName
-            )
+            (schema, modelName) => {
+
+                const container = this.convert(
+                    schema,
+                    context,
+                    modelName
+                );
+
+                // Исключение дубликатов.
+                // Дубликаты появляются, когда типы данные, которые
+                // ссылаются ($ref) без изменения на другие, подменяются
+                // моделями из `components`.
+                return _.map(container, (descr: DataTypeDescriptor) => {
+                    // исключение элементов, которые имеют общий
+                    // originalSchemaPath у элементов, на которые они сослались
+                    if(descr.originalSchemaPath) {
+
+                        if(_.findIndex(
+                            alreadyConverted,
+                            v => v === descr.originalSchemaPath
+                        ) !== -1) {
+                            return null;
+                        }
+
+                        alreadyConverted.push(
+                            descr.originalSchemaPath
+                        );
+                    }
+
+                    return descr;
+                });
+            }
         );
 
-        _.each(dataTypeContainers, arr => {
-            _.each(arr, descriptor => {
-                if(descriptor)
-                    console.log(prettier.format(descriptor.render()));
-            });
-        });
+        return _.compact(_.flattenDepth(dataTypeContainers));
     }
 
     public abstract convert(
@@ -124,6 +143,9 @@ export abstract class BaseConvertor {
                         }
 
                         result[modelName] = sch;
+
+                        if(parameter.description)
+                            result[modelName].description = parameter.description;
                     }
                 });
 
@@ -132,7 +154,8 @@ export abstract class BaseConvertor {
                     response: Response,
                     code: number
                 ) => {
-                    // todo пока обрабатывается только контент
+
+                    // todo пока обрабатываются только контент и заголовки
                     _.each(response.content || {}, (
                         content: any,
                         contentType: string
@@ -145,7 +168,15 @@ export abstract class BaseConvertor {
 
                         if(content.schema)
                             result[modelName] = content.schema;
-                    })
+                    });
+
+                    if(response.headers) {
+                        const modelName = `${baseTypeName}Headers_response${code}`;
+                        result[modelName] = {
+                            type: "object",
+                            properties: response.headers
+                        };
+                    }
                 });
 
                 // оброботка тела запроса

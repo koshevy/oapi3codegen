@@ -1,6 +1,8 @@
 import { NumberTypeScriptDescriptor } from "./number";
+import { StringTypeScriptDescriptor } from "./string";
 import { ObjectTypeScriptDescriptor } from "./object";
 import { AnyTypeScriptDescriptor } from "./any";
+import { EnumTypeScriptDescriptor } from "./enum";
 
 /**
  * Правила для определения: какой тип данных будет использоваться.
@@ -14,6 +16,26 @@ export const rules = [
     {
         rule: {
             type: 'object',
+            required: ['enum'],
+            properties: {
+                enum: {
+                    type: 'array',
+                    items: {
+                        oneOf: [
+                            {type: 'string'},
+                            {type: 'number'},
+                            {type: 'integer'}
+                        ]
+                    }
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: EnumTypeScriptDescriptor
+    },
+    {
+        rule: {
+            type: 'object',
             properties: {
                 type: {
                     type: 'string',
@@ -23,6 +45,19 @@ export const rules = [
             additionalProperties: true
         },
         classConstructor: NumberTypeScriptDescriptor
+    },
+    {
+        rule: {
+            type: 'object',
+            properties: {
+                type: {
+                    type: 'string',
+                    pattern: 'string'
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: StringTypeScriptDescriptor
     },
     {
         rule: {

@@ -1,12 +1,10 @@
 
 // todo оптимизировать файлову структуру и типизацию
-import {
-    DataTypeDescriptor,
-    DescriptorSchema
-} from "../../../core/data-type-descriptor";
+import { BaseConvertor } from "../../../core";
+import { DataTypeDescriptor } from "../../../core/data-type-descriptor";
 import { AbstractTypeScriptDescriptor } from "./abstract";
 
-export class NumberTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
+export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
 
     constructor (
 

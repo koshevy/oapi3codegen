@@ -62,8 +62,8 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
         if(commentLines.length) {
             comment = `/**\n${_.map(
                 commentLines,
-                v => ` * ${v}\n`
-            ).join('')} */\n`;
+                v => ` * ${v}`
+            ).join('\n')}\n */\n`;
         }
 
         return comment;
