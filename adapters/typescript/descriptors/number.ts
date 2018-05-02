@@ -54,6 +54,7 @@ export class NumberTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      * @returns {string}
      */
     public render(rootLevel: boolean = true): string {
-        return `${rootLevel ? `type ${this.modelName} = ` : ''}number`;
+        const comment = this.getComments();
+        return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}number`;
     }
 }

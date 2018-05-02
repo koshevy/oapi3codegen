@@ -83,8 +83,10 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
             console.log(this.render(true));
         }
 
+        const comment = this.getComments();
+
         // fixme не учитываются anyOf, allOf, oneOf
-        return rootLevel ? `export enum ${this.modelName} {${
+        return rootLevel ? `${comment}export enum ${this.modelName} {${
                 _.map(this.schema.enum, v => {
                     return (_.isNumber(v) || (_.isString(v) && v.match(/^\d+$/)))
                         ? JSON.stringify(v)

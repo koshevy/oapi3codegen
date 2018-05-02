@@ -52,6 +52,7 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      * @returns {string}
      */
     public render(rootLevel: boolean = true): string {
-        return `${rootLevel ? `type ${this.modelName} = ` : ''}string`;
+        const comment = this.getComments();
+        return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}string`;
     }
 }

@@ -51,6 +51,7 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
      * @returns {string}
      */
     public render(rootLevel: boolean = true): string {
-        return `${rootLevel ? `type ${this.modelName} = ` : ''}any`;
+        const comment = this.getComments();
+        return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}any`;
     }
 }

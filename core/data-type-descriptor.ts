@@ -34,7 +34,7 @@ export interface DataTypeDescriptor {
      * Рендер типа данных в строку.
      * @returns {string}
      */
-    render(): string;
+    render(rootLevel: boolean): string;
 
     /**
      * Получение комментариев для этого дескриптора.

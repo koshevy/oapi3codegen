@@ -144,18 +144,21 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 : `${comment}export interface ${this.modelName} `)
             : '';
 
+
         // рекурсивно просчитывает вложенные свойства
         const properties = _.map(
             this.propertiesSets,
             (propertySet) => `{ ${_.values(_.map(
                 propertySet,
-                (descr: PropertyDescriptor, name) =>
-                    `\n\n${descr.comment}'${name}'${!descr.required?'?':''}: ${
+                (descr: PropertyDescriptor, name) => {
+                    const propName = name.match(/\-/) ? `'${name}'` : name;
+                    return `\n\n${descr.comment}${propName}${!descr.required ? '?' : ''}: ${
                         _.map(
                             descr.typeContainer,
                             type => type.render(false)
                         ).join('; ')
-                    }`
+                    }`;
+                }
             )).join('; ')} }`
         ).join(' | ');
 

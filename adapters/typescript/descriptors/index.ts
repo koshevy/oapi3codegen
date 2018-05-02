@@ -3,6 +3,7 @@ import { StringTypeScriptDescriptor } from "./string";
 import { ObjectTypeScriptDescriptor } from "./object";
 import { AnyTypeScriptDescriptor } from "./any";
 import { EnumTypeScriptDescriptor } from "./enum";
+import { ArrayTypeScriptDescriptor } from "./array";
 
 /**
  * Правила для определения: какой тип данных будет использоваться.
@@ -36,6 +37,7 @@ export const rules = [
     {
         rule: {
             type: 'object',
+            required: ['type'],
             properties: {
                 type: {
                     type: 'string',
@@ -49,6 +51,7 @@ export const rules = [
     {
         rule: {
             type: 'object',
+            required: ['type'],
             properties: {
                 type: {
                     type: 'string',
@@ -62,6 +65,7 @@ export const rules = [
     {
         rule: {
             type: 'object',
+            required: ['type'],
             properties: {
                 type: {
                     type: 'string',
@@ -71,6 +75,20 @@ export const rules = [
             additionalProperties: true
         },
         classConstructor: ObjectTypeScriptDescriptor
+    },
+    {
+        rule: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+                type: {
+                    type: 'string',
+                    pattern: 'array'
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: ArrayTypeScriptDescriptor
     },
     // тип по-умолчанию
     {

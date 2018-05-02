@@ -73,5 +73,5 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
      * Рендер типа данных в строку.
      * @returns {string}
      */
-    public abstract render(): string;
+    public abstract render(rootLevel: boolean): string;
 }
