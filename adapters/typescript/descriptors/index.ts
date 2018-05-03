@@ -4,6 +4,7 @@ import { ObjectTypeScriptDescriptor } from "./object";
 import { AnyTypeScriptDescriptor } from "./any";
 import { EnumTypeScriptDescriptor } from "./enum";
 import { ArrayTypeScriptDescriptor } from "./array";
+import { OneOfTypeScriptDescriptor } from "./one-of";
 
 /**
  * Правила для определения: какой тип данных будет использоваться.
@@ -14,6 +15,22 @@ import { ArrayTypeScriptDescriptor } from "./array";
  * @type {Array}
  */
 export const rules = [
+    {
+        rule: {
+            type: 'object',
+            required: ['oneOf'],
+            properties: {
+                oneOf: {
+                    type: 'array',
+                    items: {
+                        type: 'object'
+                    }
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: OneOfTypeScriptDescriptor
+    },
     {
         rule: {
             type: 'object',

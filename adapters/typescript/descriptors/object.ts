@@ -144,7 +144,6 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 : `${comment}export interface ${this.modelName} `)
             : '';
 
-
         // рекурсивно просчитывает вложенные свойства
         const properties = _.map(
             this.propertiesSets,

@@ -8,14 +8,14 @@ import {
 import { BaseConvertor } from "../../../core";
 import { AbstractTypeScriptDescriptor } from "./abstract";
 
-
-export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
+export class OneOfTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
 
     /**
-     * Описание типа данных для элементов массива.
-     * fixme не поддерживает конкретное перечисление (items: [...]), пока только общее (items: {...})
+     * Описания вариантов, которые являются частью типа.
+     * При рендеринге будут исключены те типы, которые
+     * рендерятся в одинаковый результат.
      */
-    protected itemsDescription: DataTypeContainer;
+    protected variants: DataTypeContainer;
 
     constructor (
 
@@ -53,12 +53,20 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
             originalSchemaPath
         );
 
-        if (schema.items) {
-            this.itemsDescription = convertor.convert(
-                schema.items,
-                context
+        if (!schema.oneOf) {
+            throw new Error(
+                'Error: descriptor, recognized as "oneOf" should have that property.'
             );
         }
+
+        // обработка разных вариантов
+        const commonPart = _.omit(schema, ['oneOf']);
+        this.variants = _.flattenDeep(_.map(schema.oneOf, variant => {
+            return convertor.convert(
+                _.merge(commonPart, variant),
+                context
+            );
+        }), 1);
     }
 
     /**
@@ -73,12 +81,13 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
     public render(rootLevel: boolean = true): string {
         const comment = this.getComments();
         return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}${
-            this.itemsDescription ? _.map(
-                this.itemsDescription,
-                (descr: DataTypeDescriptor) => {
-                    return `Array<${descr.render(false)}>`;
-                }
-            ).join(' | ') : 'any[]'
+            this.variants
+                ? _.uniq(_.map(
+                    this.variants,
+                    (descr: DataTypeDescriptor)=>
+                        descr.render(false)
+                )).join(' | ')
+                : 'any[]'
         }`;
     }
 }
