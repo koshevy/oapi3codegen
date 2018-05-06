@@ -69,9 +69,29 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
         return comment;
     }
 
+    public toString(): string {
+        return `${this.modelName || 'Anonymous Type'}${
+            this.originalSchemaPath
+                ? `(${this.originalSchemaPath})`
+                : ''
+        }`;
+    }
+
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {RenderResult[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
+     * @param {boolean} rootLevel
+     * Говорит о том, что это рендер "корневого"
+     * уровня — то есть, не в составе другого типа,
+     * а самостоятельно.
+     *
      * @returns {string}
      */
-    public abstract render(rootLevel: boolean): string;
+    public abstract render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean
+    ): string ;
 }

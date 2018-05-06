@@ -118,6 +118,10 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {RenderResult[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
      * @param {boolean} rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
@@ -125,13 +129,17 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      *
      * @returns {string}
      */
-    public render(rootLevel: boolean = true): string {
+    public render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean = true
+    ): string {
 
         if(rootLevel && !this.modelName) {
             throw new Error(
                 'Root object models should have model name!'
             );
         } else if(!rootLevel && this.modelName) {
+            childrenDependencies.push(this);
             // если это не rootLevel, и есть имя,
             // то просто выводится имя
             return this.modelName;
@@ -154,7 +162,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                     return `\n\n${descr.comment}${propName}${!descr.required ? '?' : ''}: ${
                         _.map(
                             descr.typeContainer,
-                            type => type.render(false)
+                            type => type.render(childrenDependencies, false)
                         ).join('; ')
                     }`;
                 }

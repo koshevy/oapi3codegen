@@ -43,6 +43,10 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
 
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {RenderResult[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
      * @param {boolean} rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
@@ -50,7 +54,10 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
      *
      * @returns {string}
      */
-    public render(rootLevel: boolean = true): string {
+    public render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean = true
+    ): string {
         const comment = this.getComments();
         return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}any`;
     }

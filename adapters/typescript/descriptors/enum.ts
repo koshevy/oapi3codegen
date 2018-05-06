@@ -70,6 +70,9 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
     /**
      * Рендер типа данных в строку.
      *
+     * @param {RenderResult[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
      * @param {boolean} rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
@@ -77,10 +80,13 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
      *
      * @returns {string}
      */
-    public render(rootLevel: boolean = true): string {
+    public render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean = true
+    ): string {
 
-        if(!rootLevel) {
-            console.log(this.render(true));
+        if(!rootLevel && this.modelName) {
+            childrenDependencies.push(this);
         }
 
         const comment = this.getComments();
@@ -88,18 +94,16 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
         // fixme не учитываются anyOf, allOf, oneOf
         return rootLevel ? `${comment}export enum ${this.modelName} {${
                 _.map(this.schema.enum, v => {
-                    return (_.isNumber(v) || (_.isString(v) && v.match(/^\d+$/)))
-                        ? JSON.stringify(v)
-                        : `${this._enumItemName(v)} = ${JSON.stringify(v)}`;
+                    return `${this._enumItemName(v)} = ${JSON.stringify(v)}`;
                 }).join(', ')
             }}` : this.modelName;
     }
 
     private _enumItemName(name: string): string {
-        name = _.camelCase(name);
+        name = _.camelCase(name.replace(/^$[^\w]+/g, ''));
         name = name.replace(
             /^./,
-            name[0].match(/\d/)
+            name[0].match(/^\d+$/)
                 ? `_${name[0]}`
                 : name[0].toUpperCase()
         );

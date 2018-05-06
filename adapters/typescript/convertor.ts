@@ -25,6 +25,71 @@ type DescriptorContext = {[name: string]: DataTypeDescriptor}
  */
 export class Convertor extends BaseConvertor {
 
+    /**
+     * @param {DataTypeContainer} typeContainer
+     * Типы, которые нужно отрендерить.
+     * @param {(descriptor: DataTypeDescriptor, text) => void} renderedCallback
+     * Колбэк, который срабатывает при рендеринге типа.
+     * @param {DataTypeContainer} alreadyRendered
+     * Типы, которые уже отрендерены, и их рендерить не нужно
+     * @param {boolean} rootLevel
+     * `false`, если это дочерний "процес"
+     * @returns {string[]}
+     */
+    public static renderRecursive(
+        typeContainer: DataTypeContainer,
+        renderedCallback: (descriptor: DataTypeDescriptor, text) => void,
+        alreadyRendered: DataTypeContainer = []
+    ): void {
+        let result = [];
+
+        _.each(typeContainer, (descr: DataTypeDescriptor) => {
+
+            let childrenDependencies = [];
+
+            // если этот тип еще не рендерился
+            if(_.findIndex(
+                alreadyRendered,
+                v => v.toString() === descr.toString()
+            ) !== -1) {
+                return;
+            } else {
+                // помечает, что на следующем этапе не нужно
+                // обрабатывать уже обработанные типы
+                alreadyRendered.push(descr);
+            }
+
+            /**
+             * Рендеринг очередного типа из очереди
+             * @type {string}
+             */
+            const renderResult = descr.render(
+                childrenDependencies,
+                true
+            );
+
+            // далее, рекурсивно нужно просчитать зависимости
+            this.renderRecursive(
+                // только те, которые еще не были просчитаны
+                _.filter(
+                    childrenDependencies,
+                    (ov) => {
+                        return _.findIndex(
+                            alreadyRendered,
+                            iv => ov.toString() === iv.toString()
+                        ) === -1
+                    }
+                ),
+                renderedCallback,
+                alreadyRendered
+            );
+
+            // Колбэк вызывается в конце, чтобы типы-зависимости
+            // шли впереди использующих их.
+            renderedCallback(descr, renderResult);
+        });
+    }
+
     protected _ajv;
 
     constructor() {

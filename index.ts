@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as _ from 'lodash';
 import * as prettier from 'prettier';
+import * as fsExtra from 'fs-extra';
 
 import { Convertor } from './adapters/typescript';
 
@@ -12,8 +13,26 @@ convertor.loadStructureFromFile(path.resolve(
 let context = {};
 let entryPoints = convertor.getEntryPoints(context);
 
-_.each(entryPoints, descriptor => {
-    console.log(prettier.format(descriptor.render()));
-});
+// _.each(entryPoints, descriptor => {
+//     /*console.log*/(prettier.format(
+//         descriptor.render(dependencies))
+//     );
+// });
 
-// console.log(prettier.format(descriptor.render()));
+let summaryText = '';
+let alreadyRendered = [];
+
+Convertor.renderRecursive(
+    entryPoints,
+    (descriptor, text) => {
+        summaryText += prettier.format(text, {parser: 'typescript'});
+    },
+    alreadyRendered
+);
+
+fsExtra.outputFile(
+    '/DATA/plugin_projects/oapi3codegen/mock/working-example.ts',
+    prettier.format(summaryText, {parser: 'typescript'})
+);
+
+console.log(_.map(alreadyRendered, v => v.toString()).sort());

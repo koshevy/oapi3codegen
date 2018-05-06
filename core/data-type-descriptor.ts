@@ -9,6 +9,9 @@ export type DescriptorSchema = Components.SchemaArray
 
 export type DataTypeContainer = DataTypeDescriptor[];
 
+/**
+ * Описание определенного типа данных.
+ */
 export interface DataTypeDescriptor {
 
     // fixme решить проблему, вызывает ошибку: provides no match for the signature 'new (schema: any, modelName: string, originalSchemaPath: string): any'.
@@ -32,15 +35,26 @@ export interface DataTypeDescriptor {
 
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {RenderResult[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
+     * @param {boolean} rootLevel
+     * Говорит о том, что это рендер "корневого"
+     * уровня — то есть, не в составе другого типа,
+     * а самостоятельно.
+     *
      * @returns {string}
      */
-    render(rootLevel: boolean): string;
+    render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean
+    ): string;
 
     /**
      * Получение комментариев для этого дескриптора.
      * @returns {string}
      * @private
      */
-    // fixme сделать все TS-дескрипторы наследниками abstract и раскомментировать
     getComments(): string;
 }
