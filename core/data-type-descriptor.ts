@@ -9,6 +9,8 @@ export type DescriptorSchema = Components.SchemaArray
 
 export type DataTypeContainer = DataTypeDescriptor[];
 
+export type DescriptorContext = {[name: string]: DataTypeDescriptor};
+
 /**
  * Описание определенного типа данных.
  */
@@ -26,6 +28,14 @@ export interface DataTypeDescriptor {
      * или null).
      */
     modelName?: string;
+
+    /*
+     * Предлагаемое имя для типа данных: может
+     * применяться, если тип данных анонимный, но
+     * необходимо вынести его за пределы родительской
+     * модели по-ситуации (например, в случае с Enum).
+     */
+    suggestedModelName?: string;
 
     /**
      * Путь до оригинальной схемы, на основе

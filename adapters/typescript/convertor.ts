@@ -10,15 +10,12 @@ import { BaseConvertor } from "../../core";
 
 import {
     DataTypeContainer,
-    DataTypeDescriptor
+    DataTypeDescriptor,
+    DescriptorContext
 } from '../../core';
-
-import { Parameter } from '../../oapi-defs';
 
 // правила для определения дипа дескриптора
 import { rules } from "./descriptors";
-
-type DescriptorContext = {[name: string]: DataTypeDescriptor}
 
 /**
  * Класс загрузчика для TypeScript.
@@ -97,10 +94,35 @@ export class Convertor extends BaseConvertor {
         this._ajv = new Ajv();
     }
 
+    /**
+     * Превращение JSON-схемы в описание типа данных.
+     * Возвращает контейнер [дескрипторов типов]{@link DataTypeDescriptor},
+     * в котором перечисляются типы данных (возможна принадлежность
+     * к более чем одному типу данных: `number[] | InterfaceName`).
+     *
+     * @param {Schema} schema
+     * Схема, для которой будет подобрано соответствущее
+     * правило, по которому будет определен дескриптор
+     * нового типа данных.
+     * @param {Object} context
+     * Контекст, в котором хранятся ранее просчитаные модели
+     * в рамках одной цепочки обработки.
+     * @param {string} name
+     * Собственное имя типа данных
+     * @param {string} suggestedName
+     * Предлагаемое имя для типа данных: может
+     * применяться, если тип данных анонимный, но
+     * необходимо вынести его за пределы родительской
+     * модели по-ситуации (например, в случае с Enum).
+     * @param {string} originalPathSchema
+     * Путь, по которому была взята схема
+     * @returns {DataTypeContainer}
+     */
     public convert(
         schema: Schema,
         context: DescriptorContext,
         name?: string,
+        suggestedName?: string,
         originalPathSchema?: string
     ): DataTypeContainer {
 
@@ -108,7 +130,7 @@ export class Convertor extends BaseConvertor {
 
         // получение по $ref
         if (schema['$ref']) {
-            const refSchema = this._findTypeByPath(
+            const refSchema = this.findTypeByPath(
                 schema['$ref'],
                 context
             );
@@ -125,12 +147,7 @@ export class Convertor extends BaseConvertor {
                     `Error (fix this place?): you should't get '$ref' and other properties as neighbors.`
                 );
             }
-        } else if(
-            variantsOf = this._processAllOf(schema, context)
-                      || this._processAnyOf(schema, context)
-                      || this._processOneOf(schema, context)
-        )
-            return variantsOf;
+        }
 
         // основной сценарий
         else {
@@ -142,6 +159,7 @@ export class Convertor extends BaseConvertor {
                     this,
                     context,
                     name,
+                    suggestedName,
                     originalPathSchema
                 )]
                 : null;

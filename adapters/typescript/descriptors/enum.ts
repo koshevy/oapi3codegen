@@ -9,17 +9,31 @@ import { AbstractTypeScriptDescriptor } from "./abstract";
 export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
 
     /**
+     * Учет автосозданных имён типов.
+     */
+    protected static _usedNames = {};
+
+    /**
      * Создение нового имени для `enum`, т.к. `enum` не может
      * быть анонимным.
      */
-    public static getNewEnumName(): string {
-        return `Enum_${this._enumNamesCount++}`
-    }
+    public static getNewEnumName(suggestedModelName: string): string {
+        let name = suggestedModelName
+            ? `${suggestedModelName}Enum`
+            : `Enum`;
 
-    /**
-     * Количество автосозданных имени типов.
-     */
-    protected static _enumNamesCount = 0;
+        if(!this._usedNames[name]){
+            this._usedNames[name] = 1;
+        } else {
+            this._usedNames[name]++;
+        }
+
+        return `${name}${
+            (this._usedNames[name] > 1)
+                ? `_${this._usedNames[name] - 2}`
+                : ''
+        }`
+    }
 
     /**
      * Свойства, относящиеся к этому объекту
@@ -51,6 +65,14 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
          */
         public readonly modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
@@ -62,7 +84,8 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
             schema,
             convertor,
             context,
-            modelName || (modelName = EnumTypeScriptDescriptor.getNewEnumName()),
+            modelName || (modelName = EnumTypeScriptDescriptor.getNewEnumName(suggestedModelName)),
+            suggestedModelName,
             originalSchemaPath
         );
     }

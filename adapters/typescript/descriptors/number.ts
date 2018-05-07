@@ -29,6 +29,14 @@ export class NumberTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
          */
         public modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
@@ -40,6 +48,7 @@ export class NumberTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             convertor,
             context,
             modelName,
+            suggestedModelName,
             originalSchemaPath
         );
     }

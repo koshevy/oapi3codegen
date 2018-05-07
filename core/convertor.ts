@@ -3,7 +3,8 @@ import * as _ from 'lodash';
 import { OApiStructure } from '../oapi-defs';
 import {
     DataTypeContainer,
-    DataTypeDescriptor
+    DataTypeDescriptor,
+    DescriptorContext
 } from '../core';
 
 import {
@@ -11,8 +12,6 @@ import {
     Parameter,
     Response
 } from '../oapi-defs';
-
-type DescriptorContext = {[name: string]: DataTypeDescriptor}
 
 /**
  * ContentType ответов по-умолчанию.
@@ -93,10 +92,82 @@ export abstract class BaseConvertor {
         return _.compact(_.flattenDepth(dataTypeContainers));
     }
 
+    /**
+     * Получить дескриптор типа по JSON Path:
+     * возвращает уже созданный ранее, или создает
+     * новый при первом упоминании.
+     *
+     * @param {string} path
+     * @param {DescriptorContext} context
+     * @returns {DataTypeDescriptor}
+     * @private
+     */
+    public findTypeByPath(
+        path: string,
+        context: DescriptorContext
+    ): DataTypeContainer {
+        return _.find(
+            _.values(context),
+            (v: DataTypeDescriptor) =>
+                v.originalSchemaPath === path
+            )
+            || this._processSchema(path, context);
+    }
+
+    public getSchemaByPath(path: string): Schema {
+        const pathMatches = path.match(pathRegex);
+
+        if (pathMatches) {
+            const filePath = pathMatches[1];
+            const schemaPath = pathMatches[2];
+            const src = filePath
+                ? this._getForeignSchema(filePath)
+                : this._structure;
+
+            const result = _.get(
+                src,
+                _.trim(schemaPath, '#/\\')
+                    .replace(/[\\\/]/g, '.')
+            );
+
+            return result;
+
+        } else throw new Error(
+            'JSON Path error:  ' +
+            `${path} is not valid JSON path!`
+        );
+    }
+
+    /**
+     * Превращение JSON-схемы в описание типа данных.
+     * Возвращает контейнер [дескрипторов типов]{@link DataTypeDescriptor},
+     * в котором перечисляются типы данных (возможна принадлежность
+     * к более чем одному типу данных: `number[] | InterfaceName`).
+     *
+     * @param {Schema} schema
+     * Схема, для которой будет подобрано соответствущее
+     * правило, по которому будет определен дескриптор
+     * нового типа данных.
+     * @param {Object} context
+     * Контекст, в котором хранятся ранее просчитаные модели
+     * в рамках одной цепочки обработки.
+     * @param {string} name
+     * Собственное имя типа данных
+     * @param {string} suggestedName
+     * Предлагаемое имя для типа данных: может
+     * применяться, если тип данных анонимный, но
+     * необходимо вынести его за пределы родительской
+     * модели по-ситуации (например, в случае с Enum).
+     * @param {string} originalPathSchema
+     * Путь, по которому была взята схема
+     *
+     * @returns {DataTypeContainer}
+     */
     public abstract convert(
         schema: Schema,
-        context: Object,
+        context: DescriptorContext,
         name?: string,
+        suggestedName?: string,
         originalPathSchema?: string
     ): DataTypeContainer;
 
@@ -196,28 +267,6 @@ export abstract class BaseConvertor {
     }
 
     /**
-     * Получить дескриптор типа по JSON Path:
-     * возвращает уже созданный ранее, или создает
-     * новый при первом упоминании.
-     *
-     * @param {string} path
-     * @param {DescriptorContext} context
-     * @returns {DataTypeDescriptor}
-     * @private
-     */
-    protected _findTypeByPath(
-        path: string,
-        context: DescriptorContext
-    ): DataTypeContainer {
-        return _.find(
-            _.values(context),
-            (v: DataTypeDescriptor) =>
-                v.originalSchemaPath === path
-            )
-            || this._processSchema(path, context);
-    }
-
-    /**
      * Получение нового дескриптора на основе JSON Path
      * из текущей структуры.
      *
@@ -231,38 +280,14 @@ export abstract class BaseConvertor {
         context: DescriptorContext
     ): DataTypeContainer {
 
-        const schema = this._getSchemaByPath(path);
+        const schema = this.getSchemaByPath(path);
         const modelName = (_.trim(path,'/\\').match(/(\w+)$/) || [])[1];
 
         if (!schema) throw new Error(
             `Error: can't find schema with path: ${path}!`
         );
 
-        return this.convert(schema, context, modelName, path);
-    }
-
-    protected _getSchemaByPath(path: string): Schema {
-        const pathMatches = path.match(pathRegex);
-
-        if (pathMatches) {
-            const filePath = pathMatches[1];
-            const schemaPath = pathMatches[2];
-            const src = filePath
-                ? this._getForeignSchema(filePath)
-                : this._structure;
-
-            const result = _.get(
-                src,
-                _.trim(schemaPath, '#/\\')
-                    .replace(/[\\\/]/g, '.')
-            );
-
-            return result;
-
-        } else throw new Error(
-            'JSON Path error:  ' +
-            `${path} is not valid JSON path!`
-        );
+        return this.convert(schema, context, modelName, null, path);
     }
 
     /**

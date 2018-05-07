@@ -46,6 +46,14 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
          */
         public readonly modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
@@ -58,32 +66,23 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             convertor,
             context,
             modelName,
+            suggestedModelName,
             originalSchemaPath
         );
 
-        // смешение разных вариантов
-        if(schema.allOf) {
-            // todo: сделать обработку allOf
-            // смешение всех вариантов
-            // ...
-        } else if(schema.anyOf) {
-            // todo: сделать обработку anyOf
-            // выбор нескольких возможных
-            // ...
-        } else if(schema.oneOf) {
-            // todo: сделать обработку anyOf
-            // выбор только одного
-            // ...
-        }
-
         // Обработка свойства.
-        // todo: сейчас обрабатывается только один набор свойств — без вариантов
         if (schema.properties) {
             _.each(schema.properties, (propSchema, propName) => {
 
+                const suggestedName = _.camelCase(propName).replace(
+                    /^./, propName[0].toUpperCase()
+                );
+
                 const typeContainer = convertor.convert(
                     propSchema,
-                    context
+                    context,
+                    null,
+                    suggestedName
                 );
 
                 const propDescr = {
@@ -110,10 +109,6 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 <any>{}
             )
         }
-    }
-
-    private _allOf(variants) {
-
     }
 
     /**

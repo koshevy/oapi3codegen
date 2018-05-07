@@ -26,6 +26,14 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
          */
         public modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
@@ -37,6 +45,7 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
             convertor,
             context,
             modelName,
+            suggestedModelName,
             originalSchemaPath
         );
     }

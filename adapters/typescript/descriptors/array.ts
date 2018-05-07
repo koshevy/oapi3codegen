@@ -38,6 +38,14 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
          */
         public readonly modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
@@ -50,13 +58,19 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
             convertor,
             context,
             modelName,
+            suggestedModelName,
             originalSchemaPath
         );
 
+        // fixme не поддерживает конкретное перечисление (items: [...]), пока только общее (items: {...})
         if (schema.items) {
             this.itemsDescription = convertor.convert(
                 schema.items,
-                context
+                context,
+                null,
+                (modelName || suggestedModelName)
+                    ? `${(modelName || suggestedModelName)}Items`
+                    : null
             );
         }
     }

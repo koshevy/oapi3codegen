@@ -13,26 +13,21 @@ convertor.loadStructureFromFile(path.resolve(
 let context = {};
 let entryPoints = convertor.getEntryPoints(context);
 
-// _.each(entryPoints, descriptor => {
-//     /*console.log*/(prettier.format(
-//         descriptor.render(dependencies))
-//     );
-// });
-
-let summaryText = '';
+let summaryText = [];
 let alreadyRendered = [];
 
 Convertor.renderRecursive(
     entryPoints,
     (descriptor, text) => {
-        summaryText += prettier.format(text, {parser: 'typescript'});
+        summaryText.push(prettier.format(text, {parser: 'typescript'}));
     },
     alreadyRendered
 );
 
 fsExtra.outputFile(
     '/DATA/plugin_projects/oapi3codegen/mock/working-example.ts',
-    prettier.format(summaryText, {parser: 'typescript'})
+    prettier.format(summaryText.join('\n'), {parser: 'typescript'})
 );
 
-console.log(_.map(alreadyRendered, v => v.toString()).sort());
+console.log('Render complete. These types was created:');
+_.each(alreadyRendered.sort(), v => console.log(v.toString()));
