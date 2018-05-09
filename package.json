@@ -4,7 +4,7 @@
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
   "bin": {
-    "oapi3ts": "./dist/cli.js"
+    "oapi3codegen": "./bin/oapi3codegen.js"
   },
   "scripts": {
     "start": "node ./dist/cli.js",
