@@ -54,7 +54,7 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
     /**
      * Рендер типа данных в строку.
      *
-     * @param {RenderResult[]} childrenDependencies
+     * @param {DataTypeDescriptor[]} childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
      * @param {boolean} rootLevel

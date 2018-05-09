@@ -16,13 +16,6 @@ export type DescriptorContext = {[name: string]: DataTypeDescriptor};
  */
 export interface DataTypeDescriptor {
 
-    // fixme решить проблему, вызывает ошибку: provides no match for the signature 'new (schema: any, modelName: string, originalSchemaPath: string): any'.
-    // new (
-    //     schema: any,
-    //     modelName: string,
-    //     originalSchemaPath: string
-    // );
-
     /**
      * Название этой модели (может быть string
      * или null).
@@ -46,7 +39,7 @@ export interface DataTypeDescriptor {
     /**
      * Рендер типа данных в строку.
      *
-     * @param {RenderResult[]} childrenDependencies
+     * @param {DataTypeDescriptor[]} childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
      * @param {boolean} rootLevel

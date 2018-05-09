@@ -6,7 +6,11 @@ import {
     OApiStructure,
     Schema
 } from "../../oapi-defs";
-import { BaseConvertor } from "../../core";
+import {
+    BaseConvertor,
+    ConvertorConfig,
+    defaultConfig
+} from "../../core";
 
 import {
     DataTypeContainer,
@@ -23,6 +27,10 @@ import { rules } from "./descriptors";
 export class Convertor extends BaseConvertor {
 
     /**
+     * Рекурсивный рендеринг
+     * [контенейра дескрипторов типов]{@link DataTypeContainer}
+     * с ренлерингом всех их зависиомостей.
+     *
      * @param {DataTypeContainer} typeContainer
      * Типы, которые нужно отрендерить.
      * @param {(descriptor: DataTypeDescriptor, text) => void} renderedCallback
@@ -89,8 +97,14 @@ export class Convertor extends BaseConvertor {
 
     protected _ajv;
 
-    constructor() {
-        super();
+    constructor(
+        /**
+         * Конфигурация для конвертора.
+         * @type {ConvertorConfig}
+         */
+        protected config: ConvertorConfig = defaultConfig
+    ) {
+        super(config);
         this._ajv = new Ajv();
     }
 
@@ -141,7 +155,7 @@ export class Convertor extends BaseConvertor {
                 return refSchema;
             } else {
                 // fixme: отследить, будет ли испоьзоваться этот сценарий
-                // fixme: здесьнужен эффективный механизм смешения уже готовой схемы с надстройкой
+                // fixme: здесь нужен эффективный механизм смешения уже готовой схемы с надстройкой
                 // fixme: пока просто валит ошибку
                 throw new Error(
                     `Error (fix this place?): you should't get '$ref' and other properties as neighbors.`
@@ -164,36 +178,6 @@ export class Convertor extends BaseConvertor {
                 )]
                 : null;
         }
-    }
-
-    /**
-     * Обработка allOf в схеме.
-     *
-     * @param {Schema} schema
-     * @param {DescriptorContext} context
-     * @returns {DataTypeContainer}
-     * @private
-     */
-    protected _processAllOf(
-        schema: Schema,
-        context: DescriptorContext,
-    ): DataTypeContainer | false {
-        // todo сделать обработку allOf
-        return null;
-    }
-
-    protected _processAnyOf(
-        schema: Schema,
-        context: DescriptorContext,
-    ): DataTypeContainer | false {
-        return null;
-    }
-
-    protected _processOneOf(
-        schema: Schema,
-        context: DescriptorContext,
-    ): DataTypeContainer | false {
-        return null;
     }
 
     /**

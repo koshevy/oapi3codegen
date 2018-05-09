@@ -8,6 +8,11 @@ import {
 } from '../core';
 
 import {
+    ConvertorConfig,
+    defaultConfig
+} from './config';
+
+import {
     Schema,
     Parameter,
     Response
@@ -34,20 +39,57 @@ export abstract class BaseConvertor {
 
     protected _structure: OApiStructure;
 
-    public loadStructure(structure: OApiStructure) {
+    protected _foreignSchemaFn: (resourcePath: string) => Schema;
+
+    constructor (
+        /**
+         * Конфигурация для конвертора.
+         * @type {ConvertorConfig}
+         */
+        protected config: ConvertorConfig = defaultConfig
+    ) {}
+
+    /**
+     * Загрузка структуры OpenAPI3-документа в конвертор.
+     * @param {OApiStructure} structure
+     */
+    public loadOAPI3Structure(structure: OApiStructure) {
         this._structure = structure;
     }
 
-    public loadStructureFromFile(fileName): boolean {
+    /**
+     * Загрузка структуры OpenAPI3-документа в конвертор из файла.
+     * @param fileName
+     * @returns {boolean}
+     */
+    public loadOAPI3StructureFromFile(fileName): boolean {
         this._structure = <OApiStructure>fsExtra.readJsonSync(fileName);
         return this._structure ? true : false;
     }
 
     /**
-     * Получение входных точек для 'вытаскивания' типов данных.
+     * Метод для установки функции, с помощью которой происходит обращение
+     * к сторонней схеме (которая находится в другом файле).
+     * @param {(resourcePath: string) => Schema} fn
+     */
+    public setForeignSchemeFn(fn: (resourcePath: string) => Schema): void {
+        this._foreignSchemaFn = fn;
+    }
+
+    /**
+     * Получение "входных точек" OpenAPI3-структуры:
+     *
+     * - Модели параметров API-методов
+     * - Модели тел запросов API-методов
+     * - Модели ответов API-методов
+     *
+     * С этих входных точек может быть начата "раскрутка" цепочки
+     * зависимостей для рендеринга с помощью метода
+     * [Convertor.renderRecursive]{@link Convertor.renderRecursive}.
+     *
      * @returns {DataTypeContainer}
      */
-    public getEntryPoints(context = {}): DataTypeContainer {
+    public getOAPI3EntryPoints(context = {}): DataTypeContainer {
         let alreadyConverted = [];
 
         //параметры
@@ -234,7 +276,7 @@ export abstract class BaseConvertor {
                         const ctSuffix = (contentType === defaultContentType)
                             ? '' : `_${_.camelCase(contentType)}`;
 
-                        // todo вынести в конфиг правилос формирования имени
+                        // todo вынести в конфиг правило формирования имени
                         const modelName = `${baseTypeName}${ctSuffix}_response${code}`;
 
                         if(content.schema)
@@ -242,7 +284,7 @@ export abstract class BaseConvertor {
                     });
 
                     if(response.headers) {
-                        const modelName = `${baseTypeName}Headers_response${code}`;
+                        const modelName = this.config.headersModelName(baseTypeName, code);
                         result[modelName] = {
                             type: "object",
                             properties: response.headers
@@ -258,7 +300,8 @@ export abstract class BaseConvertor {
                 );
 
                 if (requestBody) {
-                    result[`${baseTypeName}Request`] = requestBody;
+                    let modelName = this.config.requestModelName(baseTypeName);
+                    result[modelName] = requestBody;
                 }
             }
         }
@@ -298,9 +341,10 @@ export abstract class BaseConvertor {
      * @private
      */
     protected _getForeignSchema(resourcePath: string): Schema {
-        // todo обращение к внешним файлам еще не реализовано
-        throw new Error(
-            `TODO: have to implement appeal to foreign files/urls. Path: ${resourcePath}.`
+        if(this._foreignSchemaFn) {
+            return this._foreignSchemaFn(resourcePath);
+        } else throw new Error(
+            `Function for getting foreign scheme not set. Use setForeignSchemeFn(). Path: ${resourcePath}.`
         );
     }
 }

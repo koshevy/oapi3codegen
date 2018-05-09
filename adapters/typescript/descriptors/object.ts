@@ -74,9 +74,10 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         if (schema.properties) {
             _.each(schema.properties, (propSchema, propName) => {
 
-                const suggestedName = _.camelCase(propName).replace(
-                    /^./, propName[0].toUpperCase()
-                );
+                const suggestedName = (modelName || suggestedModelName || '')
+                    + _.camelCase(propName).replace(
+                        /^./, propName[0].toUpperCase()
+                    );
 
                 const typeContainer = convertor.convert(
                     propSchema,
@@ -114,7 +115,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
     /**
      * Рендер типа данных в строку.
      *
-     * @param {RenderResult[]} childrenDependencies
+     * @param {DataTypeDescriptor[]} childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
      * @param {boolean} rootLevel

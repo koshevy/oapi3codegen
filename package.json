@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
+  "bin": {
+    "oapi3ts": "./dist/cli.js"
+  },
   "scripts": {
-    "start": "node ./dist/index.js",
+    "start": "node ./dist/cli.js",
     "build": "tsc",
-    "build:start": "tsc && node ./dist/index.js",
+    "build:start": "tsc && node ./dist/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

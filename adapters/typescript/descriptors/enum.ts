@@ -93,7 +93,7 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
     /**
      * Рендер типа данных в строку.
      *
-     * @param {RenderResult[]} childrenDependencies
+     * @param {DataTypeDescriptor[]} childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
      * @param {boolean} rootLevel
@@ -114,7 +114,6 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
 
         const comment = this.getComments();
 
-        // fixme не учитываются anyOf, allOf, oneOf
         return rootLevel ? `${comment}export enum ${this.modelName} {${
                 _.map(this.schema.enum, v => {
                     return `${this._enumItemName(v)} = ${JSON.stringify(v)}`;
