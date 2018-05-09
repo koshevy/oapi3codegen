@@ -10,7 +10,7 @@
         "sourceMap": false
     },
     "exclude": [
-        "node_modules"
+        "oapi3codegen/node_modules"
     ],
     "files": [
         "./index.ts",

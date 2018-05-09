@@ -24,13 +24,14 @@
   "license": "MIT",
   "dependencies": {
     "ajv": "^6.4.0",
-    "execa": "^0.10.0",
-    "lodash": "^4.17.5",
-    "prettier": "^1.12.1",
-    "typescript": "^2.8.1"
+    "lodash": "^4.17.5"
+    
   },
   "devDependencies": {
+    "execa": "^0.10.0",
     "fs-extra": "^5.0.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "prettier": "^1.12.1",
+    "typescript": "^2.8.1"
   }
 }
