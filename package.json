@@ -7,6 +7,7 @@
     "oapi3codegen": "./bin/oapi3codegen.js"
   },
   "scripts": {
+    "postinstall": "cd ./node_modules/oapi3codegen && npm install",
     "start": "node ./dist/cli.js",
     "build": "tsc",
     "build:start": "tsc && node ./dist/cli.js",
@@ -25,9 +26,8 @@
   "dependencies": {
     "ajv": "^6.4.0",
     "lodash": "^4.17.5"
-    
   },
-  "dependencies": {
+  "devDependencies": {
     "execa": "^0.10.0",
     "fs-extra": "^5.0.0",
     "path": "^0.12.7",
