@@ -8,6 +8,9 @@ import { getArvgParam } from './lib';
 
 import { Convertor } from './adapters/typescript';
 
+// *****************
+// *** CLI Arguments
+
 // Source OpenAPI-file (.json)
 const srcPath = getArvgParam('srcPath');
 
@@ -15,11 +18,20 @@ const srcPath = getArvgParam('srcPath');
 const destPath = getArvgParam('destPath')
     || path.resolve(process.cwd(), './generated-code');
 
-if(!srcPath)
-    throw new Error('--srcPath is not set!');
+// Whether should models output in separated files
+const separatedFiles = getArvgParam('separatedFiles') || false;
 
-if(!fsExtra.pathExistsSync(srcPath))
-    throw new Error(`File ${srcPath} is not exists!`);
+if(!srcPath)
+     throw new Error('--srcPath is not set!');
+
+// Absolute url to path from CWD
+const srcPathAbs = path.resolve(process.cwd(), srcPath);
+
+if(!fsExtra.pathExistsSync(srcPathAbs))
+    throw new Error(`File ${srcPathAbs} is not exists!`);
+
+// ******************
+// *** Implementation
 
 const convertor: Convertor = new Convertor();
 convertor.loadOAPI3StructureFromFile(path.resolve(
@@ -29,7 +41,13 @@ convertor.loadOAPI3StructureFromFile(path.resolve(
 let context = {};
 let entryPoints = convertor.getOAPI3EntryPoints(context);
 
-let summaryText = [];
+let summaryTextPieces = [];
+
+/**
+ * Immutable value of array intended to collect
+ * all affected models at all recursive levels.
+ * @type {any[]}
+ */
 let alreadyRendered = [];
 
 /**
@@ -40,15 +58,42 @@ let alreadyRendered = [];
 Convertor.renderRecursive(
     entryPoints,
     (descriptor, text) => {
-        summaryText.push(prettier.format(text, {parser: 'typescript'}));
+        // Single file
+        if(!separatedFiles) {
+            summaryTextPieces.push(
+                prettier.format(
+                    text,
+                    {parser: 'typescript'}
+                ));
+        } else {
+            // Different files
+
+        }
     },
     alreadyRendered
 );
 
-fsExtra.outputFile(
-    '/DATA/plugin_projects/oapi3codegen/mock/working-example.ts',
-    prettier.format(summaryText.join('\n'), {parser: 'typescript'})
-);
+/**
+ * Output render results into file(s)
+ */
+
+// Single file
+if(!separatedFiles) {
+
+    const fileInfo = path.parse(srcPathAbs);
+    if(!fileInfo['name'])
+        throw new Error(`Can't extract name if path in "${srcPathAbs}"`);
+
+    fsExtra.outputFile(
+        path.resolve(destPath, `${fileInfo['name']}.ts`),
+        prettier.format(
+            summaryTextPieces.join('\n'),
+            {parser: 'typescript'}
+        )
+    );
+} else {
+    // Different files
+}
 
 console.log('Render complete. These types was created:');
 _.each(alreadyRendered.sort(), v => console.log(v.toString()));
