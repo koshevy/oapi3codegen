@@ -31,7 +31,7 @@ if (!fsExtra.pathExistsSync(cliTsPath)) {
 }
 
 // execute CLI interface
-execa.shellSync([
+console.log(execa.shellSync([
   'cd ./node_modules/oapi3codegen',
-  `node ./dist/cli.js`
-].join(' && '));
+  `node ./dist/cli.js ${paramsString}`
+].join(' && '), {stdout: 'inherit'}));

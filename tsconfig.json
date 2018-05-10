@@ -9,9 +9,19 @@
         "noImplicitAny": false,
         "sourceMap": false
     },
-    "exclude": [
-        "oapi3codegen/node_modules"
+    "include": [
+        "core/*",
+        "adapters/typescript/*",
+        "adapters/typescript/descriptors/*",
+        "oapi-defs/*",
+        "oapi-defs/common/*",
+        "oapi-defs/components/*"
     ],
+    "exclude": [
+        "oapi3codegen/node_modules",
+        "**/*.spec.ts"
+    ],
+    "maxNodeModuleJsDepth": 2,
     "files": [
         "./index.ts",
         "./cli.ts"
