@@ -15,7 +15,8 @@
         "adapters/typescript/descriptors/*",
         "oapi-defs/*",
         "oapi-defs/common/*",
-        "oapi-defs/components/*"
+        "oapi-defs/components/*",
+        "lib/*"
     ],
     "exclude": [
         "oapi3codegen/node_modules",
