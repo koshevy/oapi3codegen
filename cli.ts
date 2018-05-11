@@ -87,13 +87,15 @@ Convertor.renderRecursive(
                                 dependencies,
                                 (dep: DataTypeDescriptor) =>
                                     `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}.ts';`
-                            ).join('\n')
-                        }\n${modelText}`;
+                            ).join(';\n')
+                        }\n\n${modelText}`;
 
                     const outputFilePath = path.resolve(
                         destPathAbs,
                         `${_.kebabCase(descr.modelName)}.ts`
                     );
+
+                    indexItems.push(`${_.kebabCase(descr.modelName)}.ts`);
 
                     console.log(`${descr.modelName} was saved in separated file: ${outputFilePath}`);
 
@@ -107,6 +109,14 @@ Convertor.renderRecursive(
                 }
             );
 
+            // Index file
+            fsExtra.outputFile(
+                path.resolve(destPathAbs, `./index.ts`),
+                prettier.format(
+                    _.map(indexItems, v => `export * from './${v}'`).join(';\n'),
+                    {parser: 'typescript'}
+                )
+            );
         }
     },
     alreadyRendered
@@ -138,6 +148,4 @@ if(!separatedFiles) {
     );
 
     console.log(`Result was saved in single file: ${outputFilePath}`);
-} else {
-    // Different files
 }
