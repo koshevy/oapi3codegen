@@ -15,8 +15,7 @@ import { Convertor } from './adapters/typescript';
 const srcPath = getArvgParam('srcPath');
 
 // Directory which will contain generated files
-const destPath = getArvgParam('destPath')
-    || path.resolve(process.cwd(), './generated-code');
+const destPath = getArvgParam('destPath');
 
 // Whether should models output in separated files
 const separatedFiles = getArvgParam('separatedFiles') || false;
@@ -26,6 +25,10 @@ if(!srcPath)
 
 // Absolute url to path from CWD
 const srcPathAbs = path.resolve(process.cwd(), srcPath);
+
+const destPathAbs = destPath
+    ? path.resolve(process.cwd(), destPath)
+    : path.resolve(process.cwd(), './generated-code');
 
 if(!fsExtra.pathExistsSync(srcPathAbs))
     throw new Error(`File ${srcPathAbs} is not exists!`);
@@ -81,16 +84,21 @@ Convertor.renderRecursive(
 if(!separatedFiles) {
 
     const fileInfo = path.parse(srcPathAbs);
+
     if(!fileInfo['name'])
         throw new Error(`Can't extract name if path in "${srcPathAbs}"`);
 
+    const outputFilePath = path.resolve(destPathAbs, `${fileInfo['name']}.ts`);
+
     fsExtra.outputFile(
-        path.resolve(destPath, `${fileInfo['name']}.ts`),
+        outputFilePath,
         prettier.format(
             summaryTextPieces.join('\n'),
             {parser: 'typescript'}
         )
     );
+
+    console.log(`Result saved in single file: ${outputFilePath}`);
 } else {
     // Different files
 }
