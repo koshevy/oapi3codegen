@@ -85,9 +85,8 @@ Convertor.renderRecursive(
                     const fileText = `${
                             _.map(
                                 dependencies,
-                                (dep: DataTypeDescriptor) => {
+                                (dep: DataTypeDescriptor) =>
                                     `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}.ts';`
-                                }
                             ).join('\n')
                         }\n${modelText}`;
 
@@ -96,7 +95,7 @@ Convertor.renderRecursive(
                         `${_.kebabCase(descr.modelName)}.ts`
                     );
 
-                    console.log(`${descr.modelName} was saved in single separated: ${outputFilePath}`);
+                    console.log(`${descr.modelName} was saved in separated file: ${outputFilePath}`);
 
                     fsExtra.outputFile(
                         outputFilePath,
