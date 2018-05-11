@@ -7,6 +7,7 @@ import * as fsExtra from 'fs-extra';
 import { getArvgParam } from './lib';
 
 import { Convertor } from './adapters/typescript';
+import { DataTypeDescriptor } from './core';
 
 // *****************
 // *** CLI Arguments
@@ -51,7 +52,7 @@ let summaryTextPieces = [];
  * all affected models at all recursive levels.
  * @type {any[]}
  */
-let alreadyRendered = [];
+let alreadyRendered: DataTypeDescriptor[] = [];
 
 /**
  * Rendering each type:
@@ -69,12 +70,51 @@ Convertor.renderRecursive(
                     {parser: 'typescript'}
                 ));
         } else {
+            let indexItems = [];
             // Different files
+            _.each(
+                alreadyRendered,
+                (descr: DataTypeDescriptor) => {
+                    let dependencies = [];
+
+                    const modelText = descr.render(
+                        dependencies,
+                        true
+                    );
+
+                    const fileText = `${
+                            _.map(
+                                dependencies,
+                                (dep: DataTypeDescriptor) => {
+                                    `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}.ts';`
+                                }
+                            ).join('\n')
+                        }\n${modelText}`;
+
+                    const outputFilePath = path.resolve(
+                        destPathAbs,
+                        `${_.kebabCase(descr.modelName)}.ts`
+                    );
+
+                    console.log(`${descr.modelName} was saved in single separated: ${outputFilePath}`);
+
+                    fsExtra.outputFile(
+                        outputFilePath,
+                        prettier.format(
+                            fileText,
+                            {parser: 'typescript'}
+                        )
+                    );
+                }
+            );
 
         }
     },
     alreadyRendered
 );
+
+console.log('Render complete. These types was created:');
+_.each(alreadyRendered.sort(), v => console.log(v.toString()));
 
 /**
  * Output render results into file(s)
@@ -98,10 +138,7 @@ if(!separatedFiles) {
         )
     );
 
-    console.log(`Result saved in single file: ${outputFilePath}`);
+    console.log(`Result was saved in single file: ${outputFilePath}`);
 } else {
     // Different files
 }
-
-console.log('Render complete. These types was created:');
-_.each(alreadyRendered.sort(), v => console.log(v.toString()));
