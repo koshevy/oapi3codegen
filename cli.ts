@@ -95,7 +95,7 @@ Convertor.renderRecursive(
                         `${_.kebabCase(descr.modelName)}.ts`
                     );
 
-                    indexItems.push(`${_.kebabCase(descr.modelName)}.ts`);
+                    indexItems.push(`${_.kebabCase(descr.modelName)}`);
 
                     console.log(`${descr.modelName} was saved in separated file: ${outputFilePath}`);
 
