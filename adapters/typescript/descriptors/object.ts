@@ -72,18 +72,9 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             context,
             modelName,
             suggestedModelName,
-            originalSchemaPath
+            originalSchemaPath,
+            ancestors
         );
-
-        // обработка свойств предков
-        if(this.ancestors) {
-            _.each(this.ancestors, ancestor => {
-                _.assign(
-                    this.propertiesSets[0],
-                    ancestor['propertiesSets'][0] || {}
-                )
-            });
-        }
 
         // Обработка собственных свойств
         if (schema.properties) {
@@ -115,6 +106,22 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 };
 
                 this.propertiesSets[0][propName] = propDescr;
+            });
+        }
+
+        // обработка свойств предков
+        if(this.ancestors) {
+            _.each(this.ancestors, ancestor => {
+                try {
+                    _.assign(
+                        this.propertiesSets[0],
+                        ancestor['propertiesSets'][0] || {}
+                    )
+                } catch(err) {
+                    console.log('——— ancestors:');
+                    console.log(ancestors);
+                    process.exit(0);
+                }
             });
         }
 
@@ -166,7 +173,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         const prefix = (rootLevel)
             ? (this.propertiesSets.length > 1
                 ? `${comment}export type ${this.modelName} = `
-                : `${comment}export interface ${this.modelName} ${this._renderExtends()}`)
+                : `${comment}export interface ${this.modelName}${this._renderExtends(childrenDependencies)}`)
             : '';
 
         // рекурсивно просчитывает вложенные свойства
@@ -194,17 +201,23 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      * @returns {string}
      * @private
      */
-    private _renderExtends(): string {
-        let filteredAncestors = []
+    private _renderExtends(dependencies: DataTypeDescriptor[]): string {
+        let filteredAncestors = [];
+
         if (this.ancestors && this.ancestors.length) {
             filteredAncestors = _.filter(
                 this.ancestors,
-                ancestor => ancestor.name ? true : false
+                ancestor => ancestor.modelName ? true : false
             );
         }
 
+        dependencies.push.apply(
+            dependencies,
+            filteredAncestors
+        );
+
         return filteredAncestors.length
-            ? ''
-            : ` extends ${_.map(filteredAncestors, v => v.name).join(', ')} `;
+            ? ` extends ${_.map(filteredAncestors, v => v.modelName).join(', ')} `
+            : '';
     }
 }

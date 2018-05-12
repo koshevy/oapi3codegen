@@ -149,7 +149,7 @@ export class Convertor extends BaseConvertor {
         // получение по $ref
         if (schema['$ref']) {
             if(_.values(schema).length === 1) {
-                return name
+                return (name && !this.config.implicitTypesRefReplacement)
                     // если неанонимный, то создает новый на основе предка
                     ? this.convert(
                         this.getSchemaByPath(schema['$ref']),
@@ -183,7 +183,8 @@ export class Convertor extends BaseConvertor {
                     context,
                     name,
                     suggestedName,
-                    originalPathSchema
+                    originalPathSchema,
+                    ancestors
                 )]
                 : null;
         }

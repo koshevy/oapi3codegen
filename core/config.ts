@@ -5,41 +5,89 @@ import * as _ from 'lodash';
  */
 export interface ConvertorConfig {
     /**
-     * Content-Type по-умолчанию.
-     * На данный момент, обрабатываются только ContentType по-умолчанию.
+     * Default content-type contains no prefixes/suffixes
+     * in type names.
      */
     defaultContentType: string,
 
     /**
-     * Регулярное выражение для расшифровки JSON Path.
+     * Regex which is using for extract JSON Path parts.
      */
     jsonPathRegex: RegExp,
 
     /**
-     * Формирование имени модели с заголовками для метода API.
+     * Mode when models that refer to any models via `$ref`
+     * replacing implicitly even firsts have names.
+     *
+     * For example, in this case:
+     * ```yml
+     * components:
+     *   schemas:
+     *      FistModel:
+     *          $ref: SecondModel
+     *      SecondModel:
+     *          type: object
+     *          properties:
+     *              exampleProperty:
+     *                  type: string
+     * ```
+     *
+     * `FirstModel` will be replaced by `SecondModel` in every
+     * place when `implicitTypesRefReplacement=true` but otherwise
+     * `SecondModel` will be rendered as interface such extends `FistModel`.
+     *
+     */
+    implicitTypesRefReplacement: boolean,
+
+    /**
+     * Function that create Parameters Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of request body for API method.
+     *
      * @param baseTypeName
      * @param code
      * @param contentType
      * @returns {string}
-     * fixme contentType не используется
+     * fixme contentType is not using now
+     */
+    parametersModelName: (baseTypeName) => string,
+
+    /**
+     * Function that create Headers Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of headers for method.
+     *
+     * @param baseTypeName
+     * @param code
+     * @param contentType
+     * @returns {string}
+     * fixme contentType is not using now
      */
     headersModelName: (baseTypeName, code, contentType?) => string,
 
     /**
-     * Формирование имени модели для запроса на метод API.
+     * Function that create Request Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of request body for API method.
+     *
      * @param baseTypeName
      * @param code
      * @param contentType
-     * fixme contentType не используется
+     * @returns {string}
+     * fixme contentType is not using now
      */
     requestModelName: (baseTypeName, contentType?) => string,
 
     /**
-     * Формирование имени модели для ответа метода API.
+     * Function that create Response Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of parameters for API method.
+     *
      * @param baseTypeName
      * @param contentType
      * @param code
      * @returns {string}
+     * fixme contentType is not using now
      */
     responseModelName: (baseTypeName, code, contentType?) => string,
 }
@@ -50,40 +98,96 @@ export interface ConvertorConfig {
  */
 export const defaultConfig: ConvertorConfig = {
 
-  defaultContentType: "application/json",
-  jsonPathRegex: /([\w:\/\\\.]+)?#(\/?[\w+\/?]+)/,
+    /**
+     * Default content-type contains no prefixes/suffixes
+     * in type names.
+     */
+    defaultContentType: "application/json",
 
-  /**
-   * Формирование имени модели с заголовками для метода API.
-   * @param baseTypeName
-   * @param code
-   * @param contentType
-   * @returns {string}
-   * fixme contentType не используется
-   */
-  headersModelName: (baseTypeName, code, contentType = null) => {
-      return `${baseTypeName}Headers_response${code}`;
-  },
+    /**
+     * Regex which is using for extract JSON Path parts.
+     */
+    jsonPathRegex: /([\w:\/\\\.]+)?#(\/?[\w+\/?]+)/,
 
-  /**
-   * Формирование имени модели для запроса на метод API.
-   * @param baseTypeName
-   * @param code
-   * @param contentType
-   * fixme contentType не используется
-   */
-  requestModelName: (baseTypeName, contentType = null) => {
-      return `${baseTypeName}Request`
-  },
+    /**
+     * Mode when models that refer to any models via `$ref`
+     * replacing implicitly even firsts have names.
+     *
+     * For example, in this case:
+     * ```yml
+     * components:
+     *   schemas:
+     *      FistModel:
+     *          $ref: SecondModel
+     *      SecondModel:
+     *          type: object
+     *          properties:
+     *              exampleProperty:
+     *                  type: string
+     * ```
+     *
+     * `FirstModel` will be replaced by `SecondModel` in every
+     * place when `implicitTypesRefReplacement=true` but otherwise
+     * `SecondModel` will be rendered as interface such extends `FistModel`.
+     *
+     */
+    implicitTypesRefReplacement: false,
 
-  /**
-   * Формирование имени модели для ответа метода API.
-   * @param baseTypeName
-   * @param contentType
-   * @param code
-   * @returns {string}
-   */
-  responseModelName: (baseTypeName, code, contentType = null) => {
-    return `${baseTypeName}${contentType ? `_${_.camelCase(contentType)}` : ''}_response${code}`
-  }
+    /**
+     * Function that create Parameters Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of request body for API method.
+     *
+     * @param baseTypeName
+     * @param code
+     * @param contentType
+     * fixme contentType не используется
+     */
+    parametersModelName: (baseTypeName) => `${baseTypeName}Parameters`,
+
+    /**
+     * Function that create Headers Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of headers for method.
+     *
+     * @param baseTypeName
+     * @param code
+     * @param contentType
+     * @returns {string}
+     * fixme contentType is not using now
+     */
+    headersModelName: (baseTypeName, code, contentType = null) =>
+        `${baseTypeName}Headers_response${code}`,
+
+    /**
+     * Function that create Request Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of request body for API method.
+     *
+     * @param baseTypeName
+     * @param code
+     * @param contentType
+     * @returns {string}
+     * fixme contentType is not using now
+     */
+    requestModelName: (baseTypeName, contentType = null) =>
+        `${baseTypeName}Request`,
+
+    /**
+     * Function that create Response Model name.
+     * Headers Model is a implicit model that based on
+     * Open API description of parameters for API method.
+     *
+     * @param baseTypeName
+     * @param contentType
+     * @param code
+     * @returns {string}
+     * fixme contentType is not using now
+     */
+    responseModelName: (baseTypeName, code, contentType = null) =>
+        `${baseTypeName}${
+            contentType
+                ? `_${_.camelCase(contentType)}`
+                : ''
+        }_response${code}`
 };

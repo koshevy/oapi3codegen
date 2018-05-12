@@ -148,12 +148,16 @@ export abstract class BaseConvertor {
         path: string,
         context: DescriptorContext
     ): DataTypeContainer {
-        return _.find(
+
+        const alreadyFound = _.find(
             _.values(context),
             (v: DataTypeDescriptor) =>
                 v.originalSchemaPath === path
-            )
-            || this._processSchema(path, context);
+        );
+
+        return alreadyFound
+            ? [alreadyFound]
+            : this._processSchema(path, context);
     }
 
     public getSchemaByPath(path: string): Schema {
@@ -251,7 +255,7 @@ export abstract class BaseConvertor {
                 // обработка параметров
                 _.each(method.parameters || {}, (parameter: Parameter) => {
                     if (parameter.schema) {
-                        const modelName = `${baseTypeName}Parameters`;
+                        const modelName = this.config.parametersModelName(baseTypeName);
 
                         sch.properties[parameter.name] = parameter.schema;
                         if (parameter.required) {
@@ -333,7 +337,19 @@ export abstract class BaseConvertor {
             `Error: can't find schema with path: ${path}!`
         );
 
-        return this.convert(schema, context, modelName, null, path);
+        const results = this.convert(
+            schema,
+            context,
+            modelName,
+            null,
+            path
+        );
+
+        _.each(results, (result: DataTypeDescriptor) => {
+            context[result.originalSchemaPath || result.modelName] = result;
+        });
+
+        return results;
     }
 
     /**
