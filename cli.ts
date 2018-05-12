@@ -108,7 +108,7 @@ Convertor.renderRecursive(
 
                     indexItems.push(`${_.kebabCase(descr.modelName)}`);
 
-                    // console.log(`${descr.modelName} was saved in separated file: ${outputFilePath}`);
+                    console.log(`${descr.modelName} was saved in separated file: ${outputFilePath}`);
 
                     fsExtra.outputFile(
                         outputFilePath,
@@ -133,9 +133,6 @@ Convertor.renderRecursive(
     alreadyRendered
 );
 
-// console.log('Render complete. These types was created:');
-// _.each(alreadyRendered.sort(), v => console.log(v.toString()));
-
 /**
  * Output render results into file(s)
  */
@@ -158,5 +155,7 @@ if(!separatedFiles) {
         )
     );
 
-    // console.log(`Result was saved in single file: ${outputFilePath}`);
+    console.log(`Result was saved in single file: ${outputFilePath}`);
+    console.log('Render complete. These types was created:');
+    _.each(alreadyRendered.sort(), v => console.log(v.toString()));
 }
