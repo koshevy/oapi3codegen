@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
+  "bin": {
+    "oapi3codegen": "./bin/oapi3codegen.js"
+  },
   "scripts": {
-    "start": "node ./dist/index.js",
+    "postinstall": "if [ ! -f './.init.lock' ]\nthen\n touch ./.init.lock && npm install\nfi",
+    "start": "node ./dist/cli.js",
     "build": "tsc",
-    "build:start": "tsc && node ./dist/index.js",
+    "build:start": "tsc && node ./dist/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -21,12 +25,13 @@
   "license": "MIT",
   "dependencies": {
     "ajv": "^6.4.0",
-    "lodash": "^4.17.5",
-    "prettier": "^1.12.1",
-    "typescript": "^2.8.1"
+    "lodash": "^4.17.5"
   },
   "devDependencies": {
+    "execa": "^0.10.0",
     "fs-extra": "^5.0.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "prettier": "^1.12.1",
+    "typescript": "^2.8.1"
   }
 }

@@ -3,16 +3,20 @@ import * as _ from 'lodash';
 import { OApiStructure } from '../oapi-defs';
 import {
     DataTypeContainer,
-    DataTypeDescriptor
+    DataTypeDescriptor,
+    DescriptorContext
 } from '../core';
+
+import {
+    ConvertorConfig,
+    defaultConfig
+} from './config';
 
 import {
     Schema,
     Parameter,
     Response
 } from '../oapi-defs';
-
-type DescriptorContext = {[name: string]: DataTypeDescriptor}
 
 /**
  * ContentType ответов по-умолчанию.
@@ -35,20 +39,57 @@ export abstract class BaseConvertor {
 
     protected _structure: OApiStructure;
 
-    public loadStructure(structure: OApiStructure) {
+    protected _foreignSchemaFn: (resourcePath: string) => Schema;
+
+    constructor (
+        /**
+         * Конфигурация для конвертора.
+         * @type {ConvertorConfig}
+         */
+        protected config: ConvertorConfig = defaultConfig
+    ) {}
+
+    /**
+     * Загрузка структуры OpenAPI3-документа в конвертор.
+     * @param {OApiStructure} structure
+     */
+    public loadOAPI3Structure(structure: OApiStructure) {
         this._structure = structure;
     }
 
-    public loadStructureFromFile(fileName): boolean {
+    /**
+     * Загрузка структуры OpenAPI3-документа в конвертор из файла.
+     * @param fileName
+     * @returns {boolean}
+     */
+    public loadOAPI3StructureFromFile(fileName): boolean {
         this._structure = <OApiStructure>fsExtra.readJsonSync(fileName);
         return this._structure ? true : false;
     }
 
     /**
-     * Получение входных точек для 'вытаскивания' типов данных.
+     * Метод для установки функции, с помощью которой происходит обращение
+     * к сторонней схеме (которая находится в другом файле).
+     * @param {(resourcePath: string) => Schema} fn
+     */
+    public setForeignSchemeFn(fn: (resourcePath: string) => Schema): void {
+        this._foreignSchemaFn = fn;
+    }
+
+    /**
+     * Получение "входных точек" OpenAPI3-структуры:
+     *
+     * - Модели параметров API-методов
+     * - Модели тел запросов API-методов
+     * - Модели ответов API-методов
+     *
+     * С этих входных точек может быть начата "раскрутка" цепочки
+     * зависимостей для рендеринга с помощью метода
+     * [Convertor.renderRecursive]{@link Convertor.renderRecursive}.
+     *
      * @returns {DataTypeContainer}
      */
-    public getEntryPoints(context = {}): DataTypeContainer {
+    public getOAPI3EntryPoints(context = {}): DataTypeContainer {
         let alreadyConverted = [];
 
         //параметры
@@ -93,11 +134,90 @@ export abstract class BaseConvertor {
         return _.compact(_.flattenDepth(dataTypeContainers));
     }
 
+    /**
+     * Получить дескриптор типа по JSON Path:
+     * возвращает уже созданный ранее, или создает
+     * новый при первом упоминании.
+     *
+     * @param {string} path
+     * @param {DescriptorContext} context
+     * @returns {DataTypeDescriptor}
+     * @private
+     */
+    public findTypeByPath(
+        path: string,
+        context: DescriptorContext
+    ): DataTypeContainer {
+
+        const alreadyFound = _.find(
+            _.values(context),
+            (v: DataTypeDescriptor) =>
+                v.originalSchemaPath === path
+        );
+
+        return alreadyFound
+            ? [alreadyFound]
+            : this._processSchema(path, context);
+    }
+
+    public getSchemaByPath(path: string): Schema {
+        const pathMatches = path.match(pathRegex);
+
+        if (pathMatches) {
+            const filePath = pathMatches[1];
+            const schemaPath = pathMatches[2];
+            const src = filePath
+                ? this._getForeignSchema(filePath)
+                : this._structure;
+
+            const result = _.get(
+                src,
+                _.trim(schemaPath, '#/\\')
+                    .replace(/[\\\/]/g, '.')
+            );
+
+            return result;
+
+        } else throw new Error(
+            'JSON Path error:  ' +
+            `${path} is not valid JSON path!`
+        );
+    }
+
+    /**
+     * Превращение JSON-схемы в описание типа данных.
+     * Возвращает контейнер [дескрипторов типов]{@link DataTypeDescriptor},
+     * в котором перечисляются типы данных (возможна принадлежность
+     * к более чем одному типу данных: `number[] | InterfaceName`).
+     *
+     * @param {Schema} schema
+     * Схема, для которой будет подобрано соответствущее
+     * правило, по которому будет определен дескриптор
+     * нового типа данных.
+     * @param {Object} context
+     * Контекст, в котором хранятся ранее просчитаные модели
+     * в рамках одной цепочки обработки.
+     * @param {string} name
+     * Собственное имя типа данных
+     * @param {string} suggestedName
+     * Предлагаемое имя для типа данных: может
+     * применяться, если тип данных анонимный, но
+     * необходимо вынести его за пределы родительской
+     * модели по-ситуации (например, в случае с Enum).
+     * @param {string} originalPathSchema
+     * Путь, по которому была взята схема
+     * @param {DataTypeDescriptor[]} ancestors
+     * Родительсткие модели
+     *
+     * @returns {DataTypeContainer}
+     */
     public abstract convert(
         schema: Schema,
-        context: Object,
+        context: DescriptorContext,
         name?: string,
-        originalPathSchema?: string
+        suggestedName?: string,
+        originalPathSchema?: string,
+        ancestors?: DataTypeDescriptor[]
     ): DataTypeContainer;
 
     // *** Закрытые методы
@@ -135,7 +255,7 @@ export abstract class BaseConvertor {
                 // обработка параметров
                 _.each(method.parameters || {}, (parameter: Parameter) => {
                     if (parameter.schema) {
-                        const modelName = `${baseTypeName}Parameters`;
+                        const modelName = this.config.parametersModelName(baseTypeName);
 
                         sch.properties[parameter.name] = parameter.schema;
                         if (parameter.required) {
@@ -163,7 +283,7 @@ export abstract class BaseConvertor {
                         const ctSuffix = (contentType === defaultContentType)
                             ? '' : `_${_.camelCase(contentType)}`;
 
-                        // todo вынести в конфиг правилос формирования имени
+                        // todo вынести в конфиг правило формирования имени
                         const modelName = `${baseTypeName}${ctSuffix}_response${code}`;
 
                         if(content.schema)
@@ -171,7 +291,7 @@ export abstract class BaseConvertor {
                     });
 
                     if(response.headers) {
-                        const modelName = `${baseTypeName}Headers_response${code}`;
+                        const modelName = this.config.headersModelName(baseTypeName, code);
                         result[modelName] = {
                             type: "object",
                             properties: response.headers
@@ -187,34 +307,13 @@ export abstract class BaseConvertor {
                 );
 
                 if (requestBody) {
-                    result[`${baseTypeName}Request`] = requestBody;
+                    let modelName = this.config.requestModelName(baseTypeName);
+                    result[modelName] = requestBody;
                 }
             }
         }
 
         return result;
-    }
-
-    /**
-     * Получить дескриптор типа по JSON Path:
-     * возвращает уже созданный ранее, или создает
-     * новый при первом упоминании.
-     *
-     * @param {string} path
-     * @param {DescriptorContext} context
-     * @returns {DataTypeDescriptor}
-     * @private
-     */
-    protected _findTypeByPath(
-        path: string,
-        context: DescriptorContext
-    ): DataTypeContainer {
-        return _.find(
-            _.values(context),
-            (v: DataTypeDescriptor) =>
-                v.originalSchemaPath === path
-            )
-            || this._processSchema(path, context);
     }
 
     /**
@@ -231,38 +330,26 @@ export abstract class BaseConvertor {
         context: DescriptorContext
     ): DataTypeContainer {
 
-        const schema = this._getSchemaByPath(path);
+        const schema = this.getSchemaByPath(path);
         const modelName = (_.trim(path,'/\\').match(/(\w+)$/) || [])[1];
 
         if (!schema) throw new Error(
             `Error: can't find schema with path: ${path}!`
         );
 
-        return this.convert(schema, context, modelName, path);
-    }
-
-    protected _getSchemaByPath(path: string): Schema {
-        const pathMatches = path.match(pathRegex);
-
-        if (pathMatches) {
-            const filePath = pathMatches[1];
-            const schemaPath = pathMatches[2];
-            const src = filePath
-                ? this._getForeignSchema(filePath)
-                : this._structure;
-
-            const result = _.get(
-                src,
-                _.trim(schemaPath, '#/\\')
-                    .replace(/[\\\/]/g, '.')
-            );
-
-            return result;
-
-        } else throw new Error(
-            'JSON Path error:  ' +
-            `${path} is not valid JSON path!`
+        const results = this.convert(
+            schema,
+            context,
+            modelName,
+            null,
+            path
         );
+
+        _.each(results, (result: DataTypeDescriptor) => {
+            context[result.originalSchemaPath || result.modelName] = result;
+        });
+
+        return results;
     }
 
     /**
@@ -273,9 +360,10 @@ export abstract class BaseConvertor {
      * @private
      */
     protected _getForeignSchema(resourcePath: string): Schema {
-        // todo обращение к внешним файлам еще не реализовано
-        throw new Error(
-            `TODO: have to implement appeal to foreign files/urls. Path: ${resourcePath}.`
+        if(this._foreignSchemaFn) {
+            return this._foreignSchemaFn(resourcePath);
+        } else throw new Error(
+            `Function for getting foreign scheme not set. Use setForeignSchemeFn(). Path: ${resourcePath}.`
         );
     }
 }

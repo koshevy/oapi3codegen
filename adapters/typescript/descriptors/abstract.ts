@@ -35,11 +35,24 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
          */
         public readonly modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
          */
-        public readonly originalSchemaPath: string
+        public readonly originalSchemaPath: string,
+
+        /**
+         * Родительсткие модели.
+         */
+        public readonly ancestors?: DataTypeDescriptor[]
 
     ) { }
 
@@ -57,7 +70,7 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
                 .split('\n');
         }
         if(this.schema.title)
-            commentLines.unshift(`# ${this.schema.title}`, '');
+            commentLines.unshift(`## ${this.schema.title}`, '');
 
         if(commentLines.length) {
             comment = `/**\n${_.map(
@@ -69,9 +82,29 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
         return comment;
     }
 
+    public toString(): string {
+        return `${this.modelName || 'Anonymous Type'}${
+            this.originalSchemaPath
+                ? `(${this.originalSchemaPath})`
+                : ''
+        }`;
+    }
+
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {DataTypeDescriptor[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
+     * @param {boolean} rootLevel
+     * Говорит о том, что это рендер "корневого"
+     * уровня — то есть, не в составе другого типа,
+     * а самостоятельно.
+     *
      * @returns {string}
      */
-    public abstract render(rootLevel: boolean): string;
+    public abstract render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean
+    ): string ;
 }

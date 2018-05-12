@@ -27,23 +27,37 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
          */
         public modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
          */
         public originalSchemaPath: string
+
     ) {
         super(
             schema,
             convertor,
             context,
             modelName,
+            suggestedModelName,
             originalSchemaPath
         );
     }
 
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {DataTypeDescriptor[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
      * @param {boolean} rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
@@ -51,7 +65,10 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      *
      * @returns {string}
      */
-    public render(rootLevel: boolean = true): string {
+    public render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean = true
+    ): string {
         const comment = this.getComments();
         return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}string`;
     }

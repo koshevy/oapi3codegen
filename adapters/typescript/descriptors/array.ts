@@ -38,6 +38,14 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
          */
         public readonly modelName: string,
 
+        /*
+         * Предлагаемое имя для типа данных: может
+         * применяться, если тип данных анонимный, но
+         * необходимо вынести его за пределы родительской
+         * модели по-ситуации (например, в случае с Enum).
+         */
+        public readonly suggestedModelName: string,
+
         /**
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
@@ -50,19 +58,29 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
             convertor,
             context,
             modelName,
+            suggestedModelName,
             originalSchemaPath
         );
 
+        // fixme не поддерживает конкретное перечисление (items: [...]), пока только общее (items: {...})
         if (schema.items) {
             this.itemsDescription = convertor.convert(
                 schema.items,
-                context
+                context,
+                null,
+                (modelName || suggestedModelName)
+                    ? `${(modelName || suggestedModelName)}Items`
+                    : null
             );
         }
     }
 
     /**
      * Рендер типа данных в строку.
+     *
+     * @param {DataTypeDescriptor[]} childrenDependencies
+     * Immutable-массив, в который складываются все зависимости
+     * типов-потомков (если такие есть).
      * @param {boolean} rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
@@ -70,13 +88,16 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
      *
      * @returns {string}
      */
-    public render(rootLevel: boolean = true): string {
+    public render(
+        childrenDependencies: DataTypeDescriptor[],
+        rootLevel: boolean = true
+    ): string {
         const comment = this.getComments();
         return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}${
             this.itemsDescription ? _.map(
                 this.itemsDescription,
                 (descr: DataTypeDescriptor) => {
-                    return `Array<${descr.render(false)}>`;
+                    return `Array<${descr.render(childrenDependencies,false)}>`;
                 }
             ).join(' | ') : 'any[]'
         }`;
