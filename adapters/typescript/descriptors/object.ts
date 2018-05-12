@@ -58,7 +58,12 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
          */
-        public readonly originalSchemaPath: string
+        public readonly originalSchemaPath: string,
+
+        /**
+         * Родительские модели.
+         */
+        public readonly ancestors?: ObjectTypeScriptDescriptor[]
 
     ) {
         super(
@@ -70,7 +75,17 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             originalSchemaPath
         );
 
-        // Обработка свойства.
+        // обработка свойств предков
+        if(this.ancestors) {
+            _.each(this.ancestors, ancestor => {
+                _.assign(
+                    this.propertiesSets[0],
+                    ancestor['propertiesSets'][0] || {}
+                )
+            });
+        }
+
+        // Обработка собственных свойств
         if (schema.properties) {
             _.each(schema.properties, (propSchema, propName) => {
 
@@ -101,14 +116,20 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
                 this.propertiesSets[0][propName] = propDescr;
             });
-        } else this.propertiesSets[0]['[key: string]'] = {
-            required: true,
-            comment: '',
-            // получает тип Any
-            typeContainer: convertor.convert(
-                <any>{},
-                <any>{}
-            )
+        }
+
+        // если по итогам, свойств нет, указывается
+        // универсальное описание
+        if(!this.propertiesSets.length) {
+            this.propertiesSets[0]['[key: string]'] = {
+                required: true,
+                comment: '',
+                // если нет свойств, получает тип Any
+                typeContainer: convertor.convert(
+                    <any>{},
+                    <any>{}
+                )
+            }
         }
     }
 

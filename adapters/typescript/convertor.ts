@@ -130,6 +130,9 @@ export class Convertor extends BaseConvertor {
      * модели по-ситуации (например, в случае с Enum).
      * @param {string} originalPathSchema
      * Путь, по которому была взята схема
+     * @param {DataTypeDescriptor[]} ancestors
+     * Родительсткие модели
+     *
      * @returns {DataTypeContainer}
      */
     public convert(
@@ -137,22 +140,28 @@ export class Convertor extends BaseConvertor {
         context: DescriptorContext,
         name?: string,
         suggestedName?: string,
-        originalPathSchema?: string
+        originalPathSchema?: string,
+        ancestors?: DataTypeDescriptor[]
     ): DataTypeContainer {
 
         let variantsOf;
 
         // получение по $ref
         if (schema['$ref']) {
-            const refSchema = this.findTypeByPath(
-                schema['$ref'],
-                context
-            );
-
-            // если вся схема состоит только из "$ref",
-            // то просто возвращается найденный дескриптор
             if(_.values(schema).length === 1) {
-                return refSchema;
+                return name
+                    // если это анонимный тип, он просто ссылается
+                    // на другой существующий
+                    ? this.findTypeByPath(schema['$ref'], context)
+                    // если неанонимный, то создает новый на основе
+                    : this.convert(
+                        this.getSchemaByPath(schema['$ref']),
+                        context,
+                        name,
+                        suggestedName,
+                        originalPathSchema,
+                        this.findTypeByPath(schema['$ref'], context)
+                    );
             } else {
                 // fixme: отследить, будет ли испоьзоваться этот сценарий
                 // fixme: здесь нужен эффективный механизм смешения уже готовой схемы с надстройкой

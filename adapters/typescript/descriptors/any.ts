@@ -39,6 +39,7 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
          * которой было создано описание этого типа данных.
          */
         public originalSchemaPath: string
+
     ) {
         super(
             schema,

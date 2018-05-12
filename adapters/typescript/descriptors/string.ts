@@ -40,6 +40,7 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
          * которой было создано описание этого типа данных.
          */
         public originalSchemaPath: string
+
     ) {
         super(
             schema,

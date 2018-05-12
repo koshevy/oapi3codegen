@@ -202,6 +202,8 @@ export abstract class BaseConvertor {
      * модели по-ситуации (например, в случае с Enum).
      * @param {string} originalPathSchema
      * Путь, по которому была взята схема
+     * @param {DataTypeDescriptor[]} ancestors
+     * Родительсткие модели
      *
      * @returns {DataTypeContainer}
      */
@@ -210,7 +212,8 @@ export abstract class BaseConvertor {
         context: DescriptorContext,
         name?: string,
         suggestedName?: string,
-        originalPathSchema?: string
+        originalPathSchema?: string,
+        ancestors?: DataTypeDescriptor[]
     ): DataTypeContainer;
 
     // *** Закрытые методы

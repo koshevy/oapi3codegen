@@ -37,6 +37,11 @@ export interface DataTypeDescriptor {
     originalSchemaPath?: string;
 
     /**
+     * Родительсткие модели.
+     */
+    ancestors?: DataTypeDescriptor[];
+
+    /**
      * Рендер типа данных в строку.
      *
      * @param {DataTypeDescriptor[]} childrenDependencies

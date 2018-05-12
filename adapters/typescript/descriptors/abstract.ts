@@ -47,7 +47,12 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
          * Путь до оригинальной схемы, на основе
          * которой было создано описание этого типа данных.
          */
-        public readonly originalSchemaPath: string
+        public readonly originalSchemaPath: string,
+
+        /**
+         * Родительсткие модели.
+         */
+        public readonly ancestors?: DataTypeDescriptor[]
 
     ) { }
 
