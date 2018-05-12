@@ -112,16 +112,10 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         // обработка свойств предков
         if(this.ancestors) {
             _.each(this.ancestors, ancestor => {
-                try {
-                    _.assign(
-                        this.propertiesSets[0],
-                        ancestor['propertiesSets'][0] || {}
-                    )
-                } catch(err) {
-                    console.log('——— ancestors:');
-                    console.log(ancestors);
-                    process.exit(0);
-                }
+                _.assign(
+                    this.propertiesSets[0],
+                    ancestor['propertiesSets'][0] || {}
+                )
             });
         }
 
