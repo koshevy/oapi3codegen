@@ -205,6 +205,6 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
         return filteredAncestors.length
             ? ''
-            : ` extends ${this.ancestors.join(', ')} `;
+            : ` extends ${filteredAncestors.join(', ')} `;
     }
 }
