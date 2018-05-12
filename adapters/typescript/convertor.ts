@@ -150,18 +150,18 @@ export class Convertor extends BaseConvertor {
         if (schema['$ref']) {
             if(_.values(schema).length === 1) {
                 return name
-                    // если это анонимный тип, он просто ссылается
-                    // на другой существующий
-                    ? this.findTypeByPath(schema['$ref'], context)
-                    // если неанонимный, то создает новый на основе
-                    : this.convert(
+                    // если неанонимный, то создает новый на основе предка
+                    ? this.convert(
                         this.getSchemaByPath(schema['$ref']),
                         context,
                         name,
                         suggestedName,
                         originalPathSchema,
                         this.findTypeByPath(schema['$ref'], context)
-                    );
+                    )
+                    // если это анонимный тип, он просто ссылается
+                    // на другой существующий
+                    : this.findTypeByPath(schema['$ref'], context);
             } else {
                 // fixme: отследить, будет ли испоьзоваться этот сценарий
                 // fixme: здесь нужен эффективный механизм смешения уже готовой схемы с надстройкой
