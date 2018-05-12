@@ -120,7 +120,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
         // если по итогам, свойств нет, указывается
         // универсальное описание
-        if(!this.propertiesSets.length) {
+        if(!_.keys(this.propertiesSets[0] || {}).length) {
             this.propertiesSets[0]['[key: string]'] = {
                 required: true,
                 comment: '',
@@ -166,7 +166,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         const prefix = (rootLevel)
             ? (this.propertiesSets.length > 1
                 ? `${comment}export type ${this.modelName} = `
-                : `${comment}export interface ${this.modelName} `)
+                : `${comment}export interface ${this.modelName} ${this._renderExtends()}`)
             : '';
 
         // рекурсивно просчитывает вложенные свойства
@@ -187,5 +187,24 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         ).join(' | ');
 
         return [prefix, properties].join('');
+    }
+
+    /**
+     * Превращение "ancestors" в строку.
+     * @returns {string}
+     * @private
+     */
+    private _renderExtends(): string {
+        let filteredAncestors = []
+        if (this.ancestors && this.ancestors.length) {
+            filteredAncestors = _.filter(
+                this.ancestors,
+                ancestor => ancestor.name ? true : false
+            );
+        }
+
+        return filteredAncestors.length
+            ? ''
+            : ` extends ${this.ancestors.join(', ')} `;
     }
 }
