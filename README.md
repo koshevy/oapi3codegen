@@ -173,7 +173,7 @@ config via CLI:
 You can convert whole OpenAPI3-specification:
 
 ```typescript
-import { Convertor } from 'oapi3codegen'
+import { Convertor } from 'oapi3codegen';
 
 const convertor: Convertor = new Convertor();
 
@@ -207,7 +207,7 @@ And also, you can convert stand-alone JSON-schema into type descriptor,
 that could be rendered:
 
 ```typescript
-import { Convertor } from 'oapi3codegen'
+import { Convertor } from 'oapi3codegen';
 // you need prettier to beautify result of rendering
 import * as prettier from 'prettier';
 // provides `_.each(...)` for our example
