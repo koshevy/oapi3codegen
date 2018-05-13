@@ -163,11 +163,19 @@ export class Convertor extends BaseConvertor {
                     // на другой существующий
                     : this.findTypeByPath(schema['$ref'], context);
             } else {
-                // fixme: отследить, будет ли испоьзоваться этот сценарий
-                // fixme: здесь нужен эффективный механизм смешения уже готовой схемы с надстройкой
-                // fixme: пока просто валит ошибку
-                throw new Error(
-                    `Error (fix this place?): you should't get '$ref' and other properties as neighbors.`
+                const refSchema = this.getSchemaByPath(schema['$ref']);
+
+                if(!refSchema) {
+                    throw new Error(`$ref is not found: ${schema['$ref']}`);
+                }
+
+                return this.convert(
+                    _.merge(refSchema, _.omit(schema, ['$ref'])),
+                    context,
+                    name,
+                    suggestedName,
+                    originalPathSchema,
+                    this.findTypeByPath(schema['$ref'], context)
                 );
             }
         }

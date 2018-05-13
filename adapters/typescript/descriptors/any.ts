@@ -69,6 +69,6 @@ export class AnyTypeScriptDescriptor extends AbstractTypeScriptDescriptor implem
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
-        return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}any`;
+        return `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}any`;
     }
 }

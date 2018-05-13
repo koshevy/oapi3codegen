@@ -6,6 +6,7 @@ const path = require('path');
 import * as _ from 'lodash';
 import * as prettier from 'prettier';
 import * as fsExtra from 'fs-extra';
+import * as download from 'download';
 import { getArvgParam } from './lib';
 
 import { Convertor } from './adapters/typescript';
@@ -29,15 +30,9 @@ const separatedFiles = getArvgParam('separatedFiles') || false;
 if(!srcPath)
      throw new Error('--srcPath is not set!');
 
-// Absolute url to path from CWD
-const srcPathAbs = path.resolve(process.cwd(), srcPath);
-
 const destPathAbs = destPath
     ? path.resolve(process.cwd(), destPath)
     : path.resolve(process.cwd(), './generated-code');
-
-if(!fsExtra.pathExistsSync(srcPathAbs))
-    throw new Error(`File ${srcPathAbs} is not exists!`);
 
 // *****************
 // *** CLI Arguments for Convrtor`s config
@@ -51,116 +46,139 @@ const convertorConfig = _.mapValues(
 // *** Implementation
 
 const convertor: Convertor = new Convertor(convertorConfig);
-convertor.loadOAPI3StructureFromFile(path.resolve(
-    process.cwd(), srcPath
-));
 
-let context = {};
-let entryPoints = convertor.getOAPI3EntryPoints(context);
+// work with URL
+if(srcPath.match(/^https?:/)) {
+    download(srcPath).then(data => {
+        convertor.loadOAPI3Structure(JSON.parse(data.toString()));
+        executeCliAction();
+    });
+} else {
 
-let summaryTextPieces = [];
+    // Absolute url to path from CWD
+    const srcPathAbs = path.resolve(process.cwd(), srcPath);
 
-/**
- * Immutable value of array intended to collect
- * all affected models at all recursive levels.
- * @type {any[]}
- */
-let alreadyRendered: DataTypeDescriptor[] = [];
+    if(!fsExtra.pathExistsSync(srcPathAbs))
+        throw new Error(`File ${srcPathAbs} is not exists!`);
 
-/**
- * Rendering each type:
- * it could be saved into common file or different
- * files depending on the `--separatedFiles` option value.
- */
-Convertor.renderRecursive(
-    entryPoints,
-    (descriptor, text) => {
-        // Single file
-        if(!separatedFiles) {
-            summaryTextPieces.push(
-                prettier.format(
-                    text,
-                    {parser: 'typescript'}
-                ));
-        } else {
+    // work with files
+    convertor.loadOAPI3StructureFromFile(path.resolve(
+        process.cwd(), srcPath
+    ));
 
-            const outputFilePath = path.resolve(
-                destPathAbs,
-                `${_.kebabCase(descriptor.modelName)}.ts`
-            );
+    executeCliAction();
+}
 
-            let dependencies = [];
+function executeCliAction() {
 
-            const modelText = descriptor.render(
-                dependencies,
-                true
-            );
+    let context = {};
+    let entryPoints = convertor.getOAPI3EntryPoints(context);
 
-            const fileText = `${
-                _.map(
+    let summaryTextPieces = [];
+
+    /**
+     * Immutable value of array intended to collect
+     * all affected models at all recursive levels.
+     * @type {any[]}
+     */
+    let alreadyRendered: DataTypeDescriptor[] = [];
+
+    /**
+     * Rendering each type:
+     * it could be saved into common file or different
+     * files depending on the `--separatedFiles` option value.
+     */
+    Convertor.renderRecursive(
+        entryPoints,
+        (descriptor, text) => {
+            // Single file
+            if (!separatedFiles) {
+                summaryTextPieces.push(
+                    prettier.format(
+                        text,
+                        {parser: 'typescript'}
+                    ));
+            } else {
+
+                const outputFilePath = path.resolve(
+                    destPathAbs,
+                    `${_.kebabCase(descriptor.modelName)}.ts`
+                );
+
+                let dependencies = [];
+
+                const modelText = descriptor.render(
                     dependencies,
-                    (dep: DataTypeDescriptor) =>
-                        `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}';`
-                ).join(';\n')
-                }\n\n${modelText}`;
+                    true
+                );
 
-            fsExtra.outputFile(
-                outputFilePath,
-                prettier.format(
-                    fileText,
-                    {parser: 'typescript'}
-                )
-            );
+                const fileText = `${
+                    _.map(
+                        dependencies,
+                        (dep: DataTypeDescriptor) =>
+                            `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}';`
+                    ).join(';\n')
+                    }\n\n${modelText}`;
 
-            console.log(`${descriptor.modelName} was saved in separated file: ${outputFilePath}`);
-        }
-    },
-    alreadyRendered
-);
+                fsExtra.outputFile(
+                    outputFilePath,
+                    prettier.format(
+                        fileText,
+                        {parser: 'typescript'}
+                    )
+                );
 
-/**
- * Output render results into file(s)
- */
+                console.log(`${descriptor.modelName} was saved in separated file: ${outputFilePath}`);
+            }
+        },
+        alreadyRendered
+    );
+
+    /**
+     * Output render results into file(s)
+     */
 
 // Single file
-if(!separatedFiles) {
+    if (!separatedFiles) {
 
-    const fileInfo = path.parse(srcPathAbs);
+        const fileInfo = path.parse(srcPath);
 
-    if(!fileInfo['name'])
-        throw new Error(`Can't extract name if path in "${srcPathAbs}"`);
+        if (!fileInfo['name'])
+            throw new Error(`Can't extract name if path in "${srcPath}"`);
 
-    const outputFilePath = path.resolve(destPathAbs, `${fileInfo['name']}.ts`);
+        const outputFilePath = path.resolve(destPathAbs, `${fileInfo['name']}.ts`);
 
-    fsExtra.outputFile(
-        outputFilePath,
-        prettier.format(
-            summaryTextPieces.join('\n'),
-            {parser: 'typescript'}
-        )
-    );
+        fsExtra.outputFile(
+            outputFilePath,
+            prettier.format(
+                summaryTextPieces.join('\n'),
+                {parser: 'typescript'}
+            )
+        );
 
-    console.log(`Result was saved in single file: ${outputFilePath}`);
-    console.log('Render complete. These types was created:');
-    _.each(alreadyRendered.sort(), v => console.log(v.toString()));
-} else {
-    // creating index.ts file
+        console.log(`Result was saved in single file: ${outputFilePath}`);
+        console.log('Render complete. These types was created:');
+        _.each(alreadyRendered.sort(), v => console.log(v.toString()));
+    } else {
+        // creating index.ts file
 
-    let indexItems = [];
-    // Different files
-    _.each(
-        alreadyRendered,
-        (descr: DataTypeDescriptor) => {
-            indexItems.push(`${_.kebabCase(descr.modelName)}`);
-        }
-    );
+        let indexItems = [];
+        // Different files
+        _.each(
+            alreadyRendered,
+            (descr: DataTypeDescriptor) => {
+                indexItems.push(`${_.kebabCase(descr.modelName)}`);
+            }
+        );
 
-    // Index file
-    fsExtra.outputFile(
-        path.resolve(destPathAbs, `./index.ts`),
-        prettier.format(
-            _.map(indexItems, v => `export * from './${v}'`).join(';\n'),
-            {parser: 'typescript'}
-        )
-    );
+        // Index file
+        fsExtra.outputFile(
+            path.resolve(destPathAbs, `./index.ts`),
+            prettier.format(
+                _.map(indexItems, v => `export * from './${v}'`).join(';\n'),
+                {parser: 'typescript'}
+            )
+        );
+    }
+
 }
