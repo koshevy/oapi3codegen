@@ -111,7 +111,7 @@ export const defaultConfig: ConvertorConfig = {
 
     /**
      * Mode when models that refer to any models via `$ref`
-     * replacing implicitly even firsts have names.
+     * are replacing implicitly even if firsts have names.
      *
      * For example, in this case:
      * ```yml

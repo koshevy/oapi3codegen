@@ -7,7 +7,7 @@
     "oapi3codegen": "./bin/oapi3codegen.js"
   },
   "scripts": {
-    "postinstall": "if [ ! -f './.init.lock' ]\nthen\n touch ./.init.lock && npm install\nfi",
+    "postinstall": "if [ ! \"$OAPI3CODEGEN_PREPARED\" = \"yes\" ]\nthen\n export OAPI3CODEGEN_PREPARED=\"yes\" && npm install\nfi",
     "start": "node ./dist/cli.js",
     "build": "tsc",
     "build:start": "tsc && node ./dist/cli.js",

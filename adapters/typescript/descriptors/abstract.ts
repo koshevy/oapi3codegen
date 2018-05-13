@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as prettier from 'prettier';
 
 // todo оптимизировать файлову структуру и типизацию
 import {
@@ -62,15 +63,20 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
      * @private
      */
     public getComments(): string {
-        let commentLines =  [],
-            comment = '';
+        const description = prettier.format(
+            `${
+                this.schema.title
+                    ? `## ${this.schema.title}\n`
+                    : ''
+            }${ (this.schema.description || '').trim()}`,
+            {
+                parser: 'remark',
+                proseWrap: 'always'
+            }
+        );
 
-        if(this.schema.description) {
-            commentLines = this.schema.description.trim()
-                .split('\n');
-        }
-        if(this.schema.title)
-            commentLines.unshift(`## ${this.schema.title}`, '');
+        let commentLines = _.compact(description.split('\n')),
+            comment = '';
 
         if(commentLines.length) {
             comment = `/**\n${_.map(
