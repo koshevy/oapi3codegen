@@ -4,7 +4,7 @@ Lightweight and simple. Can be used for *browser's* and for Node.js ecosystems.
 Now supports converting from **OpenAPI 3** to *TypeScript* types (OpenAPI 2 and below are not supported).
 
 <details>
-<summary>For example, creates constructions such as (click to explain):</summary>
+<summary>For example, creates constructions such as (click to expand):</summary>
 
 ```typescript
 /**
