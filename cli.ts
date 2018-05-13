@@ -1,6 +1,8 @@
 /// <reference path="custom-typings.d.ts" />
 
-import * as path from 'path';
+// Node.js construction
+const path = require('path');
+
 import * as _ from 'lodash';
 import * as prettier from 'prettier';
 import * as fsExtra from 'fs-extra';
@@ -81,53 +83,36 @@ Convertor.renderRecursive(
                     {parser: 'typescript'}
                 ));
         } else {
-            let indexItems = [];
-            // Different files
-            _.each(
-                alreadyRendered,
-                (descr: DataTypeDescriptor) => {
-                    let dependencies = [];
 
-                    const modelText = descr.render(
-                        dependencies,
-                        true
-                    );
-
-                    const fileText = `${
-                            _.map(
-                                dependencies,
-                                (dep: DataTypeDescriptor) =>
-                                    `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}';`
-                            ).join(';\n')
-                        }\n\n${modelText}`;
-
-                    const outputFilePath = path.resolve(
-                        destPathAbs,
-                        `${_.kebabCase(descr.modelName)}.ts`
-                    );
-
-                    indexItems.push(`${_.kebabCase(descr.modelName)}`);
-
-                    console.log(`${descr.modelName} was saved in separated file: ${outputFilePath}`);
-
-                    fsExtra.outputFile(
-                        outputFilePath,
-                        prettier.format(
-                            fileText,
-                            {parser: 'typescript'}
-                        )
-                    );
-                }
+            const outputFilePath = path.resolve(
+                destPathAbs,
+                `${_.kebabCase(descriptor.modelName)}.ts`
             );
 
-            // Index file
+            let dependencies = [];
+
+            const modelText = descriptor.render(
+                dependencies,
+                true
+            );
+
+            const fileText = `${
+                _.map(
+                    dependencies,
+                    (dep: DataTypeDescriptor) =>
+                        `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}';`
+                ).join(';\n')
+                }\n\n${modelText}`;
+
             fsExtra.outputFile(
-                path.resolve(destPathAbs, `./index.ts`),
+                outputFilePath,
                 prettier.format(
-                    _.map(indexItems, v => `export * from './${v}'`).join(';\n'),
+                    fileText,
                     {parser: 'typescript'}
                 )
             );
+
+            console.log(`${descriptor.modelName} was saved in separated file: ${outputFilePath}`);
         }
     },
     alreadyRendered
@@ -158,4 +143,24 @@ if(!separatedFiles) {
     console.log(`Result was saved in single file: ${outputFilePath}`);
     console.log('Render complete. These types was created:');
     _.each(alreadyRendered.sort(), v => console.log(v.toString()));
+} else {
+    // creating index.ts file
+
+    let indexItems = [];
+    // Different files
+    _.each(
+        alreadyRendered,
+        (descr: DataTypeDescriptor) => {
+            indexItems.push(`${_.kebabCase(descr.modelName)}`);
+        }
+    );
+
+    // Index file
+    fsExtra.outputFile(
+        path.resolve(destPathAbs, `./index.ts`),
+        prettier.format(
+            _.map(indexItems, v => `export * from './${v}'`).join(';\n'),
+            {parser: 'typescript'}
+        )
+    );
 }

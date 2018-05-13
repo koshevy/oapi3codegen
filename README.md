@@ -1,7 +1,7 @@
 # Code generation from OpenAPI 3 to TypeScript
 
 Lightweight and simple. Can be used for *browser's* and for Node.js ecosystems.
-Now supports converting from **OpenAPI 3** to *TypeScript* types (OpenAPI 2 and below are not supported).
+Now supports converting from **OpenAPI 3** to **TypeScript** types (OpenAPI 2 and below are not supported).
 
 <details>
 <summary>For example, creates constructions such as (click to expand):</summary>
@@ -173,7 +173,7 @@ config via CLI:
 You can convert whole OpenAPI3-specification:
 
 ```typescript
-import { Convertor } from 'oapi3codegen'
+import { Convertor } from 'oapi3codegen';
 
 const convertor: Convertor = new Convertor();
 
@@ -207,7 +207,7 @@ And also, you can convert stand-alone JSON-schema into type descriptor,
 that could be rendered:
 
 ```typescript
-import { Convertor } from 'oapi3codegen'
+import { Convertor } from 'oapi3codegen';
 // you need prettier to beautify result of rendering
 import * as prettier from 'prettier';
 // provides `_.each(...)` for our example
@@ -270,6 +270,10 @@ export interface AnotherType {
   age?: number;
 }
 ```
+
+## API (TypeScript)
+
+Coming soon...
 
 ## How to extend?
 
