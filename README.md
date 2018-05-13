@@ -271,6 +271,10 @@ export interface AnotherType {
 }
 ```
 
+## API (TypeScript)
+
+Coming soon...
+
 ## How to extend?
 
 Coming soon...
