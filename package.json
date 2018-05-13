@@ -1,13 +1,13 @@
 {
   "name": "oapi3codegen",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
   "bin": {
     "oapi3codegen": "./bin/oapi3codegen.js"
   },
   "scripts": {
-    "postinstall": "if [ ! -f './.init.lock' ]\nthen\n touch ./.init.lock && npm install\nfi",
+    "postinstall": "if [ ! \"$OAPI3CODEGEN_PREPARED\" = \"yes\" ]\nthen\n export OAPI3CODEGEN_PREPARED=\"yes\" && npm install\nfi",
     "start": "node ./dist/cli.js",
     "build": "tsc",
     "build:start": "tsc && node ./dist/cli.js",
