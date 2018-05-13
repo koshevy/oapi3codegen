@@ -93,7 +93,7 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
-        return `${rootLevel ? `${comment}type ${this.modelName} = ` : ''}${
+        return `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
             this.itemsDescription ? _.map(
                 this.itemsDescription,
                 (descr: DataTypeDescriptor) => {

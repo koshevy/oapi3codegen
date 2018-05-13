@@ -69,12 +69,54 @@ export interface GetParametersMeta_response401
 }
 
 /**
+ * Kind of request error: syntax or semantic. Syntax error means the
+ * application logic error, semantics — error of data, that contragent
+ * inputs.
+ */
+export enum HttpErrorBadRequestTypeEnum {
+  Syntax = "syntax",
+  Semantic = "semantic"
+}
+
+/**
+ * Typical response one Bad Request Error (400)
+ */
+export interface HttpErrorBadRequest {
+  /**
+   * Common error message
+   */
+  message: string;
+
+  /**
+   * Kind of request error: syntax or semantic. Syntax error means the
+   * application logic error, semantics — error of data, that contragent
+   * inputs.
+   */
+  type?: HttpErrorBadRequestTypeEnum;
+
+  /**
+   * Explained description of error
+   */
+  description?: string;
+
+  /**
+   * Additional list of errors with JSON-pointers
+   */
+  errors?: Array<{
+    originalMessage: string;
+
+    message?: string;
+
+    jsonPointer: string;
+  }>;
+}
+
+/**
  * ## MetaDataView
- *
  * MetaData helps decide what the method has to use to
  * interpret and render parameter or category of parameters.
  */
-type GetParametersMeta_response200 = Array<Category | Parameter>;
+export type GetParametersMeta_response200 = Array<Category | Parameter>;
 
 ```
 </details>
@@ -125,6 +167,8 @@ With time, it's supposed, possibilities of this plugin will be extended by:
 - Lightweight ([swagger-codegen](https://github.com/swagger-api/swagger-codegen) solution — it's about a 14mb for ready JAR)
 - Supports OpenAPI3
 - Above all, intended for TypeScript 
+
+### Why not swagger-codegen?
 
 ## Install
 
