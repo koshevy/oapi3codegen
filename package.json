@@ -1,6 +1,6 @@
 {
   "name": "oapi3codegen",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
   "bin": {
@@ -15,12 +15,17 @@
   },
   "repository": "https://github.com/koshevy/oapi3codegen",
   "keywords": [
+    "api",
     "openapi",
+    "open-api",
     "oapi",
+    "open-api3",
     "openapi3",
     "swagger",
     "ts",
-    "typescript"
+    "typescript",
+    "codegeneration",
+    "code-generation"
   ],
   "author": "koshevy",
   "license": "MIT",
