@@ -112,7 +112,7 @@ With time, it's supposed, possibilities of this plugin will be extended by:
     - [Dredd](https://www.npmjs.com/package/dredd)
     - Most populars doc-generators (at least, [Redoc](https://www.npmjs.com/package/redoc) and [SwaggerUI](https://www.npmjs.com/package/swagger-ui))
     - Convention for working with DDD OpenAPI3
-- **Other languages** (is there are need for it): Kotlin, Java, PHP, 
+- **Other languages** (is there are need for it?): Kotlin, Java, PHP, 
 
 ### Ideology
 
