@@ -1,4 +1,4 @@
-# Code generation from OpenAPI 3
+# Code generation from OpenAPI 3 to TypeScript
 
 Lightweight and simple. Can be used for *browser's* and for Node.js ecosystems.
 Now supports converting from **OpenAPI 3** to *TypeScript* types (OpenAPI 2 and below are not supported).
@@ -168,7 +168,7 @@ config via CLI:
 | **defaultContentType**          | Default content-type contains no prefixes/suffixes in type names.             |
 | **implicitTypesRefReplacement** | Mode when models that refer to any models via `$ref` are replacing implicitly even if firsts have names |
 
-## Using via API
+## Using via API (TypeScript)
 
 You can convert whole OpenAPI3-specification:
 
