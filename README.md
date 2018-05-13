@@ -74,7 +74,7 @@ export interface GetParametersMeta_response401
  * MetaData helps decide what the method has to use to
  * interpret and render parameter or category of parameters.
  */
-type GetParametersMeta_response200 = Array<Category | Parameter>;
+export type GetParametersMeta_response200 = Array<Category | Parameter>;
 
 ```
 </details>
