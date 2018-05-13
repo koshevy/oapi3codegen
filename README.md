@@ -168,8 +168,6 @@ With time, it's supposed, possibilities of this plugin will be extended by:
 - Supports OpenAPI3
 - Above all, intended for TypeScript 
 
-### Why not swagger-codegen?
-
 ## Install
 
 ##### 1. Install TypeScript
