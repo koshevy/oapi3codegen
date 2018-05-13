@@ -1,14 +1,7 @@
 # Code generation from OpenAPI 3
 
 Lightweight and simple. Can be used for *browser's* and for Node.js ecosystems.
-
 Now supports converting from **OpenAPI 3** to *TypeScript* types (OpenAPI 2 and below are not supported).
-
-> #### 🚦 Status of project
-> - **Stabilization:** ready to use in non-production projects (see Road Map).
-> - **Not supported YML (only JSON)**. *Will be supported soon. Now, you can use something like [js-yaml](https://www.npmjs.com/package/js-yaml)*
->
-> Please, if it possible: send me your schemas that not converts properly.
 
 <details>
 <summary>For example, creates constructions such as:</summary>
@@ -86,6 +79,12 @@ type GetParametersMeta_response200 = Array<Category | Parameter>;
 ```
 
 </details>
+
+> #### 🚦 Status of project
+> - **Stabilization:** ready to use in non-production projects (see Road Map).
+> - **Not supported YML (only JSON)**. *Will be supported soon. Now, you can use something like [js-yaml](https://www.npmjs.com/package/js-yaml)*
+>
+> Please, if it possible: send me your schemas that not converts properly.
 
 ### Online demo
 
