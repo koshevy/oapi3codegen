@@ -77,8 +77,8 @@ export interface GetParametersMeta_response401
 type GetParametersMeta_response200 = Array<Category | Parameter>;
 
 ```
-
 </details>
+
 
 > #### 🚦 Status of project
 > - **Stabilization:** ready to use in non-production projects (see Road Map).
