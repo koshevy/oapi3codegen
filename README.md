@@ -130,25 +130,25 @@ With time, it's supposed, possibilities of this plugin will be extended by:
 
 ##### 1. Install TypeScript
 
-```
+```sh
 npm install typescript@latest -g
 ``` 
 
 ##### 2. Install oapi3codegen global (for CLI using)
 
-```
+```sh
 npm install oapi3codegen -g
 ``` 
 
 ##### 3. Install oapi3codegen for local project
 
-```
+```sh
 npm install oapi3codegen --save
 ``` 
 
 ## Using via CLI
 
-```
+```sh
 oapi3codegen --srcPath /PATH/TO/SRC/open-api-file.json --destPath /PATH/TO/DEST --separatedFiles true
 ```
 
@@ -206,7 +206,7 @@ Convertor.renderRecursive(
 And also, you can convert stand-alone JSON-schema into type descriptor,
 that could be rendered:
 
-```
+```typescript
 import { Convertor } from 'oapi3codegen'
 // you need prettier to beautify result of rendering
 import * as prettier from 'prettier';
@@ -254,7 +254,7 @@ _.each(convertResult, typeDescriptor => {
 
 And this code will print result:
 
-```
+```typescript
 /**
  * ## Person
  * Information about person you have to register in your system.
