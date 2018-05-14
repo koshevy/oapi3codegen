@@ -23,6 +23,17 @@ export interface Response extends ObjectWithRef {
                   | SchemaString;
         }
     };
+
+    /**
+     * Not OAS3: in order to maintain OAS2
+     */
+    schema: SchemaArray
+        | SchemaObject
+        | SchemaInteger
+        | SchemaNumber
+        | SchemaObject
+        | SchemaString;
+
     description: string;
     // todo встречается в нескольких местах. вынести в интерфейс?
     externalDocs: {

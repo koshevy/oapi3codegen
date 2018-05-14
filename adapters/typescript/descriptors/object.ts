@@ -119,6 +119,8 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             });
         }
 
+        // todo: do additionalProperties support
+
         // если по итогам, свойств нет, указывается
         // универсальное описание
         if(!_.keys(this.propertiesSets[0] || {}).length) {

@@ -22,6 +22,16 @@ import {
 import { rules } from "./descriptors";
 
 /**
+ * Record in temporary list of schemas in process.
+ * Those records are creating in order to avoid infinity loop
+ * for recursive types.
+ */
+interface SchemaHold {
+    schema: Schema;
+    bulk: Object;
+}
+
+/**
  * Класс загрузчика для TypeScript.
  */
 export class Convertor extends BaseConvertor {
@@ -96,6 +106,7 @@ export class Convertor extends BaseConvertor {
     }
 
     protected _ajv;
+    protected _onHoldSchemas: SchemaHold[] = [];
 
     constructor(
         /**
@@ -144,12 +155,16 @@ export class Convertor extends BaseConvertor {
         ancestors?: DataTypeDescriptor[]
     ): DataTypeContainer {
 
-        let variantsOf;
+        // holding schema on in order to avoid infinity loop
+        const holdSchema = this._holdSchemaBeforeConvert(schema);
+        if (holdSchema) return <any>holdSchema.bulk;
+
+        let result;
 
         // получение по $ref
         if (schema['$ref']) {
             if(_.values(schema).length === 1) {
-                return (name && !this.config.implicitTypesRefReplacement)
+                result = (name && !this.config.implicitTypesRefReplacement)
                     // если неанонимный, то создает новый на основе предка
                     ? this.convert(
                         this.getSchemaByPath(schema['$ref']),
@@ -169,7 +184,7 @@ export class Convertor extends BaseConvertor {
                     throw new Error(`$ref is not found: ${schema['$ref']}`);
                 }
 
-                return this.convert(
+                result = this.convert(
                     _.merge(refSchema, _.omit(schema, ['$ref'])),
                     context,
                     name,
@@ -184,7 +199,7 @@ export class Convertor extends BaseConvertor {
         else {
             const constructor = this._findMatchedConstructor(schema);
 
-            return constructor
+            result = constructor
                 ? [new constructor(
                     schema,
                     this,
@@ -196,6 +211,10 @@ export class Convertor extends BaseConvertor {
                 )]
                 : null;
         }
+
+        this._holdSchemaOf(schema, result)
+
+        return result;
     }
 
     /**
@@ -212,5 +231,39 @@ export class Convertor extends BaseConvertor {
                 item._schemaComplied = this._ajv.compile(item.rule);
             return item._schemaComplied(schema);
         }) || {}).classConstructor;
+    }
+
+    protected _holdSchemaBeforeConvert(schema: Schema): SchemaHold | null {
+        const alreadyOn = _.find(this._onHoldSchemas, (v: SchemaHold) =>
+            v.schema === schema
+        );
+
+        if (!alreadyOn) {
+            this._onHoldSchemas.push({
+                schema,
+                bulk: {}
+            });
+        }
+
+        return alreadyOn;
+    }
+
+    protected _holdSchemaOf(schema: Schema, descr: DataTypeDescriptor): void {
+        const index = _.findIndex(this._onHoldSchemas, (v: SchemaHold) =>
+            v.schema === schema
+        );
+
+        if (index !== -1) {
+            const record = this._onHoldSchemas[index];
+
+            if (descr) {
+                _.assign(
+                    this._onHoldSchemas[index].bulk,
+                    descr
+                );
+            }
+
+            this._onHoldSchemas.splice(index, 1);
+        }
     }
 }

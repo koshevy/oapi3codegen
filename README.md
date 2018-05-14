@@ -126,6 +126,7 @@ export type GetParametersMeta_response200 = Array<Category | Parameter>;
 > #### 🚦 Status of project
 > - **Stabilization:** ready to use in non-production projects (see Road Map).
 > - **Not supported YML (only JSON)**. *Will be supported soon. Now, you can use something like [js-yaml](https://www.npmjs.com/package/js-yaml)*
+> - ***🐞 UPDATE:*** Fixed problem with infinity loop in recursive types!
 >
 > Please, if it possible: send me your schemas that not converts properly.
 
@@ -139,12 +140,11 @@ Work is just started, and current functionality (creating TypeScript types) —
 It's just a first part of the supposed functionality.
 With time, it's supposed, possibilities of this plugin will be extended by:
 
-- *URL's support [in progress]*
 - *Make project well documented [in progress]*
 - *YAML support [in progress]*
 - *Stabilization [in progress]*
 - *Playground site [in progress]*
-- Plugins support and docs
+- Plugins support
 - Generation classes (now creates only interfaces) with internal validation [ *concept description is coming soon* ]
 - Generation API Classes
     - Solutions for AngularX based on *Assured requests idea* with internal validation [ *concept description is coming soon* ]

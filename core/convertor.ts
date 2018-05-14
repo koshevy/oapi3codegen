@@ -276,8 +276,11 @@ export abstract class BaseConvertor {
                     code: number
                 ) => {
 
+                    const fallbackOpenApiData = {};
+                    fallbackOpenApiData[defaultContentType] = response.schema || {};
+
                     // todo пока обрабатываются только контент и заголовки
-                    _.each(response.content || {}, (
+                    _.each(response.content || fallbackOpenApiData || {}, (
                         content: any,
                         contentType: string
                     ) => {
@@ -287,8 +290,8 @@ export abstract class BaseConvertor {
                         // todo вынести в конфиг правило формирования имени
                         const modelName = `${baseTypeName}${ctSuffix}_response${code}`;
 
-                        if(content.schema)
-                            result[modelName] = content.schema;
+                        if(content.schema || content)
+                            result[modelName] = (content.schema || content);
                     });
 
                     if(response.headers) {
