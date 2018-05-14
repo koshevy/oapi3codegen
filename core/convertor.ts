@@ -292,6 +292,11 @@ export abstract class BaseConvertor {
 
                         if(content.schema || content)
                             result[modelName] = (content.schema || content);
+
+                        // add description if it set
+                        if (result[modelName] && response.description) {
+                            result[modelName].description = response.description;
+                        }
                     });
 
                     if(response.headers) {
