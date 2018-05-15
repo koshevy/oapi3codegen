@@ -276,6 +276,13 @@ export abstract class BaseConvertor {
                     code: number
                 ) => {
 
+                    if (response.$ref) {
+                        response = _.merge(
+                            _.omit(response, ['$ref']),
+                            this.getSchemaByPath(response.$ref)
+                        );
+                    }
+
                     const fallbackOpenApiData = {};
                     fallbackOpenApiData[defaultContentType] = response.schema || {};
 
