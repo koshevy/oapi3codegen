@@ -28,11 +28,11 @@ export interface Response extends ObjectWithRef {
      * Not OAS3: in order to maintain OAS2
      */
     schema: SchemaArray
-        | SchemaObject
-        | SchemaInteger
-        | SchemaNumber
-        | SchemaObject
-        | SchemaString;
+          | SchemaObject
+          | SchemaInteger
+          | SchemaNumber
+          | SchemaObject
+          | SchemaString;
 
     description: string;
     // todo встречается в нескольких местах. вынести в интерфейс?

@@ -8,9 +8,7 @@
   },
   "scripts": {
     "prepare": "if [ ! \"$OAPI3CODEGEN_PREPARED\" = \"yes\" ]\nthen\n export OAPI3CODEGEN_PREPARED=\"yes\" && npm install\nfi",
-    "start": "node ./dist/cli.js",
     "build": "tsc",
-    "build:start": "tsc && node ./dist/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": "https://github.com/koshevy/oapi3codegen",
