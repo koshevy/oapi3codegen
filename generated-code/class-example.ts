@@ -64,7 +64,7 @@ export class CategoryClass implements Category{
 }
 
 /**
- * Example: how could be auto-generated class
+ * Example: such could be auto-generated class
  *
  * @property name
  * @property photoUrls
@@ -141,6 +141,11 @@ export class PetClass implements Pet{
          */
         status?: PetStatusEnum
     ) {
+
+        // Here ajv-validation
+
+        // ...
+
         // Checks are in setters (not read-only, therefore — have setters)
         this.name = name;
         this.photoUrls = photoUrls;
