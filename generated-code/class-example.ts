@@ -103,7 +103,10 @@ export class PetClass implements Pet{
 
     public set tags(v: Array<Tag>) {
         assertType('tags', v, this, 'array');
-        this._photoUrls = _.map(v, v => TagClass.fabric(v));
+        this._tags = _.map(v, v => {
+            this._category =  (v instanceof TagClass)
+                ? v : CategoryClass.fabric(v);
+        });
     }
 
     public get status(): PetStatusEnum {
@@ -130,6 +133,7 @@ export class PetClass implements Pet{
 
         /**
          * ## Category
+         * read-only too: have getter, but no setter
          */
         category?: Category,
 
@@ -138,6 +142,7 @@ export class PetClass implements Pet{
         /**
          * ## Status6
          * pet status in the store
+         * read-only too: have getter, but no setter
          */
         status?: PetStatusEnum
     ) {
@@ -169,8 +174,9 @@ export class PetClass implements Pet{
         );
 
         // Checks above: here read-only (read-only, have setters)
-        this._category =  CategoryClass.fabric(category);
+        this._category =  (category instanceof CategoryClass)
+            ? category : CategoryClass.fabric(category);
+
         this._status = status;
     }
 }
-
