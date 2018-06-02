@@ -12,6 +12,7 @@ export interface Parameter extends ObjectWithRef {
     in: ParameterIn;
     name: string;
     required: boolean;
+    readOnly: boolean;
     schema: SchemaArray
           | SchemaObject
           | SchemaInteger

@@ -1,6 +1,6 @@
 {
   "name": "oapi3codegen-assert",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Micro-library with assertions for codegeneration",
   "main": "index.ts",
   "scripts": {

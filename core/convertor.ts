@@ -259,6 +259,7 @@ export abstract class BaseConvertor {
                         const modelName = this.config.parametersModelName(baseTypeName);
 
                         sch.properties[parameter.name] = parameter.schema;
+                        sch.properties[parameter.name]["readOnly"] = parameter.readOnly;
                         if (parameter.required) {
                             sch.required.push(parameter.name);
                         }

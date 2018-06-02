@@ -22,25 +22,37 @@ export class AssertionError extends Error {
  * Object contains property
  * @param type
  * Type supposed in assertion:
- * - object
+ * - boolean
  * - number
+ * - integer
  * - string
  * - object
  * - array
  */
-function assertType(
+export function assertType(
     propName: string,
     v: any,
     obj: any,
     type: string
 ) {
-    const oppositeCondition = (type === 'array')
-        ? (('object' !== typeof v) || 1)
-        : (type !== typeof v);
-
     const className = obj
         ? obj.constructor.name
         : '[unknown object]'
+
+    let oppositeCondition;
+
+    switch (type) {
+        case 'array':
+            oppositeCondition = (('object' !== typeof v) || 1);
+            break;
+        case 'integer':
+            if (Number['isInteger']) {
+                oppositeCondition = Number['isInteger'](v);
+                break;
+            }
+        default:
+            oppositeCondition = (type !== typeof v);
+    }
 
     if(oppositeCondition)
         throw new AssertionError(
@@ -61,7 +73,7 @@ function assertType(
  * @param reg
  * RegExp supposed to match
  */
-function assertMatch(
+export function assertMatch(
     propName: string,
     v: string,
     obj: any,
@@ -86,7 +98,7 @@ function assertMatch(
  * @param reg
  * RegExp supposed to match
  */
-function assertBetween(
+export function assertBetween(
     propName: string,
     v: number,
     obj: any,
@@ -121,7 +133,7 @@ function assertBetween(
  * @param obj
  * @param enumValues
  */
-function assertEnum(
+export function assertEnum(
     propName: string,
     v: any,
     obj: any,
@@ -143,7 +155,7 @@ function assertEnum(
  * @param obj
  * @param type
  */
-function assertArrayItemsTypes(
+export function assertArrayItemsTypes(
     propName: string,
     v: any[],
     obj: any,

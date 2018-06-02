@@ -8,10 +8,12 @@ import {
 import { BaseConvertor } from "../../../core";
 import { AbstractTypeScriptDescriptor } from "./abstract";
 
-interface PropertyDescriptor {
+// todo support default values!
+export interface PropertyDescriptor {
     required: boolean;
-    typeContainer: DataTypeContainer,
-    comment: string
+    readOnly: boolean;
+    typeContainer: DataTypeContainer;
+    comment: string;
 }
 
 export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
@@ -21,7 +23,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      * (интерфейсы и классы).
      * @type {{}}
      */
-    protected propertiesSets: [{
+    public propertiesSets: [{
         [name: string]: PropertyDescriptor
     }] = [ {} ];
 
@@ -98,6 +100,8 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                         v => v === propName
                     ) !== -1,
 
+                    readOnly: propSchema.readOnly,
+
                     typeContainer,
 
                     comment: typeContainer[0]
@@ -127,6 +131,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             this.propertiesSets[0]['[key: string]'] = {
                 required: true,
                 comment: '',
+                readOnly: false,
                 // если нет свойств, получает тип Any
                 typeContainer: convertor.convert(
                     <any>{},
@@ -179,7 +184,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 propertySet,
                 (descr: PropertyDescriptor, name) => {
                     const propName = name.match(/\-/) ? `'${name}'` : name;
-                    return `\n\n${descr.comment}${propName}${!descr.required ? '?' : ''}: ${
+                    return `\n\n${descr.comment}${descr.readOnly?'readonly ':''}${propName}${!descr.required ? '?' : ''}: ${
                         _.map(
                             descr.typeContainer,
                             type => type.render(childrenDependencies, false)

@@ -9,7 +9,11 @@ import * as fsExtra from 'fs-extra';
 import * as download from 'download';
 import { getArvgParam } from './lib';
 
-import { Convertor } from './adapters/typescript';
+import {
+    Convertor,
+    ClassRenderer
+} from './adapters/typescript';
+import { ObjectTypeScriptDescriptor } from './adapters/typescript/descriptors/object';
 import {
     DataTypeDescriptor,
     defaultConfig as defaultConvertorConfig
@@ -71,10 +75,9 @@ if(srcPath.match(/^https?:/)) {
 
 function executeCliAction() {
 
-    let context = {};
-    let entryPoints = convertor.getOAPI3EntryPoints(context);
-
-    let summaryTextPieces = [];
+    const context = {};
+    const entryPoints = convertor.getOAPI3EntryPoints(context);
+    const summaryTextPieces = [];
 
     /**
      * Immutable value of array intended to collect
@@ -91,6 +94,19 @@ function executeCliAction() {
     Convertor.renderRecursive(
         entryPoints,
         (descriptor, text) => {
+
+            if (descriptor instanceof ObjectTypeScriptDescriptor){
+                const classRenderer = new ClassRenderer(
+                    <ObjectTypeScriptDescriptor>descriptor
+                );
+
+                const classCode = classRenderer.render();
+                console.log(prettier.format(
+                    classCode,
+                    {parser: 'typescript'}
+                ));
+            }
+
             // Single file
             if (!separatedFiles) {
                 summaryTextPieces.push(

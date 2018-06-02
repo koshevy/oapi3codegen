@@ -18,7 +18,7 @@ import {
     DescriptorContext
 } from '../../core';
 
-// правила для определения дипа дескриптора
+// rules that helps determine a type of descriptor
 import { rules } from "./descriptors";
 
 /**
@@ -32,7 +32,7 @@ interface SchemaHold {
 }
 
 /**
- * Класс загрузчика для TypeScript.
+ * Class of converter from OAPI3 to TypeScript types.
  */
 export class Convertor extends BaseConvertor {
 
