@@ -1,49 +1,7 @@
 import * as _ from "lodash";
 import { Category, Pet, PetStatusEnum, Tag } from "./converted-petstore";
 
-export class AssertionError extends Error {
-    constructor(message, typeName, v, schema?) {
-        super(message);
-        console.error(`Validation error: ${typeName}.`);
-        console.error('Value is:');
-        console.error(v);
-        console.error(message);
-        console.error(schema);
-    }
-}
-
-function assertType(propName, v, obj, type) {
-    const oppositeCondition = (type === 'array')
-        ? (('object' !== typeof v) || 1)
-        : (type !== typeof v)
-    if(oppositeCondition)
-        throw new AssertionError(
-            `${obj.constructor.name}.${propName} should be ${type}`,
-            obj.constructor.name,
-            v
-        );
-}
-
-function assertMatch(propName, v, obj, reg) {
-    if(!v.match(reg))
-        throw new AssertionError(
-            `${obj.constructor.name}.${propName} should match ${reg}`,
-            obj.constructor.name,
-            v
-        );
-}
-
-function assertBetween(propName, v, obj, reg) {
-    // ...
-}
-
-function assertEnum(propName, v, obj, enumValues) {
-    // ...
-}
-
-function assertArrayItemsTypes(propName, v, obj, type) {
-    // ...
-}
+import * as _assert from 'oapi3codegen-assert';
 
 export class TagClass implements Tag {
     id: number;
@@ -82,8 +40,8 @@ export class PetClass implements Pet{
     }
 
     public set name(v) {
-        assertType('name', v, this, 'string');
-        assertEnum('name', v, this, ['Полкан', 'Жучка']);
+        _assert.assertType('name', v, this, 'string');
+        _assert.assertEnum('name', v, this, ['Полкан', 'Жучка']);
         this._name = v;
     }
 
@@ -92,8 +50,8 @@ export class PetClass implements Pet{
     }
 
     public set photoUrls(v: Array<string>) {
-        assertType('photoUrls', v, this, 'array');
-        assertArrayItemsTypes('photoUrls', v, this, 'string');
+        _assert.assertType('photoUrls', v, this, 'array');
+        _assert.assertArrayItemsTypes('photoUrls', v, this, 'string');
         this._photoUrls = v;
     }
 
@@ -102,7 +60,7 @@ export class PetClass implements Pet{
     }
 
     public set tags(v: Array<Tag>) {
-        assertType('tags', v, this, 'array');
+        _assert.assertType('tags', v, this, 'array');
         this._tags = _.map(v, v => {
             this._category =  (v instanceof TagClass)
                 ? v : CategoryClass.fabric(v);
@@ -159,14 +117,14 @@ export class PetClass implements Pet{
         // Checks read-only elements, that's
         // no setters, but have a validation
 
-        assertType(
+        _assert.assertType(
             'status',
             status,
             this,
             'string'
         );
 
-        assertEnum(
+        _assert.assertEnum(
             'status',
             status,
             this,
