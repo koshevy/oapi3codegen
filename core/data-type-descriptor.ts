@@ -17,6 +17,11 @@ export type DescriptorContext = {[name: string]: DataTypeDescriptor};
 export interface DataTypeDescriptor {
 
     /**
+     * Access to src schema.
+     */
+    schema: DescriptorSchema;
+
+    /**
      * Название этой модели (может быть string
      * или null).
      */

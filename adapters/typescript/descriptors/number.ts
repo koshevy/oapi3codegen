@@ -10,7 +10,7 @@ export class NumberTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
     constructor (
 
-        schema: any,
+        public schema: any,
 
         /**
          * Родительский конвертор, который используется

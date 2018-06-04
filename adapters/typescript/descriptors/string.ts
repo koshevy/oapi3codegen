@@ -8,7 +8,7 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
     constructor (
 
-        schema: any,
+        public schema: any,
 
         /**
          * Родительский конвертор, который используется

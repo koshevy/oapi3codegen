@@ -19,7 +19,7 @@ export class ArrayTypeScriptDescriptor extends AbstractTypeScriptDescriptor impl
 
     constructor (
 
-        protected schema: any,
+        public schema: any,
 
         /**
          * Родительский конвертор, который используется

@@ -17,7 +17,7 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
 
     constructor (
 
-        protected schema: any,
+        public schema: any,
 
         /**
          * Родительский конвертор, который используется

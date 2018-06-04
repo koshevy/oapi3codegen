@@ -46,7 +46,7 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
 
     constructor (
 
-        protected schema: any,
+        public schema: any,
 
         /**
          * Родительский конвертор, который используется

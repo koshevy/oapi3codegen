@@ -29,7 +29,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
     constructor (
 
-        protected schema: any,
+        public schema: any,
 
         /**
          * Родительский конвертор, который используется
