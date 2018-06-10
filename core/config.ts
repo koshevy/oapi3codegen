@@ -157,7 +157,7 @@ export const defaultConfig: ConvertorConfig = {
      * fixme contentType is not using now
      */
     headersModelName: (baseTypeName, code, contentType = null) =>
-        `${baseTypeName}Headers_response${code}`,
+        `${baseTypeName}HeadersResponse${code}`,
 
     /**
      * Function that create Request Model name.
@@ -186,8 +186,8 @@ export const defaultConfig: ConvertorConfig = {
      */
     responseModelName: (baseTypeName, code, contentType = null) =>
         `${baseTypeName}${
-            contentType
+            (contentType && contentType !== defaultConfig.defaultContentType) 
                 ? `_${_.camelCase(contentType)}`
                 : ''
-        }_response${code}`
+        }Response${code != 200 ? code : ''}`
 };

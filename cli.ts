@@ -95,6 +95,8 @@ function executeCliAction() {
         entryPoints,
         (descriptor, text) => {
 
+            /*
+            fixme experimental code test
             if (descriptor instanceof ObjectTypeScriptDescriptor){
                 const classRenderer = new ClassRenderer(
                     <ObjectTypeScriptDescriptor>descriptor
@@ -106,6 +108,7 @@ function executeCliAction() {
                     {parser: 'typescript'}
                 ));
             }
+            */
 
             // Single file
             if (!separatedFiles) {

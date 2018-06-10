@@ -122,7 +122,9 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
     }
 
     private _enumItemName(name: string): string {
-        name = _.camelCase(name.replace(/^$[^\w]+/g, ''));
+        name = name.replace(/\-$/, 'Minus');
+        name = name.replace(/\+$/, 'Plus');
+        name = _.camelCase(name.replace(/[^\w]+/g, ''));
         name = name.replace(
             /^./,
             name[0].match(/^\d+$/)

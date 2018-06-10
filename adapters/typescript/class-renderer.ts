@@ -101,8 +101,6 @@ export class ClassRenderer {
                 type => type.render([], false)
             ).join(' | ');
 
-            console.log('———', descr);
-
             // Definition of argument in constructor
             const constructorArg = `${descr.readOnly ? 'public readonly ' : ''}${
                 camelName}${descr.required ? '' : '?'}: ${typeOfProp}`;

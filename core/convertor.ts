@@ -242,7 +242,7 @@ export abstract class BaseConvertor {
                 // описание метода
                 const method = methods[methodName];
                 // название модели по-умолчанию
-                const baseTypeName = [
+                const baseTypeName = _.upperFirst(method.operationId) || [
                     _.capitalize(methodName),
                     _.upperFirst(_.camelCase(pathName))
                 ].join('');
@@ -296,7 +296,7 @@ export abstract class BaseConvertor {
                             ? '' : `_${_.camelCase(contentType)}`;
 
                         // todo вынести в конфиг правило формирования имени
-                        const modelName = `${baseTypeName}${ctSuffix}_response${code}`;
+                        const modelName = this.config.responseModelName(baseTypeName, code, contentType);//`${baseTypeName}${ctSuffix}_response${code}`;
 
                         if(content.schema || content)
                             result[modelName] = (content.schema || content);
