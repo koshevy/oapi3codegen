@@ -90,6 +90,17 @@ export interface ConvertorConfig {
      * fixme contentType is not using now
      */
     responseModelName: (baseTypeName, code, contentType?) => string,
+
+    /**
+     * Name of directory with extracted models and types.
+     */
+    typingsDirectory: string;
+
+    /**
+     * Name of directory with generated API-services
+     * for Angular.
+     */
+    servicesDirectory: string
 }
 
 /**
@@ -189,5 +200,16 @@ export const defaultConfig: ConvertorConfig = {
             (contentType && contentType !== defaultConfig.defaultContentType) 
                 ? `_${_.camelCase(contentType)}`
                 : ''
-        }Response${code != 200 ? code : ''}`
+        }Response${code != 200 ? code : ''}`,
+
+    /**
+     * Name of directory with extracted models and types.
+     */
+    typingsDirectory: './typings',
+
+    /**
+     * Name of directory with generated API-services
+     * for Angular.
+     */
+    servicesDirectory: './typings'
 };

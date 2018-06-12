@@ -1,0 +1,31 @@
+{
+  "name": "oapi3codegen-agent-angular",
+  "version": "0.1.0",
+  "description": "Base class for API-working service",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koshevy/oapi3codegen.git"
+  },
+  "keywords": [
+    "angular",
+    "api",
+    "codegen",
+    "codegeneration"
+  ],
+  "author": "koshevy@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/koshevy/oapi3codegen/issues"
+  },
+  "homepage": "https://github.com/koshevy/oapi3codegen#readme",
+  "dependencies": {
+    "@angular/common": "^6.0.4",
+    "@angular/core": "^6.0.4",
+    "oapi3codegen": "^0.1.19",
+    "rxjs": "^5.5.6"
+  }
+}

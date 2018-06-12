@@ -1,7 +1,12 @@
 {
+    "compileOnSave": false,
     "compilerOptions": {
         "allowJs": true,
+        "declaration": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "module": "commonjs",
+        "moduleResolution": "node",
         "noEmit": false,
         "noEmitOnError": false,
         "outDir": "./dist",
@@ -9,6 +14,10 @@
         "noImplicitAny": false,
         "sourceMap": false
     },
+    "exclude": [
+        "oapi3codegen/node_modules",
+        "**/*.spec.ts"
+    ],
     "include": [
         "core/*",
         "adapters/typescript/*",
@@ -18,9 +27,9 @@
         "oapi-defs/components/*",
         "lib/*"
     ],
-    "exclude": [
-        "oapi3codegen/node_modules",
-        "**/*.spec.ts"
+    "lib": [
+        "es2017",
+        "dom"
     ],
     "maxNodeModuleJsDepth": 2,
     "files": [

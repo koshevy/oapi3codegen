@@ -16,8 +16,17 @@ import {
 import { ObjectTypeScriptDescriptor } from './adapters/typescript/descriptors/object';
 import {
     DataTypeDescriptor,
+    ConvertorConfig,
     defaultConfig as defaultConvertorConfig
 } from './core';
+
+// *****************
+// *** CLI Arguments for Convrtor`s config
+
+const convertorConfig: ConvertorConfig = _.mapValues(
+    defaultConvertorConfig,
+    (v, k) => getArvgParam(k) || v
+);
 
 // *****************
 // *** CLI Arguments
@@ -38,12 +47,12 @@ const destPathAbs = destPath
     ? path.resolve(process.cwd(), destPath)
     : path.resolve(process.cwd(), './generated-code');
 
-// *****************
-// *** CLI Arguments for Convrtor`s config
-
-const convertorConfig = _.mapValues(
-    defaultConvertorConfig,
-    (v, k) => getArvgParam(k) || v
+/**
+ * Path for models and types.
+ */
+const typingsPathAbs = path.resolve(
+    destPathAbs,
+    convertorConfig.typingsDirectory
 );
 
 // ******************
@@ -120,7 +129,7 @@ function executeCliAction() {
             } else {
 
                 const outputFilePath = path.resolve(
-                    destPathAbs,
+                    typingsPathAbs,
                     `${_.kebabCase(descriptor.modelName)}.ts`
                 );
 
@@ -157,7 +166,7 @@ function executeCliAction() {
      * Output render results into file(s)
      */
 
-// Single file
+    // Single file
     if (!separatedFiles) {
 
         const fileInfo = path.parse(srcPath);
@@ -165,7 +174,7 @@ function executeCliAction() {
         if (!fileInfo['name'])
             throw new Error(`Can't extract name if path in "${srcPath}"`);
 
-        const outputFilePath = path.resolve(destPathAbs, `${fileInfo['name']}.ts`);
+        const outputFilePath = path.resolve(typingsPathAbs, `${fileInfo['name']}.ts`);
 
         fsExtra.outputFile(
             outputFilePath,
@@ -177,7 +186,9 @@ function executeCliAction() {
 
         console.log(`Result was saved in single file: ${outputFilePath}`);
         console.log('Render complete. These types was created:');
+
         _.each(alreadyRendered.sort(), v => console.log(v.toString()));
+
     } else {
         // creating index.ts file
 
@@ -192,7 +203,7 @@ function executeCliAction() {
 
         // Index file
         fsExtra.outputFile(
-            path.resolve(destPathAbs, `./index.ts`),
+            path.resolve(typingsPathAbs, `./index.ts`),
             prettier.format(
                 _.map(indexItems, v => `export * from './${v}'`).join(';\n'),
                 {parser: 'typescript'}

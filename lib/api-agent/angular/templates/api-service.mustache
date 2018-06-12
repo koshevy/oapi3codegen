@@ -1,0 +1,96 @@
+import { Injectable } from '@angular/core';
+import { ApiMethodBase } from 'oapi3codegen/api-agent/angular/api-method.base';
+import { ApiSchema, SubSchema } from 'oapi3codegen/api-agent/angular/api-schema';
+import { {{typingsDepencies}} } from '{{typingsDirectory}}';
+
+import * as domainSchema from './{{apiName}}.json';
+
+/**
+ * Service for angular based on ApiAgent solution.
+ * Provides assured request to API method with implicit
+ * validation and common errors handling scheme.
+ */
+@Injectable()
+export class {{apiMethodName}} extends ApiMethodBase<{{responseModelName}}, {{requestModelName}}, {{paramsModelName}}> {
+
+    protected get method(): {{method}} {
+        return {{method}};
+    }
+
+    /**
+     * Path template, example: `/some/path/{id}`.
+     * @returns {string}
+     */
+    protected get pathTemplate(): string {
+        return {{path}};
+    }
+
+    /**
+     * Parameters in a query.
+     * @returns {string[]}
+     */
+    protected get queryParams(): string[] {
+        return {{queryParams}};
+    }
+
+    /**
+     * API servers.
+     * @returns {string[]}
+     */
+    protected get servers(): string[] {
+        return {{servers}};
+    }
+
+    /**
+     * Complete domain API schema (OAS3) with library
+     * of models.
+     * @returns {SubSchema}
+     */
+    protected get domainSchema(): any {
+        return domainSchema;
+    }
+
+    /**
+     * JSON Schemas using for validations at requests.
+     * @returns {Schema}
+     */
+    protected get schema(): ApiSchema {
+        return {
+            response: {{responseSchema}},
+            request: {{requestSchema}},
+            params: {{paramsSchema}}
+        } as any;
+    }
+
+    /**
+     * Mock data when servers is disabled (in DEV-mode).
+     * @returns {any}
+     */
+    protected get mockData(): any {
+        return {{mockData}} as any;
+    }
+
+		// *** Methods
+
+    /**
+     * @param {HttpClient} httpClient
+     * @param {ApiErrorHandler} errorHandler
+     * Обработчик ошибок HTTP-запросов и
+     * @param {ServersData} serversData
+     */
+    constructor(
+        protected httpClient: HttpClient,
+        @Inject(API_ERROR_HANDLER)
+            protected errorHandler: ApiErrorHandler,
+        @Inject(SERVERS_DATA)
+            protected serversData: ServersData
+    ) {
+        super(
+            httpClient,
+            errorHandler,
+            serversData,
+            domainSchema
+        );
+    }
+
+}
