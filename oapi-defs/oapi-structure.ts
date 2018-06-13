@@ -12,6 +12,10 @@ type Schema = Components.SchemaArray
 export interface OApiStructure {
     info: OApiInfo;
     paths: OApiPath;
+    servers: Array<{
+        description: string,
+        url: string
+    }>,
     components: {
         parameters: {
             [key: string]: Components.Parameter

@@ -14,6 +14,8 @@ export interface PropertyDescriptor {
     readOnly: boolean;
     typeContainer: DataTypeContainer;
     comment: string;
+    defaultValue: undefined;
+    exampleValue: undefined;
 }
 
 export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
@@ -106,7 +108,10 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
                     comment: typeContainer[0]
                         ? typeContainer[0].getComments()
-                        : ''
+                        : '',
+
+                    defaultValue: propSchema.default,
+                    exampleValue: this._findExampleInTypeContainer(typeContainer)
                 };
 
                 this.propertiesSets[0][propName] = propDescr;
@@ -136,7 +141,10 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 typeContainer: convertor.convert(
                     <any>{},
                     <any>{}
-                )
+                ),
+
+                defaultValue: undefined,
+                exampleValue: undefined
             }
         }
     }
@@ -197,6 +205,13 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         return [prefix, properties].join('');
     }
 
+    public getExampleValue(): {[key:string]: any} {
+        return _.mapValues(
+            this.propertiesSets[0],
+            (v: PropertyDescriptor) => v.exampleValue || v.defaultValue
+        );
+    }
+
     /**
      * Превращение "ancestors" в строку.
      * @returns {string}
@@ -220,5 +235,20 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         return filteredAncestors.length
             ? ` extends ${_.map(filteredAncestors, v => v.modelName).join(', ')} `
             : '';
+    }
+
+    private _findExampleInTypeContainer(
+        typeContainer: DataTypeContainer
+    ): any {
+        for (const descr of typeContainer) {
+            if (descr instanceof ObjectTypeScriptDescriptor) {
+                return descr.getExampleValue();
+            } else {
+                const exV = descr.schema.example || descr.schema.default;
+                if (exV) return exV;
+            }
+        }
+
+        return undefined;
     }
 }

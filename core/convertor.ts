@@ -5,7 +5,8 @@ import { OApiStructure } from '../oapi-defs';
 import {
     DataTypeContainer,
     DataTypeDescriptor,
-    DescriptorContext
+    DescriptorContext,
+    ApiMetaInfo
 } from '../core';
 
 import {
@@ -16,7 +17,8 @@ import {
 import {
     Schema,
     Parameter,
-    Response
+    Response,
+    ParameterIn
 } from '../oapi-defs';
 
 /**
@@ -88,13 +90,20 @@ export abstract class BaseConvertor {
      * зависимостей для рендеринга с помощью метода
      * [Convertor.renderRecursive]{@link Convertor.renderRecursive}.
      *
+     * @param {ApiMetaInfo} metaInfo
+     * Place where meta-information accumulates during
+     * API-info extracting.
+     *
      * @returns {DataTypeContainer}
      */
-    public getOAPI3EntryPoints(context = {}): DataTypeContainer {
+    public getOAPI3EntryPoints(
+        context = {},
+        metaInfo: ApiMetaInfo[] = []
+    ): DataTypeContainer {
         let alreadyConverted = [];
 
         //параметры
-        const methodsSchemes = this._getMethodsSchemes();
+        const methodsSchemes = this._getMethodsSchemes(metaInfo);
 
         const dataTypeContainers = _.map(
             methodsSchemes,
@@ -225,10 +234,14 @@ export abstract class BaseConvertor {
 
     /**
      * Извлечени схем из параметров, ответов и тел запросов для API.
+     * @param {ApiMetaInfo[]} metaInfo
+     * Place for storing meta-info of API-method.
      * @returns {{[p: string]: Schema}}
      * @private
      */
-    private _getMethodsSchemes(): {[className: string]: Schema} {
+    private _getMethodsSchemes(
+        metaInfo: ApiMetaInfo[]
+    ): {[className: string]: Schema} {
 
         let result = {};
 
@@ -247,27 +260,62 @@ export abstract class BaseConvertor {
                     _.upperFirst(_.camelCase(pathName))
                 ].join('');
 
-                const sch = {
+                const metaInfoItem: ApiMetaInfo = {
+                    baseTypeName: baseTypeName,
+                    method: methodName.toUpperCase(),
+                    path: pathName,
+                    queryParams: [],
+                    servers: _.map(struct.servers || [], v => v.url),
+                    mockData: {},
+                    // default noname
+                    apiSchemaFile: 'domain-api-schema',
+                    typingsDependencies: [],
+                    typingsDirectory: 'typings',
+                    responseModelName: null,
+                    requestModelName: null,
+                    paramsModelName: null,
+                    responseSchema: null,
+                    requestSchema: null,
+                    paramsSchema: null
+                };
+
+                const paramsSchema = {
                    type: "object",
                    required: [],
                    properties: {}
                 };
 
-                // обработка параметров
-                _.each(method.parameters || {}, (parameter: Parameter) => {
-                    if (parameter.schema) {
-                        const modelName = this.config.parametersModelName(baseTypeName);
+                const paramsModelName = this.config.parametersModelName(baseTypeName);
 
-                        sch.properties[parameter.name] = parameter.schema;
-                        sch.properties[parameter.name]["readOnly"] = parameter.readOnly;
+                // обработка параметров
+                _.each(method.parameters || {}, (parameter: Parameter, index) => {
+                    if (parameter.schema) {
+
+                        paramsSchema.properties[parameter.name] = parameter.schema;
+                        paramsSchema.properties[parameter.name]["readOnly"] = parameter.readOnly;
                         if (parameter.required) {
-                            sch.required.push(parameter.name);
+                            paramsSchema.required.push(parameter.name);
                         }
 
-                        result[modelName] = sch;
+                        result[paramsModelName] = paramsSchema;
 
-                        if(parameter.description)
-                            result[modelName].description = parameter.description;
+                        if (index === 0) {
+                            metaInfoItem.typingsDependencies.push(paramsModelName);
+                            metaInfoItem.paramsModelName = paramsModelName;
+                            metaInfoItem.paramsSchema = paramsSchema;
+                        }
+
+                        if (parameter.in === ParameterIn.Query) {
+                            metaInfoItem.queryParams.push(parameter.name);
+                        }
+
+                        // fixme Need to test this place
+                        // if(parameter.description)
+                        //    result[paramsModelName].description = parameter.description;
+
+                        if (!result[paramsModelName].description) {
+                            result[paramsModelName].description = `Model of parameters for API ${pathName}`;
+                        }
                     }
                 });
 
@@ -301,6 +349,13 @@ export abstract class BaseConvertor {
                         if(content.schema || content)
                             result[modelName] = (content.schema || content);
 
+                        // Success responses using as a default response
+                        if (Math.round(code / 100) === 2) {
+                            metaInfoItem.responseModelName = modelName;
+                            metaInfoItem.typingsDependencies.push(modelName);
+                            metaInfoItem.responseSchema = result[modelName];
+                        }
+
                         // add description if it set
                         if (result[modelName] && response.description) {
                             result[modelName].description = response.description;
@@ -326,7 +381,12 @@ export abstract class BaseConvertor {
                 if (requestBody) {
                     let modelName = this.config.requestModelName(baseTypeName);
                     result[modelName] = requestBody;
+                    metaInfoItem.typingsDependencies.push(modelName);
+                    metaInfoItem.requestModelName = modelName;
+                    metaInfoItem.requestSchema = requestBody;
                 }
+
+                metaInfo.push(metaInfoItem);
             }
         }
 

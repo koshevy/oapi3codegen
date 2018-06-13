@@ -1,9 +1,18 @@
-import { Injectable } from '@angular/core';
-import { ApiMethodBase } from 'oapi3codegen/api-agent/angular/api-method.base';
-import { ApiSchema, SubSchema } from 'oapi3codegen/api-agent/angular/api-schema';
-import { {{typingsDepencies}} } from '{{typingsDirectory}}';
+import { Inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
-import * as domainSchema from './{{apiName}}.json';
+import { ApiMethodBase } from 'oapi3codegen-agent-angular/api-method.base';
+import { ApiSchema } from 'oapi3codegen-agent-angular/api-schema';
+import { SERVERS_DATA, ServersData } from 'oapi3codegen-agent-angular/servers.data.provider';
+import {
+  API_ERROR_HANDLER,
+  ApiErrorHandler
+} from 'oapi3codegen-agent-angular/event-manager.provider';
+
+// Typings for this API method
+import { {{typingsDependencies}} } from '{{typingsDirectory}}';
+
+import * as domainSchema from './{{apiSchemaFile}}.json';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -11,7 +20,7 @@ import * as domainSchema from './{{apiName}}.json';
  * validation and common errors handling scheme.
  */
 @Injectable()
-export class {{apiMethodName}} extends ApiMethodBase<{{responseModelName}}, {{requestModelName}}, {{paramsModelName}}> {
+export class {{baseTypeName}}Service extends ApiMethodBase<{{responseModelName}}, {{requestModelName}}, {{paramsModelName}}> {
 
     protected get method(): {{method}} {
         return {{method}};

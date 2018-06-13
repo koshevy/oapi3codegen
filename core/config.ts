@@ -211,5 +211,5 @@ export const defaultConfig: ConvertorConfig = {
      * Name of directory with generated API-services
      * for Angular.
      */
-    servicesDirectory: './typings'
+    servicesDirectory: './services'
 };
