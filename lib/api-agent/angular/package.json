@@ -1,6 +1,6 @@
 {
   "name": "oapi3codegen-agent-angular",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Base class for API-working service",
   "main": "index.ts",
   "scripts": {
@@ -23,8 +23,8 @@
   },
   "homepage": "https://github.com/koshevy/oapi3codegen#readme",
   "dependencies": {
-    "@angular/common": "^6.0.4",
-    "@angular/core": "^6.0.4",
+    "@angular/common": "^5.2.0",
+    "@angular/core": "^5.2.0",
     "ajv": "^6.5.1",
     "lodash": "^4.17.10",
     "oapi3codegen": "^0.1.19",
