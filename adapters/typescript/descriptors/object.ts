@@ -128,21 +128,38 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             });
         }
 
-        // todo: do additionalProperties support
+        // fixme: do additionalProperties support when additionalProperties === true
 
         // если по итогам, свойств нет, указывается
         // универсальное описание
-        if(!_.keys(this.propertiesSets[0] || {}).length) {
-            this.propertiesSets[0]['[key: string]'] = {
-                required: true,
-                comment: '',
-                readOnly: false,
-                // если нет свойств, получает тип Any
-                typeContainer: convertor.convert(
+        else if(
+            schema.additionalProperties ||
+            ( !_.keys(this.propertiesSets[0] || {}).length
+              && (schema.additionalProperties !== false))
+        ) {
+            const addProp = schema.additionalProperties;
+            const typeContainer = ('object' === typeof addProp)
+                ? convertor.convert(
+                    _.omit(addProp, ['description', 'title']),
+                    context,
+                    null,
+                    `${modelName}Properties`
+                )
+                : convertor.convert(
                     <any>{},
                     <any>{}
-                ),
+                );
 
+            this.propertiesSets[0]['[key: string]'] = {
+                required: true,
+                comment: typeContainer[0]
+                    ? typeContainer[0].getComments()
+                    : '',
+                readOnly: ('object' === typeof addProp)
+                    ? addProp.readOnly || false
+                    : false,
+                // если нет свойств, получает тип Any
+                typeContainer: typeContainer,
                 defaultValue: undefined,
                 exampleValue: undefined
             }
