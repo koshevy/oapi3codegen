@@ -356,7 +356,7 @@ export abstract class BaseConvertor {
                             metaInfoItem.responseSchema = result[modelName];
                         }
 
-                        // add description if it set
+                        // add description if it's set
                         if (result[modelName] && response.description) {
                             result[modelName].description = response.description;
                         }

@@ -223,7 +223,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
     }
 
     public getExampleValue(): {[key:string]: any} {
-        return _.mapValues(
+        return this.schema.example || _.mapValues(
             this.propertiesSets[0],
             (v: PropertyDescriptor) => v.exampleValue || v.defaultValue
         );
