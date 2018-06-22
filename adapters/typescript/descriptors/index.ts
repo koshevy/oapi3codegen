@@ -2,6 +2,7 @@ import { NumberTypeScriptDescriptor } from "./number";
 import { StringTypeScriptDescriptor } from "./string";
 import { ObjectTypeScriptDescriptor } from "./object";
 import { AnyTypeScriptDescriptor } from "./any";
+import { NullTypeScriptDescriptor } from "./null";
 import { EnumTypeScriptDescriptor } from "./enum";
 import { ArrayTypeScriptDescriptor } from "./array";
 import { SomeOfTypeScriptDescriptor } from "./some-of";
@@ -138,6 +139,20 @@ export const rules = [
             additionalProperties: true
         },
         classConstructor: ArrayTypeScriptDescriptor
+    },
+    {
+        rule: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+                type: {
+                    type: 'string',
+                    pattern: 'null'
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: NullTypeScriptDescriptor
     },
     // тип по-умолчанию
     {

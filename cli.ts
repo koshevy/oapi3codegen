@@ -127,7 +127,7 @@ function executeCliAction(oapiData) {
         `${baseFileName}.json`
     );
 
-    oapiData.$id = baseFileName;
+    oapiData.$id = `${baseFileName}.json`;
 
     fsExtra.outputFile(
         newOapiFilePath,

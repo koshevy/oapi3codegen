@@ -140,7 +140,8 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             const addProp = schema.additionalProperties;
             const typeContainer = ('object' === typeof addProp)
                 ? convertor.convert(
-                    _.omit(addProp, ['description', 'title']),
+                    // these properties not affect a schema
+                    _.omit(addProp, ['description', 'title', 'example', 'default']),
                     context,
                     null,
                     `${modelName}Properties`

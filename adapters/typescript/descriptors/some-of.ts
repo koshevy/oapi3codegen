@@ -162,7 +162,6 @@ export class SomeOfTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
     private _getSomeOfSchemes(schema, commonPart, type: SomeOfType): any[] {
         let schemes = [];
         switch (type) {
-            case SomeOfType.AnyOf:
             case SomeOfType.AllOf:
                 schemes.push(_.merge.apply(
                     _,
@@ -178,7 +177,7 @@ export class SomeOfTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                         }
                     )
                 ));
-                if (type === SomeOfType.AllOf) break;
+            case SomeOfType.AnyOf:
             case SomeOfType.OneOf:
                 schemes = _.flattenDeep([schemes, schema[type]], 1);
         }
