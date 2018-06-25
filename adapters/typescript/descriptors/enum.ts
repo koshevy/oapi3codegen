@@ -108,8 +108,13 @@ export class EnumTypeScriptDescriptor extends AbstractTypeScriptDescriptor imple
         rootLevel: boolean = true
     ): string {
 
+        const type = this.schema.type;
+
         // especially case: string variants
-        if (!rootLevel && (this.schema.type === 'string')) {
+        if ( !rootLevel &&
+             (type === 'string' ||
+                 (_.isArray(type) && type[0] === 'string'))) {
+
             return _.map(this.schema.enum, (v) => JSON.stringify(v))
                 .join(' | ');
         }

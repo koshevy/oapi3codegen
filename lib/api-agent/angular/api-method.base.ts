@@ -93,7 +93,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
         if (!ApiMethodBase._ajv) {
             ApiMethodBase._ajv = new Ajv({
                 allErrors: true,
-                coerceTypes: true,
+                coerceTypes: false,
                 ownProperties: true,
                 errorDataPath: 'property',
                 useDefaults: true,

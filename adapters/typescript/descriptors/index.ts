@@ -1,5 +1,6 @@
 import { NumberTypeScriptDescriptor } from "./number";
 import { StringTypeScriptDescriptor } from "./string";
+import { BooleanTypeScriptDescriptor } from "./boolean";
 import { ObjectTypeScriptDescriptor } from "./object";
 import { AnyTypeScriptDescriptor } from "./any";
 import { NullTypeScriptDescriptor } from "./null";
@@ -139,6 +140,20 @@ export const rules = [
             additionalProperties: true
         },
         classConstructor: ArrayTypeScriptDescriptor
+    },
+    {
+        rule: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+                type: {
+                    type: 'string',
+                    pattern: 'boolean'
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: BooleanTypeScriptDescriptor
     },
     {
         rule: {

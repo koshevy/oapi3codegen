@@ -114,6 +114,14 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                     exampleValue: this._findExampleInTypeContainer(typeContainer)
                 };
 
+                // last step: apply "nullable" property after schema is
+                // interpreted to make life easier
+                if (propSchema.nullable) {
+                    this._makeSchemaNullable(
+                        propSchema
+                    );
+                }
+
                 this.propertiesSets[0][propName] = propDescr;
             });
         }
@@ -141,7 +149,14 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
             const typeContainer = ('object' === typeof addProp)
                 ? convertor.convert(
                     // these properties not affect a schema
-                    _.omit(addProp, ['description', 'title', 'example', 'default']),
+                    _.omit(addProp, [
+                        'description',
+                        'title',
+                        'example',
+                        'default',
+                        'readonly',
+                        'nullable'
+                    ]),
                     context,
                     null,
                     `${modelName}Properties`
@@ -163,6 +178,14 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 typeContainer: typeContainer,
                 defaultValue: undefined,
                 exampleValue: undefined
+            }
+
+            // last step: apply "nullable" property after schema is
+            // interpreted to make life easier
+            if (schema.additionalProperties && schema.additionalProperties.nullable) {
+                this._makeSchemaNullable(
+                    schema.additionalProperties
+                );
             }
         }
     }
@@ -268,5 +291,32 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         }
 
         return undefined;
+    }
+
+    private _makeSchemaNullable(schema: any): void {
+        // base scenario: simple type
+        if (schema.type) {
+            if ( _.isArray(schema.type)
+                 && !_.find(schema.type, v => v === 'null')) {
+                schema.type.push('null')
+            } else if ('string' === typeof schema.type) {
+                schema.type = [schema.type, 'null'];
+            }
+        } else if ( schema.$ref && !schema.anyOf &&
+            // next scenario: single $ref
+            !schema.oneOf && !schema.allOf) {
+
+            const ref = schema.$ref;
+            delete schema.$ref;
+            schema.anyOf = [{type: 'null'}, {$ref: ref}]
+        } else {
+            // last scenario: variants
+            _.each(
+                schema.oneOf || schema.anyOf || schema.allOf || [],
+                (subSchema) => {
+                    this._makeSchemaNullable(subSchema)
+                }
+            )
+        }
     }
 }
