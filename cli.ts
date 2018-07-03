@@ -96,11 +96,12 @@ if(srcPath.match(/^https?:/)) {
     if(!fsExtra.pathExistsSync(srcPathAbs))
         throw new Error(`File ${srcPathAbs} is not exists!`);
 
-    const data = fs.readFileSync(
+    const data = JSON.parse(fs.readFileSync(
         path.resolve(
             process.cwd(), srcPath
-        )
-    );
+        ),
+        'utf8'
+    ));
 
     // work with files
     convertor.loadOAPI3Structure(data);
