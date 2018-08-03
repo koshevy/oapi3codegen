@@ -161,6 +161,7 @@ export class SomeOfTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
      */
     private _getSomeOfSchemes(schema, commonPart, type: SomeOfType): any[] {
         let schemes = [];
+
         switch (type) {
             case SomeOfType.AllOf:
                 schemes.push(_.merge.apply(

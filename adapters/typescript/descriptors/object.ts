@@ -150,6 +150,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 ? convertor.convert(
                     // these properties not affect a schema
                     _.omit(addProp, [
+                        // fixme move to config. copypasted in typescript/convertot.ts
                         'description',
                         'title',
                         'example',
@@ -318,5 +319,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 }
             )
         }
+
+        delete schema.nullable;
     }
 }

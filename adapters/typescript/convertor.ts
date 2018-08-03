@@ -163,7 +163,22 @@ export class Convertor extends BaseConvertor {
 
         // получение по $ref
         if (schema['$ref']) {
-            if(_.values(schema).length === 1) {
+
+            // исключаются элементы, которые не оказывают
+            // влияния на определение типа (title, nullable и т.д.)
+            const valuableOptionsCount = _.values(
+                _.omit(schema, [
+                    // fixme move to config. copypasted in descriptors/object.ts
+                    'description',
+                    'title',
+                    'example',
+                    'default',
+                    'readonly',
+                    'nullable'
+                ]),
+            ).length
+
+            if(valuableOptionsCount === 1) {
                 result = (name && !this.config.implicitTypesRefReplacement)
                     // если неанонимный, то создает новый на основе предка
                     ? this.convert(
