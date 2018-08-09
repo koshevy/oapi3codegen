@@ -10,7 +10,7 @@ import {
     HttpRequest,
     HttpErrorResponse, HttpEvent
 } from '@angular/common/http';
-import {ApiMethodBase} from 'Lib/api-agent/api-method.base';
+import { ApiMethodBase } from 'oapi3codegen-agent-angular/api-method.base';
 
 /**
  * Тип API-ошибки.

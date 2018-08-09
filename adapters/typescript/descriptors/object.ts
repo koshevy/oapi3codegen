@@ -296,6 +296,10 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
     private _makeSchemaNullable(schema: any): void {
         // base scenario: simple type
+
+        /*
+        Old code:
+
         if (schema.type) {
             if ( _.isArray(schema.type)
                  && !_.find(schema.type, v => v === 'null')) {
@@ -319,7 +323,20 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
                 }
             )
         }
+        */
+
+        // New code: now actually have to wrap schema
 
         delete schema.nullable;
+
+        const schemaCopy = _.cloneDeep(schema);
+        for(const propName of _.keys(schema)) {
+            delete schema[propName];
+        }
+
+        schema.anyOf = [
+            {type: null},
+            schemaCopy
+        ];
     }
 }
