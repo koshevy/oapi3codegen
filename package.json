@@ -1,6 +1,6 @@
 {
   "name": "oapi3codegen",
-  "version": "0.1.29",
+  "version": "0.1.31",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
   "bin": {

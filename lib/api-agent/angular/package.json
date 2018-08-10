@@ -1,6 +1,6 @@
 {
   "name": "oapi3codegen-agent-angular",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Base class for API-working service",
   "main": "index.ts",
   "scripts": {

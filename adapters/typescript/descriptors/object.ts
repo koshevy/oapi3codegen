@@ -335,7 +335,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         }
 
         schema.anyOf = [
-            {type: null},
+            {type: 'null'},
             schemaCopy
         ];
     }

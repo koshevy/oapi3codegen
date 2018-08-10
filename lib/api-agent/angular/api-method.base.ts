@@ -39,7 +39,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
     private static _ajv: Ajv.Ajv;
 
     protected abstract get method(): | ('DELETE' | 'GET' | 'HEAD' | 'JSONP' | 'OPTIONS')
-                                     | ('POST'   | 'PUT' | 'PATCH');
+        | ('POST'   | 'PUT' | 'PATCH');
 
     /**
      * JSON Schema, используемая для проверки данных запросов.
@@ -152,6 +152,15 @@ export abstract class ApiMethodBase<R, B, P = null> {
         const path = _.template(this.pathTemplate)(params);
         const server = this.getServerPath();
 
+        // fixme FE App: временное решение для получения строки Query
+        const queryString = _(query)
+            .map((v, k) => `${k}=` + (_.isArray(query) ? query.join(',') : v))
+            .value()
+            .join('&');
+
+        if (requestOptions.withCredentials !== false)
+            requestOptions.withCredentials = true;
+
         // !!! По поводу валидаций:
         // Валидации выполняются внутри Observable,
         // чтобы был доступ к subscriber. Тогда ему можно
@@ -163,7 +172,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
         // путь в "белом списке", идет обращение к нему.
         // Иначе — обращение к mock-данным
         if (server) {
-            const url = `${server || ''}${path}`;
+            const url = `${server || ''}${path}?${queryString}`;
             const request = new HttpRequest<B>(this.method, url, payLoad, requestOptions);
 
             return Observable.create((subscriber: Subscriber<R>) => {

@@ -244,7 +244,7 @@ function executeCliAction(oapiData) {
 
                 const fileText = `${
                     _.map(
-                        dependencies,
+                        _.uniq(dependencies),
                         (dep: DataTypeDescriptor) =>
                             `import { ${dep.modelName} } from './${_.kebabCase(dep.modelName)}';`
                     ).join(';\n')
