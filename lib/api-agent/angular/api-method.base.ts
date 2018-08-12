@@ -36,10 +36,12 @@ declare const Number: any;
 
 export abstract class ApiMethodBase<R, B, P = null> {
 
-    private static _ajv: Ajv.Ajv;
+    private static _ajv: {
+        [key: string]: Ajv.Ajv
+    } = {};
 
     protected abstract get method(): | ('DELETE' | 'GET' | 'HEAD' | 'JSONP' | 'OPTIONS')
-        | ('POST'   | 'PUT' | 'PATCH');
+                                     | ('POST'   | 'PUT' | 'PATCH');
 
     /**
      * JSON Schema, используемая для проверки данных запросов.
@@ -71,6 +73,8 @@ export abstract class ApiMethodBase<R, B, P = null> {
      */
     protected abstract get mockData(): any;
 
+    private _ajvComplier: Ajv.Ajv;
+
     /**
      * Кэш скомпилированных ajv-валидаторов для этого сервиса.
      */
@@ -90,8 +94,13 @@ export abstract class ApiMethodBase<R, B, P = null> {
         protected serversData: ServersData,
         domainSchema
     ) {
-        if (!ApiMethodBase._ajv) {
-            ApiMethodBase._ajv = new Ajv({
+        const schemaId = domainSchema['$id'];
+        if (!schemaId) {
+            throw new Error('Domain schema should have an id!')
+        }
+
+        if (!ApiMethodBase._ajv[schemaId]) {
+            ApiMethodBase._ajv[schemaId] = new Ajv({
                 allErrors: true,
                 coerceTypes: false,
                 ownProperties: true,
@@ -107,6 +116,8 @@ export abstract class ApiMethodBase<R, B, P = null> {
                 }
             });
         }
+
+        this._ajvComplier = ApiMethodBase._ajv[schemaId];
     }
 
     /**
@@ -335,8 +346,8 @@ export abstract class ApiMethodBase<R, B, P = null> {
             return null;
         } else {
             if (!this._ajvCaches[type]) {
-                this._ajvCaches[type] = ApiMethodBase
-                    ._ajv.compile(this.schema[type]);
+                this._ajvCaches[type] = this._ajvComplier
+                    .compile(this.schema[type]);
             }
 
             const validate = this._ajvCaches[type];
