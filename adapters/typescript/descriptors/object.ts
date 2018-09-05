@@ -294,6 +294,7 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         return undefined;
     }
 
+    // fixme has to delete
     private _makeSchemaNullable(schema: any): void {
         // base scenario: simple type
 
@@ -327,16 +328,16 @@ export class ObjectTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
 
         // New code: now actually have to wrap schema
 
-        delete schema.nullable;
-
-        const schemaCopy = _.cloneDeep(schema);
-        for(const propName of _.keys(schema)) {
-            delete schema[propName];
-        }
-
-        schema.anyOf = [
-            {type: 'null'},
-            schemaCopy
-        ];
+        // delete schema.nullable;
+        //
+        // const schemaCopy = _.cloneDeep(schema);
+        // for(const propName of _.keys(schema)) {
+        //     delete schema[propName];
+        // }
+        //
+        // schema.anyOf = [
+        //     {type: 'null'},
+        //     schemaCopy
+        // ];
     }
 }

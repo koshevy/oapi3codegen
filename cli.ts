@@ -132,7 +132,29 @@ function executeCliAction(oapiData) {
 
     fsExtra.outputFile(
         newOapiFilePath,
-        JSON.stringify(oapiData)
+        JSON.stringify(
+            oapiData,
+            (key, value: any) => {
+                if (_.isObject(value) && value.nullable) {
+                    delete value.nullable;
+
+                    const schemaCopy = _.cloneDeep(value);
+                    for(const propName of _.keys(value)) {
+                        delete value[propName];
+                    }
+
+                    value.anyOf = [
+                        {
+                            type: 'null',
+                            description: 'Parsed nullable'
+                        },
+                        schemaCopy
+                    ];
+                }
+
+                return value;
+            }
+        )
     );
 
     // saving angular services

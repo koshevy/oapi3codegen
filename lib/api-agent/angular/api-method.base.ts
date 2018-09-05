@@ -160,7 +160,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
 
         // fixme query не используется
         const query = _.pick(params || {}, this.queryParams);
-        const path = _.template(this.pathTemplate)(params);
+        const path = _.template(this.pathTemplate)(params || {});
         const server = this.getServerPath();
 
         // fixme FE App: временное решение для получения строки Query
