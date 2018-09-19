@@ -15,8 +15,6 @@ import { HttpHeaders } from '@angular/common/http/src/headers';
 import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subject } from 'rxjs/Subject';
-import 'rxjs/add/observable/of';
-import 'rxjs/add/operator/map';
 
 import { ApiSchema } from './api-schema';
 import {
