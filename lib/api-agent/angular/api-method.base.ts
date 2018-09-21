@@ -12,9 +12,11 @@ import {
 import { HttpParams } from '@angular/common/http/src/params';
 import { HttpHeaders } from '@angular/common/http/src/headers';
 
-import { Observable } from 'rxjs/Observable';
-import { Subscriber } from 'rxjs/Subscriber';
-import { Subject } from 'rxjs/Subject';
+import {
+    Observable,
+    Subscriber,
+    Subject
+} from 'rxjs';
 
 import { ApiSchema } from './api-schema';
 import {
