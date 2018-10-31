@@ -135,6 +135,8 @@ function executeCliAction(oapiData) {
         JSON.stringify(
             oapiData,
             (key, value: any) => {
+
+                // adding supports of Swagger's `nullable`
                 if (_.isObject(value) && value.nullable) {
                     delete value.nullable;
                     const schemaCopy = _.cloneDeep(value);
@@ -148,6 +150,15 @@ function executeCliAction(oapiData) {
                             schemaCopy
                         ]
                     };
+                }
+
+                // cut off examples and descriptions
+                if (key === 'description' && ('string' === typeof key)) {
+                    return '';
+                }
+
+                if (key === 'example') {
+                    return undefined;
                 }
 
                 return value;

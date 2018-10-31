@@ -1,5 +1,7 @@
-import { Subject } from 'rxjs/Subject';
-import { Subscriber } from 'rxjs/Subscriber';
+import {
+    Subject,
+    Subscriber
+} from 'rxjs';
 
 import {
     InjectionToken,

@@ -1,6 +1,6 @@
 {
   "name": "oapi3codegen",
-  "version": "0.1.40",
+  "version": "0.1.41",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
   "bin": {
@@ -36,7 +36,7 @@
     "execa": "^0.10.0",
     "fs-extra": "^5.0.0",
     "lodash": "^4.17.10",
-    "oapi3codegen-agent-angular": "^1.0.1",
+    "oapi3codegen-agent-angular": "^1.0.4",
     "oapi3codegen-assert": "^0.1.1",
     "prettier": "^1.12.1",
     "typescript": "^2.8.3"
