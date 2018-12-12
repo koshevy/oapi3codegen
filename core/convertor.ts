@@ -280,9 +280,9 @@ export abstract class BaseConvertor {
                 };
 
                 const paramsSchema = {
-                   type: "object",
-                   required: [],
-                   properties: {}
+                    type: "object",
+                    required: [],
+                    properties: {}
                 };
 
                 const paramsModelName = this.config.parametersModelName(baseTypeName);
@@ -372,18 +372,32 @@ export abstract class BaseConvertor {
                 });
 
                 // оброботка тела запроса
-                // todo пока обрабатывается только ContentType по-умолчанию
-                const requestBody = _.get(
-                    method,
-                    `requestBody.content.${defaultContentType}.schema`
-                );
+                const content = _.get(method, `requestBody.content`);
+                const contentTypes = _.keys(content);
+                const schemas = [];
 
-                if (requestBody) {
-                    let modelName = this.config.requestModelName(baseTypeName);
-                    result[modelName] = requestBody;
+                _.each(contentTypes, (contentType: string) => {
+                    // Определяем путь к схеме. Учитываем случай, когда схема без contentType
+                    const pathToScheme = contentType === 'schema'
+                        ? 'schema'
+                        : `${contentType}.schema`;
+
+                    const schema = _.get(content, pathToScheme);
+                    if (schema) {
+                        schemas.push(schema);
+                    }
+                });
+
+                const modelName = this.config.requestModelName(baseTypeName);
+                if (schemas.length) {
+                    const readySchema = (schemas.length === 1)
+                        ? _.head(schemas)
+                        : { anyOf: schemas };
+
+                    result[modelName] = readySchema;
                     metaInfoItem.typingsDependencies.push(modelName);
                     metaInfoItem.requestModelName = modelName;
-                    metaInfoItem.requestSchema = requestBody;
+                    metaInfoItem.requestSchema = readySchema;
                 }
 
                 metaInfo.push(metaInfoItem);
