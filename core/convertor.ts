@@ -16,6 +16,7 @@ import {
 
 import {
     Schema,
+    SchemaObject,
     Parameter,
     Response,
     ParameterIn
@@ -27,6 +28,20 @@ import {
  * @type {string}
  */
 const defaultContentType = 'application/json';
+const defaultContentTypeKey = 'json';
+
+/**
+ * Content types could be used to describe
+ * data in parameters, body ot responses
+ *
+ * @type {{form: string; json: string; multipart: string; xml: string}}
+ */
+const usedContentTypes = {
+    'application/x-www-form-urlencoded': 'form',
+    'application/json': 'json',
+    'multipart/form-data': 'multipart',
+    'application/xml': 'xml',
+};
 
 /**
  * Регулярное выражение для JSON Path-путей.
@@ -41,7 +56,6 @@ const pathRegex = /([\w:\/\\\.]+)?#(\/?[\w+\/?]+)/;
 export abstract class BaseConvertor {
 
     protected _structure: OApiStructure;
-
     protected _foreignSchemaFn: (resourcePath: string) => Schema;
 
     constructor (
@@ -105,7 +119,7 @@ export abstract class BaseConvertor {
         //параметры
         const methodsSchemes = this._getMethodsSchemes(metaInfo);
 
-        const dataTypeContainers = _.map(
+        const dataTypeContainers: DataTypeContainer = _.map(
             methodsSchemes,
             (schema, modelName) => {
 
@@ -279,132 +293,232 @@ export abstract class BaseConvertor {
                     paramsSchema: null
                 };
 
-                const paramsSchema = {
-                    type: "object",
-                    required: [],
-                    properties: {}
-                };
+                // pick Parameters schemas
+                _.assign(result,
+                    this._pickApiMethodParameters(
+                        metaInfoItem,
+                        method.parameters
+                    )
+                );
 
-                const paramsModelName = this.config.parametersModelName(baseTypeName);
+                // pick Responses schemas
+                _.assign(result,
+                    this._pickApiMethodResponses(
+                        metaInfoItem,
+                        method.responses || {}
+                    )
+                );
 
-                // обработка параметров
-                _.each(method.parameters || {}, (parameter: Parameter, index) => {
-                    if (parameter.schema) {
-
-                        paramsSchema.properties[parameter.name] = parameter.schema;
-                        paramsSchema.properties[parameter.name]["readOnly"] = parameter.readOnly;
-                        if (parameter.required) {
-                            paramsSchema.required.push(parameter.name);
-                        }
-
-                        result[paramsModelName] = paramsSchema;
-
-                        if (index === 0) {
-                            metaInfoItem.typingsDependencies.push(paramsModelName);
-                            metaInfoItem.paramsModelName = paramsModelName;
-                            metaInfoItem.paramsSchema = paramsSchema;
-                        }
-
-                        if (parameter.in === ParameterIn.Query) {
-                            metaInfoItem.queryParams.push(parameter.name);
-                        }
-
-                        // fixme Need to test this place
-                        // if(parameter.description)
-                        //    result[paramsModelName].description = parameter.description;
-
-                        if (!result[paramsModelName].description) {
-                            result[paramsModelName].description = `Model of parameters for API ${pathName}`;
-                        }
-                    }
-                });
-
-                // обработка ответов
-                _.each(method.responses || {}, (
-                    response: Response,
-                    code: number
-                ) => {
-
-                    if (response.$ref) {
-                        response = _.merge(
-                            _.omit(response, ['$ref']),
-                            this.getSchemaByPath(response.$ref)
-                        );
-                    }
-
-                    const fallbackOpenApiData = {};
-                    fallbackOpenApiData[defaultContentType] = response.schema || {};
-
-                    // todo пока обрабатываются только контент и заголовки
-                    _.each(response.content || fallbackOpenApiData || {}, (
-                        content: any,
-                        contentType: string
-                    ) => {
-                        const ctSuffix = (contentType === defaultContentType)
-                            ? '' : `_${_.camelCase(contentType)}`;
-
-                        // todo вынести в конфиг правило формирования имени
-                        const modelName = this.config.responseModelName(baseTypeName, code, contentType);//`${baseTypeName}${ctSuffix}_response${code}`;
-
-                        if(content.schema || content)
-                            result[modelName] = (content.schema || content);
-
-                        // Success responses using as a default response
-                        if (Math.round(code / 100) === 2) {
-                            metaInfoItem.responseModelName = modelName;
-                            metaInfoItem.typingsDependencies.push(modelName);
-                            metaInfoItem.responseSchema = result[modelName];
-                        }
-
-                        // add description if it's set
-                        if (result[modelName] && response.description) {
-                            result[modelName].description = response.description;
-                        }
-                    });
-
-                    if(response.headers) {
-                        const modelName = this.config.headersModelName(baseTypeName, code);
-                        result[modelName] = {
-                            type: "object",
-                            properties: response.headers
-                        };
-                    }
-                });
-
-                // оброботка тела запроса
-                const content = _.get(method, `requestBody.content`);
-                const contentTypes = _.keys(content);
-                const schemas = [];
-
-                _.each(contentTypes, (contentType: string) => {
-                    // Определяем путь к схеме. Учитываем случай, когда схема без contentType
-                    const pathToScheme = contentType === 'schema'
-                        ? 'schema'
-                        : `${contentType}.schema`;
-
-                    const schema = _.get(content, pathToScheme);
-                    if (schema) {
-                        schemas.push(schema);
-                    }
-                });
-
-                const modelName = this.config.requestModelName(baseTypeName);
-                if (schemas.length) {
-                    const readySchema = (schemas.length === 1)
-                        ? _.head(schemas)
-                        : { anyOf: schemas };
-
-                    result[modelName] = readySchema;
-                    metaInfoItem.typingsDependencies.push(modelName);
-                    metaInfoItem.requestModelName = modelName;
-                    metaInfoItem.requestSchema = readySchema;
-                }
+                // pick Request Body schemas
+                _.assign(result,
+                    this._pickApiMethodBody(
+                        metaInfoItem,
+                        _.get(method, `requestBody.content`)
+                            || method.requestBody
+                    )
+                );
 
                 metaInfo.push(metaInfoItem);
             }
         }
 
         return result;
+    }
+
+    /**
+     * Get parameters from the `parameters` section
+     * in method into {@link ApiMetaInfo}-object
+     *
+     * @param {ApiMetaInfo} metaInfoItem
+     * @param {Parameter[]} parameters
+     * @private
+     */
+    protected _pickApiMethodParameters(
+        metaInfoItem: ApiMetaInfo,
+        parameters: Parameter[]
+    ): {[key: string]: Schema} {
+
+        const result = {};
+
+        const paramsModelName = this.config.parametersModelName(
+            metaInfoItem.baseTypeName
+        );
+
+        const paramsSchema: SchemaObject = {
+            type: "object",
+            required: [],
+            properties: {}
+        };
+
+        // process parameters
+        _.each(parameters || {}, (parameter: Parameter, index) => {
+            if (parameter.schema) {
+
+                paramsSchema.properties[parameter.name] = parameter.schema;
+                paramsSchema.properties[parameter.name]["readOnly"] = parameter.readOnly;
+                if (parameter.required) {
+                    paramsSchema.required.push(parameter.name);
+                }
+
+                if (index === 0) {
+                    metaInfoItem.typingsDependencies.push(paramsModelName);
+                    metaInfoItem.paramsModelName = paramsModelName;
+                    metaInfoItem.paramsSchema = paramsSchema;
+                }
+
+                if (parameter.in === ParameterIn.Query) {
+                    metaInfoItem.queryParams.push(parameter.name);
+                }
+
+                // fixme Need to test this place
+                // if(parameter.description)
+                //    result[paramsModelName].description = parameter.description;
+
+                if (!paramsSchema.description) {
+                    paramsSchema.description = `Model of parameters for API ${metaInfoItem.path}`;
+                }
+
+                result[paramsModelName] = paramsSchema;
+            }
+        });
+
+        return result;
+    }
+
+    protected _pickApiMethodResponses(
+        metaInfoItem: ApiMetaInfo,
+        responses: {[key: string]: Response}
+    ): {[key: string]: Schema} {
+
+        const result = {};
+
+        _.each(responses, (
+            response: Response,
+            code: number
+        ) => {
+
+            if (response.$ref) {
+                response = _.merge(
+                    _.omit(response, ['$ref']),
+                    this.getSchemaByPath(response.$ref)
+                );
+            }
+
+            const contentSchemes = this._pickContentTypes(
+                response.content
+                    || response.schema
+                    || response || {}
+            );
+
+            // todo пока обрабатываются только контент и заголовки
+            _.each(contentSchemes, (
+                schema: any,
+                contentTypeKey: string
+            ) => {
+                // todo вынести в конфиг правило формирования имени
+                const modelName = this.config.responseModelName(
+                    metaInfoItem.baseTypeName,
+                    code,
+                    contentTypeKey
+                );
+
+                // Success responses using as a default response
+                if (Math.round(code / 100) === 2) {
+                    metaInfoItem.responseModelName = modelName;
+                    metaInfoItem.typingsDependencies.push(modelName);
+                    metaInfoItem.responseSchema = schema;
+                }
+
+                // add description if it's set
+                if (schema && response.description) {
+                    schema.description = response.description;
+                }
+
+                result[modelName] = schema;
+            });
+
+            if(response.headers) {
+                const modelName = this.config.headersModelName(
+                    metaInfoItem.baseTypeName,
+                    code
+                );
+
+                result[modelName] = {
+                    type: "object",
+                    properties: response.headers
+                };
+            }
+        });
+
+        return result;
+    }
+
+    protected _pickApiMethodBody(
+        metaInfoItem: ApiMetaInfo,
+        requestBody: any
+    ): {[key: string]: Schema} {
+
+        const result = {};
+        const contentSchemes = this._pickContentTypes(requestBody);
+        const schemas = _(contentSchemes)
+            .mapValues((v, k) => {
+                // `multipart` items marked as a FormData
+                if (k === 'multipart') {
+                    return {
+                        anyOf: [
+                            v,
+                            {
+                                'instanceof': 'FormData',
+                                'x-generic': v
+                            }
+                        ]
+                    };
+                } else {
+                    return v;
+                }
+            })
+            .values()
+            .compact()
+            .value();
+
+        const modelName = this.config.requestModelName(
+            metaInfoItem.baseTypeName
+        );
+
+        if (schemas.length) {
+            const readySchema = (schemas.length === 1)
+                ? _.head(schemas)
+                : { anyOf: schemas };
+
+            result[modelName] = readySchema;
+            metaInfoItem.typingsDependencies.push(modelName);
+            metaInfoItem.requestModelName = modelName;
+            metaInfoItem.requestSchema = readySchema;
+        }
+
+        return result;
+    }
+
+    /**
+     * Pick of schemes appropriate to different content types
+     * @param contentTypesContainer
+     * @private
+     */
+    protected _pickContentTypes(contentTypesContainer): {
+        [contentTypeKey: string]: Schema
+    } {
+        const picked = _(contentTypesContainer)
+            .pick(_.keys(usedContentTypes))
+            .mapValues(data => data.schema || data)
+            .mapKeys((v, key) => usedContentTypes[key])
+            .value();
+
+        return _.values(picked).length
+            ? picked
+            : _.zipObject(
+                [defaultContentTypeKey],
+                [contentTypesContainer]
+            );
     }
 
     /**

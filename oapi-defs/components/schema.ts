@@ -14,5 +14,5 @@ export interface Schema extends ObjectWithRef {
      * Custom property means the property of this
      * schema is read only.
      */
-    readOnly: boolean;
+    readOnly?: boolean;
 }

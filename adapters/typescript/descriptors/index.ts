@@ -7,6 +7,7 @@ import { NullTypeScriptDescriptor } from "./null";
 import { EnumTypeScriptDescriptor } from "./enum";
 import { ArrayTypeScriptDescriptor } from "./array";
 import { SomeOfTypeScriptDescriptor } from "./some-of";
+import { Instanceof } from "./instanceof";
 
 /**
  * Правила для определения: какой тип данных будет использоваться.
@@ -168,6 +169,19 @@ export const rules = [
             additionalProperties: true
         },
         classConstructor: NullTypeScriptDescriptor
+    },
+    {
+        rule: {
+            type: 'object',
+            required: ['instanceof'],
+            properties: {
+                'instanceof': {
+                    type: 'string'
+                }
+            },
+            additionalProperties: true
+        },
+        classConstructor: Instanceof
     },
     // тип по-умолчанию
     {

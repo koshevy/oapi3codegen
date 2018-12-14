@@ -10,6 +10,8 @@ export interface ConvertorConfig {
      */
     defaultContentType: string,
 
+    defaultContentTypeKey: string,
+
     /**
      * Regex which is using for extract JSON Path parts.
      */
@@ -115,6 +117,8 @@ export const defaultConfig: ConvertorConfig = {
      */
     defaultContentType: "application/json",
 
+    defaultContentTypeKey: 'json',
+
     /**
      * Regex which is using for extract JSON Path parts.
      */
@@ -195,10 +199,10 @@ export const defaultConfig: ConvertorConfig = {
      * @returns {string}
      * fixme contentType is not using now
      */
-    responseModelName: (baseTypeName, code, contentType = null) =>
+    responseModelName: (baseTypeName, code, contentTypeKey = null) =>
         `${baseTypeName}${
-            (contentType && contentType !== defaultConfig.defaultContentType) 
-                ? `_${_.camelCase(contentType)}`
+            (contentTypeKey && contentTypeKey !== defaultConfig.defaultContentTypeKey) 
+                ? `_${_.capitalize(contentTypeKey)}`
                 : ''
         }Response${code != 200 ? code : ''}`,
 

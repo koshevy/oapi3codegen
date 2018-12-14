@@ -9,7 +9,7 @@ export interface OApiPath {
             operationId: string,
             requestBody: Components.Schema,
             parameters: Array<Components.Parameter>,
-            responses: Array<Components.Response>
+            responses: { [key: string]: Components.Response }
         }
     }
 }
