@@ -111,9 +111,17 @@ export abstract class ApiMethodBase<R, B, P = null> {
                 verbose: true,
                 schemas: [domainSchema],
                 // fixme нужно добавить основные OAS3-форматы
-                formats: {
-                    float: v => Number.isInteger(Number(v))
-                }
+                formats: {},
+                // Swagger's custom formats not supported yet
+                unknownFormats: [
+                    'password',
+                    'byte',
+                    'binary',
+                    'float',
+                    'double',
+                    'int32',
+                    'int64'
+                ]
             });
         }
 
