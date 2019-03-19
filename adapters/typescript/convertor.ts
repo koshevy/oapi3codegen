@@ -176,7 +176,7 @@ export class Convertor extends BaseConvertor {
                     'readonly',
                     'nullable'
                 ]),
-            ).length
+            ).length;
 
             if(valuableOptionsCount === 1) {
                 result = (name && !this.config.implicitTypesRefReplacement)

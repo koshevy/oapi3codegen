@@ -19,9 +19,7 @@ import {
 } from 'rxjs';
 
 import { ApiSchema } from './api-schema';
-import {
-    ServersData
-} from './servers.data.provider';
+import { ServersInfo } from './servers.info.provider';
 import {
     ApiErrorEventType,
     ApiErrorHandler,
@@ -32,7 +30,6 @@ import {
 // переопределение глобальных настроек `Lodash template`
 _.templateSettings.interpolate = /{([\s\S]+?)}/g;
 
-declare const Number: any;
 
 export abstract class ApiMethodBase<R, B, P = null> {
 
@@ -41,7 +38,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
     } = {};
 
     protected abstract get method(): | ('DELETE' | 'GET' | 'HEAD' | 'JSONP' | 'OPTIONS')
-                                     | ('POST'   | 'PUT' | 'PATCH');
+        | ('POST'   | 'PUT' | 'PATCH');
 
     /**
      * JSON Schema, используемая для проверки данных запросов.
@@ -67,12 +64,6 @@ export abstract class ApiMethodBase<R, B, P = null> {
      */
     protected abstract get servers(): string[];
 
-    /**
-     * Мокап-данные для этого поля.
-     * @returns {any}
-     */
-    protected abstract get mockData(): any;
-
     private _ajvComplier: Ajv.Ajv;
 
     /**
@@ -86,12 +77,12 @@ export abstract class ApiMethodBase<R, B, P = null> {
      * @param {HttpClient} httpClient
      * @param {ApiErrorHandler} errorHandler
      * Обработчик ошибок HTTP-запросов и
-     * @param {ServersData} serversData
+     * @param {ServersInfo} serversInfo
      */
     constructor(
         protected httpClient: HttpClient,
         protected errorHandler: ApiErrorHandler,
-        protected serversData: ServersData,
+        protected serversInfo: ServersInfo,
         domainSchema
     ) {
         const schemaId = domainSchema['$id'];
@@ -134,13 +125,34 @@ export abstract class ApiMethodBase<R, B, P = null> {
      * @returns {string | null}
      */
     public getServerPath(): string | null {
-        for (const serverPath of this.servers) {
-            if (this.serversData[serverPath]) {
-                return _.trim(this.serversData[serverPath], '/');
-            }
+        const serversInfo = this.serversInfo;
+        const whiteUrls = _.intersection(
+            (serversInfo.urlWhitelist || []),
+            this.servers
+        );
+
+        const customRedefine = serversInfo.customRedefines
+            && _.find(
+                serversInfo.customRedefines,
+                redefine => this instanceof redefine.serviceClass
+            );
+
+        if (!whiteUrls.length) {
+            throw new Error('No server URL\'s in white list!');
         }
 
-        return null;
+        const serverUrl = _.first(whiteUrls);
+
+        // looking for custom redefines of server url
+        // particulary for that class
+        if (customRedefine) {
+            return customRedefine.serverUrl;
+        } else if (serversInfo.redefines[serverUrl]) {
+            // or looking for common redefines of server url
+            return serversInfo.redefines[serverUrl];
+        }
+
+        return serverUrl;
     }
 
     /**
@@ -169,7 +181,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
         // fixme query не используется
         const query = _.pick(params || {}, this.queryParams);
         const path = _.template(this.pathTemplate)(params || {});
-        const server = this.getServerPath();
+        const server = _.trimEnd(this.getServerPath(), '/');
 
         // fixme FE App: временное решение для получения строки Query
         const queryString = _(query)
@@ -187,75 +199,35 @@ export abstract class ApiMethodBase<R, B, P = null> {
         // обработчиком запроса в компоненте, но при этом не
         // придется добавлять уровень в Observable.
 
-        // Если для этого сервера указан
-        // путь в "белом списке", идет обращение к нему.
-        // Иначе — обращение к mock-данным
-        if (server) {
-            const url = `${server || ''}${path}?${queryString}`;
-            const request = new HttpRequest<B>(this.method, url, payLoad, requestOptions);
+        const url = `${server || ''}${path}?${queryString}`;
+        const request = new HttpRequest<B>(this.method, url, payLoad, requestOptions);
 
-            return Observable.create((subscriber: Subscriber<R>) => {
+        return Observable.create((subscriber: Subscriber<R>) => {
 
-                // fixme заголовки не проверяются. надо реализовать
+            // todo should validate headers
 
-                // валидация входных параметров
-                (this._validate(
-                    params,
-                    ValidationType.ParamsValidation,
-                    subscriber,
-                    statusSubject
-                ) !== false)
+            // валидация входных параметров
+            (this._validate(
+                params,
+                ValidationType.ParamsValidation,
+                subscriber,
+                statusSubject
+            ) !== false)
 
-                // валидация тела запроса
-                && (this._validate(
-                    payLoad,
-                    ValidationType.RequestValidation,
-                    subscriber,
-                    statusSubject
-                ) !== false)
+            // валидация тела запроса
+            && (this._validate(
+                payLoad,
+                ValidationType.RequestValidation,
+                subscriber,
+                statusSubject
+            ) !== false)
 
-                // Если ошибки валидации не прерывали запрос
-                // (зависит от того, как реализован обработчик,
-                // подробнее в описании ApiErrorHandler):
-                // попытка отправить запрос.
-                && this.requestAttempt(request, subscriber, statusSubject);
-            });
-        } else {
-            return Observable.create((subscriber: Subscriber<R>) => {
-
-                // валидация входных параметров
-                (this._validate(
-                    params,
-                    ValidationType.ParamsValidation,
-                    subscriber,
-                    statusSubject
-                ) !== false)
-
-                // валидация тела запроса
-                && (this._validate(
-                    payLoad,
-                    ValidationType.RequestValidation,
-                    subscriber,
-                    statusSubject
-                ) !== false)
-
-                // валидация ответа (якобы ответа :)
-                && (this._validate(
-                    this.mockData,
-                    ValidationType.ResponseValidation,
-                    subscriber,
-                    statusSubject
-                ) !== false)
-
-                // Если ошибки валидации не прерывали запрос
-                // (зависит от того, как реализован обработчик,
-                // подробнее в описании ApiErrorHandler):
-                // возврат мокапов.
-                && subscriber.next(this.mockData);
-
-                subscriber.complete();
-            });
-        }
+            // Если ошибки валидации не прерывали запрос
+            // (зависит от того, как реализован обработчик,
+            // подробнее в описании ApiErrorHandler):
+            // попытка отправить запрос.
+            && this.requestAttempt(request, subscriber, statusSubject);
+        });
     }
 
     /**
@@ -297,7 +269,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
                     case HttpEventType.Sent:
                         break;
 
-                    // fixme дописать другие варианты
+                    // todo дописать другие варианты
 
                     // Данные получены успешно
                     case HttpEventType.Response:

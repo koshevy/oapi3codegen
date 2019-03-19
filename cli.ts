@@ -81,6 +81,40 @@ const apiServiceTemplate = _.template(require('oapi3codegen-agent-angular/templa
     .get('api-service')
     .toString());
 
+const jsonStringifyReplacer = (key, value: any) => {
+
+    // adding supports of Swagger's `nullable`
+    if (_.isObject(value) && value.nullable) {
+        delete value.nullable;
+        const schemaCopy = _.cloneDeep(value);
+
+        return {
+            anyOf: [
+                {
+                    type: 'null',
+                    description: 'OApi Nullable'
+                },
+                schemaCopy
+            ]
+        };
+    }
+
+    // cut off titles and descriptions
+    if (
+        _.includes(['description', 'title'], key)
+        && ('string' === typeof key)) {
+
+        return undefined;
+    }
+
+    // cut off examples
+    if (key === 'example') {
+        return undefined;
+    }
+
+    return value;
+};
+
 // work with URL
 if(srcPath.match(/^https?:/)) {
     download(srcPath).then(data => {
@@ -128,41 +162,15 @@ function executeCliAction(oapiData) {
         `${baseFileName}.json`
     );
 
+    const servicesIndex = [];
+
     oapiData.$id = `${baseFileName}.json`;
 
     fsExtra.outputFile(
         newOapiFilePath,
         JSON.stringify(
             oapiData,
-            (key, value: any) => {
-
-                // adding supports of Swagger's `nullable`
-                if (_.isObject(value) && value.nullable) {
-                    delete value.nullable;
-                    const schemaCopy = _.cloneDeep(value);
-
-                    return {
-                        anyOf: [
-                            {
-                                type: 'null',
-                                description: 'Parsed nullable'
-                            },
-                            schemaCopy
-                        ]
-                    };
-                }
-
-                // cut off examples and descriptions
-                if (key === 'description' && ('string' === typeof key)) {
-                    return '';
-                }
-
-                if (key === 'example') {
-                    return undefined;
-                }
-
-                return value;
-            }
+            jsonStringifyReplacer
         )
     );
 
@@ -179,7 +187,6 @@ function executeCliAction(oapiData) {
             convertorConfig.typingsDirectory
         );
 
-        // metaInfoItem.mockData =
         const responseDescriptor = convertor.convert(
             metaInfoItem.responseSchema,
             context,
@@ -189,11 +196,13 @@ function executeCliAction(oapiData) {
             []
         );
 
+        let mockData;
+
         if (responseDescriptor[0] &&
             responseDescriptor[0] instanceof ObjectTypeScriptDescriptor
         ) {
             const responseModel = <ObjectTypeScriptDescriptor>responseDescriptor[0];
-            metaInfoItem.mockData = responseModel.getExampleValue();
+            mockData = responseModel.getExampleValue();
         }
 
         metaInfoItem = _.mapValues(metaInfoItem, (v, k) => {
@@ -207,8 +216,10 @@ function executeCliAction(oapiData) {
                 case 'responseSchema':
                 case 'requestSchema':
                 case 'paramsSchema':
-                case 'mockData':
-                    return JSON.stringify(v).replace(
+                    return JSON.stringify(
+                        v,
+                        jsonStringifyReplacer
+                    ).replace(
                         /"#\/components/g,
                         `"${baseFileName}.json#/components`
                     );
@@ -219,6 +230,8 @@ function executeCliAction(oapiData) {
 
         const serviceRendered = apiServiceTemplate(metaInfoItem);
 
+        servicesIndex.push(path.basename(serviceFileName, '.ts'));
+
         fsExtra.outputFile(
             serviceFileName,
             prettier.format(
@@ -227,6 +240,20 @@ function executeCliAction(oapiData) {
             )
         );
     });
+
+    // output index of services
+    fsExtra.outputFile(
+        path.resolve(
+            servicesPathAbs,
+            './index.ts'
+        ),
+        prettier.format(
+            _.map(servicesIndex, serviceFileName =>
+                `export * from './${serviceFileName}';`
+            ).join('\n'),
+            prettierOptions
+        )
+    );
 
     /**
      * Rendering each type:

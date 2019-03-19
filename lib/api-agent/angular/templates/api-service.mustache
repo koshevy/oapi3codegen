@@ -3,7 +3,11 @@ import { HttpClient } from '@angular/common/http';
 
 import { ApiMethodBase } from 'oapi3codegen-agent-angular/api-method.base';
 import { ApiSchema } from 'oapi3codegen-agent-angular/api-schema';
-import { SERVERS_DATA, ServersData } from 'oapi3codegen-agent-angular/servers.data.provider';
+import {
+  SERVERS_INFO,
+  ServersInfo
+} from 'oapi3codegen-agent-angular/servers.info.provider';
+
 import {
   API_ERROR_HANDLER,
   ApiErrorHandler
@@ -71,33 +75,25 @@ export class {{baseTypeName}}Service extends ApiMethodBase<{{responseModelName}}
         } as any;
     }
 
-    /**
-     * Mock data when servers is disabled (in DEV-mode).
-     * @returns {any}
-     */
-    protected get mockData(): any {
-        return {{mockData}} as any;
-    }
-
 		// *** Methods
 
     /**
      * @param {HttpClient} httpClient
      * @param {ApiErrorHandler} errorHandler
      * Обработчик ошибок HTTP-запросов и
-     * @param {ServersData} serversData
+     * @param {ServersInfo} serversInfo
      */
     constructor(
         protected httpClient: HttpClient,
         @Inject(API_ERROR_HANDLER)
             protected errorHandler: ApiErrorHandler,
-        @Inject(SERVERS_DATA)
-            protected serversData: ServersData
+        @Inject(SERVERS_INFO)
+            protected serversInfo: ServersInfo
     ) {
         super(
             httpClient,
             errorHandler,
-            serversData,
+            serversInfo,
             domainSchema
         );
     }
