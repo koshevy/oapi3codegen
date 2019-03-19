@@ -103,6 +103,8 @@ export interface ConvertorConfig {
      * for Angular.
      */
     servicesDirectory: string
+
+    mocksDirectory: string
 }
 
 /**
@@ -215,5 +217,7 @@ export const defaultConfig: ConvertorConfig = {
      * Name of directory with generated API-services
      * for Angular.
      */
-    servicesDirectory: './services'
+    servicesDirectory: './services',
+
+    mocksDirectory: './mocks'
 };

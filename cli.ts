@@ -70,6 +70,11 @@ const servicesPathAbs = path.resolve(
     convertorConfig.servicesDirectory
 );
 
+const mocksPathAbs = path.resolve(
+    destPathAbs,
+    convertorConfig.mocksDirectory
+);
+
 // ******************
 // *** Implementation
 
@@ -181,6 +186,11 @@ function executeCliAction(oapiData) {
             `./${_.kebabCase(metaInfoItem.baseTypeName)}.service.ts`
         );
 
+        const mockFileName = path.resolve(
+            mocksPathAbs,
+            `./${_.kebabCase(metaInfoItem.baseTypeName)}.json`
+        );
+
         metaInfoItem.apiSchemaFile = baseFileName;
         metaInfoItem.typingsDirectory = path.join(
             '../',
@@ -232,6 +242,7 @@ function executeCliAction(oapiData) {
 
         servicesIndex.push(path.basename(serviceFileName, '.ts'));
 
+        // save file with service
         fsExtra.outputFile(
             serviceFileName,
             prettier.format(
@@ -239,6 +250,14 @@ function executeCliAction(oapiData) {
                 prettierOptions
             )
         );
+
+        // save JSON-file with mock
+        if (mockData) {
+            fsExtra.outputFile(
+                mockFileName,
+                JSON.stringify(mockData, null, '  ')
+            );
+        }
     });
 
     // output index of services
