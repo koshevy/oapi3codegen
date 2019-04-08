@@ -106,7 +106,7 @@ const jsonStringifyReplacer = (key, value: any) => {
 
     // cut off titles and descriptions
     if (
-        _.includes(['description', 'title'], key)
+        _.includes(['description' /*, 'title' */], key)
         && ('string' === typeof key)) {
 
         return undefined;
