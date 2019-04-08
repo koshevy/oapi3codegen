@@ -8,12 +8,9 @@ import * as _ from 'lodash';
 import * as prettier from 'prettier';
 import * as fsExtra from 'fs-extra';
 import * as download from 'download';
-import { getArvgParam } from './lib';
+import { getArvgParam } from './lib/helpers';
 
-import {
-    Convertor,
-    ClassRenderer
-} from './adapters/typescript';
+import { Convertor } from './adapters/typescript';
 import { ObjectTypeScriptDescriptor } from './adapters/typescript/descriptors/object';
 import {
     DataTypeDescriptor,
@@ -44,7 +41,7 @@ const convertorConfig: ConvertorConfig = _.mapValues(
 // Source OpenAPI-file (.json)
 const srcPath = getArvgParam('srcPath');
 
-// Directory which will contain generated files
+// Directory which will contain dist files
 const destPath = getArvgParam('destPath');
 
 // Whether should models output in separated files
@@ -55,7 +52,7 @@ if(!srcPath)
 
 const destPathAbs = destPath
     ? path.resolve(process.cwd(), destPath)
-    : path.resolve(process.cwd(), './generated-code');
+    : path.resolve(process.cwd(), './dist-code');
 
 /**
  * Path for models and types.
@@ -82,7 +79,7 @@ const convertor: Convertor = new Convertor(convertorConfig);
 
 const metaInfo: ApiMetaInfo[] = [];
 
-const apiServiceTemplate = _.template(require('oapi3codegen-agent-angular/templates')
+const apiServiceTemplate = _.template(require('oapi3codegen-agent-ng-api-service/templates')
     .get('api-service')
     .toString());
 
@@ -179,7 +176,7 @@ function executeCliAction(oapiData) {
         )
     );
 
-    // saving angular services
+    // saving ng-api-service services
     _.each(metaInfo, (metaInfoItem: ApiMetaInfo) => {
         const serviceFileName = path.resolve(
             servicesPathAbs,
@@ -282,21 +279,6 @@ function executeCliAction(oapiData) {
     Convertor.renderRecursive(
         entryPoints,
         (descriptor, text) => {
-
-            /*
-            fixme experimental code test
-            if (descriptor instanceof ObjectTypeScriptDescriptor){
-                const classRenderer = new ClassRenderer(
-                    <ObjectTypeScriptDescriptor>descriptor
-                );
-
-                const classCode = classRenderer.render();
-                console.log(prettier.format(
-                    classCode,
-                    {parser: 'typescript'}
-                ));
-            }
-            */
 
             // Single file
             if (!separatedFiles) {

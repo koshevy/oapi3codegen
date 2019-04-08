@@ -12,7 +12,7 @@ import {
     HttpRequest,
     HttpErrorResponse, HttpEvent
 } from '@angular/common/http';
-import { ApiMethodBase } from 'oapi3codegen-agent-angular/api-method.base';
+import { ApiService } from '../api.service';
 
 /**
  * Тип API-ошибки.
@@ -47,7 +47,7 @@ export interface ApiErrorEventData {
 
     /**
      * Отправитель запроса.
-     * todo нужно связать с ApiMethodBase. для этого надо вынести это в интерфейс
+     * todo нужно связать с ApiService. для этого надо вынести это в интерфейс
      */
     sender: any;
 
@@ -94,7 +94,7 @@ export class ValidationError {
 
         /**
          * Отправитель запроса.
-         * todo нужно связать с ApiMethodBase. для этого надо вынести это в интерфейс
+         * todo нужно связать с ApiService. для этого надо вынести это в интерфейс
          */
         public sender: any,
 

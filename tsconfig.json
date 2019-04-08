@@ -25,7 +25,7 @@
         "oapi-defs/*",
         "oapi-defs/common/*",
         "oapi-defs/components/*",
-        "lib/*"
+      "packages/*"
     ],
     "lib": [
         "es2017",

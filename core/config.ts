@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import {DataTypeDescriptor, DescriptorSchema} from "./data-type-descriptor";
 
 /**
  * Интерфейс конфигурации для ковертора.
@@ -10,6 +11,10 @@ export interface ConvertorConfig {
      */
     defaultContentType: string,
 
+    /**
+     * A key using for content type short describing
+     * assumed as a default key
+     */
     defaultContentTypeKey: string,
 
     /**
@@ -99,12 +104,21 @@ export interface ConvertorConfig {
     typingsDirectory: string;
 
     /**
-     * Name of directory with generated API-services
+     * Name of directory with dist API-services
      * for Angular.
      */
     servicesDirectory: string
 
+    /**
+     * Name of directory with extracted mocks
+     */
     mocksDirectory: string
+
+    /**
+     * Properties that should be excluded from
+     * comparison of two schemas ({@link DataTypeDescriptor})
+     */
+    excludeFromComparison: string[];
 }
 
 /**
@@ -119,6 +133,10 @@ export const defaultConfig: ConvertorConfig = {
      */
     defaultContentType: "application/json",
 
+    /**
+     * A key using for content type short describing
+     * assumed as a default key
+     */
     defaultContentTypeKey: 'json',
 
     /**
@@ -214,10 +232,26 @@ export const defaultConfig: ConvertorConfig = {
     typingsDirectory: './typings',
 
     /**
-     * Name of directory with generated API-services
+     * Name of directory with dist API-services
      * for Angular.
      */
     servicesDirectory: './services',
 
-    mocksDirectory: './mocks'
+    /**
+     * Name of directory with extracted mocks
+     */
+    mocksDirectory: './mocks',
+
+    /**
+     * Properties that should be excluded from
+     * comparison of two schemas ({@link DataTypeDescriptor})
+     */
+    excludeFromComparison: [
+        'description',
+        'title',
+        'example',
+        'default',
+        'readonly',
+        'nullable'
+    ]
 };

@@ -9,6 +9,6 @@ export interface SchemaObject extends Schema {
     example?: {[key: string]: any};
     default?: {[key: string]: any};
 
-    additionalProperties?: Schema;
+    additionalProperties?: Schema | boolean;
     properties?: {[key: string]: Schema};
 }

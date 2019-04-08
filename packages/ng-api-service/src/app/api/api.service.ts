@@ -18,20 +18,20 @@ import {
     Subject
 } from 'rxjs';
 
-import { ApiSchema } from './api-schema';
-import { ServersInfo } from './servers.info.provider';
+import { ApiSchema } from './lib/api-schema';
+import { ServersInfo } from './lib/servers.info.provider';
 import {
     ApiErrorEventType,
     ApiErrorHandler,
     ValidationType,
     ValidationError
-} from './event-manager.provider';
+} from './lib/event-manager.provider';
 
 // переопределение глобальных настроек `Lodash template`
 _.templateSettings.interpolate = /{([\s\S]+?)}/g;
 
 
-export abstract class ApiMethodBase<R, B, P = null> {
+export abstract class ApiService<R, B, P = null> {
 
     private static _ajv: {
         [key: string]: Ajv.Ajv
@@ -90,8 +90,8 @@ export abstract class ApiMethodBase<R, B, P = null> {
             throw new Error('Domain schema should have an id!')
         }
 
-        if (!ApiMethodBase._ajv[schemaId]) {
-            ApiMethodBase._ajv[schemaId] = new Ajv({
+        if (!ApiService._ajv[schemaId]) {
+            ApiService._ajv[schemaId] = new Ajv({
                 allErrors: true,
                 coerceTypes: false,
                 ownProperties: true,
@@ -116,7 +116,7 @@ export abstract class ApiMethodBase<R, B, P = null> {
             });
         }
 
-        this._ajvComplier = ApiMethodBase._ajv[schemaId];
+        this._ajvComplier = ApiService._ajv[schemaId];
     }
 
     /**

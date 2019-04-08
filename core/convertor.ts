@@ -1,6 +1,6 @@
 import * as fsExtra from 'fs-extra';
 import * as _ from 'lodash';
-import * as prettier from 'prettier';
+
 import { OApiStructure } from '../oapi-defs';
 import {
     DataTypeContainer,
@@ -32,7 +32,7 @@ const defaultContentTypeKey = 'json';
 
 /**
  * Content types could be used to describe
- * data in parameters, body ot responses
+ * mocks in parameters, body ot responses
  *
  * @type {{form: string; json: string; multipart: string; xml: string}}
  */

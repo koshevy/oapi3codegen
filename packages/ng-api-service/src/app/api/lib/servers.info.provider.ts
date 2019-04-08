@@ -19,13 +19,13 @@ export interface ServersInfo {
 
     /**
      * Custom redefining of paths for particualar services.
-     * Could be used in case when sublcass of {@link ApiMethodBase}
+     * Could be used in case when sublcass of {@link ApiService}
      * should work on different domain or mock server.
      */
     customRedefines?: [
         {
             /**
-             * Class of service (should be subclass of {@link ApiMethodBase})
+             * Class of service (should be subclass of {@link ApiService})
              */
             serviceClass: typeof Object.constructor,
 

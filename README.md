@@ -158,7 +158,7 @@ With time, it's supposed, possibilities of this plugin will be extended by:
 
 ### Ideology
 
-- **Data format loyalty:** it's should be as useful as it possible regardless validity of source data.
+- **Data format loyalty:** it's should be as useful as it possible regardless validity of source mocks.
 - **Integration**: solution should be able to be integrated to any system (at least, based on NPM). It's mean, should have CLI and API.
 
 ### Why not swagger-codegen?

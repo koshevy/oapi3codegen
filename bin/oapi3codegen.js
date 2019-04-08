@@ -4,7 +4,7 @@ const path = require('path');
 const execa = require('execa');
 const fsExtra = require('fs-extra');
 const _ = require('lodash');
-const { getArvgParam } = require('../lib');
+const { getArvgParam } = require('../lib/helpers');
 
 const params = _.mapValues({
     srcPath: undefined,
@@ -16,7 +16,7 @@ const params = _.mapValues({
 
 // work in curent dir, not in plugin dir
 if(!params.destPath) {
-  params.destPath = path.resolve(process.cwd(), './generated-code');
+  params.destPath = path.resolve(process.cwd(), './dist-code');
 }
 
 const paramsString = _.compact(_.map(
@@ -24,7 +24,7 @@ const paramsString = _.compact(_.map(
   (v, k) => (v !== undefined) ? `--${k} ${v}` : null
 )).join(' ');
 
-const cliTsPath = path.resolve(__dirname, '../dist/cli.js');
+const cliTsPath = path.resolve(__dirname, '../dist/lib.js');
 
 // default plugin dir: for local install
 let oapi3codegenDir = path.resolve(

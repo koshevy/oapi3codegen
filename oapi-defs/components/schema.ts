@@ -9,10 +9,11 @@ export interface Schema extends ObjectWithRef {
     $ref?: string;
     example?: any;
     default?: any
-
     /**
      * Custom property means the property of this
      * schema is read only.
      */
     readOnly?: boolean;
+
+    [key: string]: any;
 }

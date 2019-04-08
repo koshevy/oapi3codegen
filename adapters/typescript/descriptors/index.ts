@@ -1,13 +1,21 @@
-import { NumberTypeScriptDescriptor } from "./number";
-import { StringTypeScriptDescriptor } from "./string";
-import { BooleanTypeScriptDescriptor } from "./boolean";
-import { ObjectTypeScriptDescriptor } from "./object";
+import { SchemaObject } from "../../../oapi-defs/components";
+
+import { AbstractTypeScriptDescriptor } from "./abstract";
 import { AnyTypeScriptDescriptor } from "./any";
-import { NullTypeScriptDescriptor } from "./null";
-import { EnumTypeScriptDescriptor } from "./enum";
 import { ArrayTypeScriptDescriptor } from "./array";
-import { SomeOfTypeScriptDescriptor } from "./some-of";
+import { BooleanTypeScriptDescriptor } from "./boolean";
+import { EnumTypeScriptDescriptor } from "./enum";
 import { Instanceof } from "./instanceof";
+import { NullTypeScriptDescriptor } from "./null";
+import { NumberTypeScriptDescriptor } from "./number";
+import { ObjectTypeScriptDescriptor } from "./object";
+import { SomeOfTypeScriptDescriptor } from "./some-of";
+import { StringTypeScriptDescriptor } from "./string";
+
+export interface DescriptorRule {
+    rule: SchemaObject;
+    classConstructor: typeof AbstractTypeScriptDescriptor;
+}
 
 /**
  * Правила для определения: какой тип данных будет использоваться.
@@ -17,7 +25,7 @@ import { Instanceof } from "./instanceof";
  *
  * @type {Array}
  */
-export const rules = [
+export const rules: DescriptorRule[] = [
     {
         rule: {
             type: 'object',

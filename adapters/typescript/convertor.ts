@@ -164,18 +164,14 @@ export class Convertor extends BaseConvertor {
         // получение по $ref
         if (schema['$ref']) {
 
+            // Here convertor has to decide: whether a schema with a $ref
+            // equals with parent (pointed in the $ref) and, therefore,
+            // should be replaced by parent, or not and should get a new model.
+
             // исключаются элементы, которые не оказывают
             // влияния на определение типа (title, nullable и т.д.)
             const valuableOptionsCount = _.values(
-                _.omit(schema, [
-                    // fixme move to config. copypasted in descriptors/object.ts
-                    'description',
-                    'title',
-                    'example',
-                    'default',
-                    'readonly',
-                    'nullable'
-                ]),
+                _.omit(schema, defaultConfig.excludeFromComparison),
             ).length;
 
             if(valuableOptionsCount === 1) {

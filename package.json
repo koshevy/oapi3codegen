@@ -1,6 +1,6 @@
 {
-  "name": "oapi3codegen",
-  "version": "0.1.49",
+  "name": "@codegena/oapi3ts",
+  "version": "1.0.0",
   "description": "OpenAPI 3 codegeneration for TypeScript: interfaces, validations, APIs",
   "main": "index.ts",
   "bin": {
@@ -31,13 +31,12 @@
   "author": "koshevy",
   "license": "MIT",
   "dependencies": {
+    "@codegena/ng-api-service": "^1.0.0",
     "ajv": "^6.5.0",
     "download": "^7.0.0",
     "execa": "^0.10.0",
     "fs-extra": "^5.0.0",
     "lodash": "^4.17.11",
-    "oapi3codegen-agent-angular": "^1.0.6",
-    "oapi3codegen-assert": "^0.1.1",
     "prettier": "^1.12.1",
     "typescript": "^2.8.3"
   }
