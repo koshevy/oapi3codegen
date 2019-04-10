@@ -19,7 +19,7 @@ import {
 } from 'rxjs';
 
 import { ApiSchema } from './lib/api-schema';
-import { ServersInfo } from './lib/servers.info.provider';
+import { ServersInfo, UrlWhitelistDefinitions } from './lib/servers.info.provider';
 import {
     ApiErrorEventType,
     ApiErrorHandler,
@@ -27,9 +27,16 @@ import {
     ValidationError
 } from './lib/event-manager.provider';
 
+/**
+ * Reg of localhost-based URLS
+ * @type {RegExp}
+ */
+const localhostReg = /^(https?:)?\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)/u;
+
 // переопределение глобальных настроек `Lodash template`
 _.templateSettings.interpolate = /{([\s\S]+?)}/g;
 
+declare const Error;
 
 export abstract class ApiService<R, B, P = null> {
 
@@ -38,7 +45,7 @@ export abstract class ApiService<R, B, P = null> {
     } = {};
 
     protected abstract get method(): | ('DELETE' | 'GET' | 'HEAD' | 'JSONP' | 'OPTIONS')
-        | ('POST'   | 'PUT' | 'PATCH');
+                                     | ('POST'   | 'PUT' | 'PATCH');
 
     /**
      * JSON Schema, используемая для проверки данных запросов.
@@ -126,10 +133,7 @@ export abstract class ApiService<R, B, P = null> {
      */
     public getServerPath(): string | null {
         const serversInfo = this.serversInfo;
-        const whiteUrls = _.intersection(
-            (serversInfo.urlWhitelist || []),
-            this.servers
-        );
+        const allowedUrls = this.getActualUrls();
 
         const customRedefine = serversInfo.customRedefines
             && _.find(
@@ -137,17 +141,20 @@ export abstract class ApiService<R, B, P = null> {
                 redefine => this instanceof redefine.serviceClass
             );
 
-        if (!whiteUrls.length) {
+        if (!allowedUrls.length) {
             throw new Error('No server URL\'s in white list!');
         }
 
-        const serverUrl = _.first(whiteUrls);
+        const serverUrl = _.first(allowedUrls);
 
         // looking for custom redefines of server url
         // particulary for that class
         if (customRedefine) {
             return customRedefine.serverUrl;
-        } else if (serversInfo.redefines[serverUrl]) {
+        } else if (
+            serversInfo.redefines &&
+            serversInfo.redefines[serverUrl]
+        ) {
             // or looking for common redefines of server url
             return serversInfo.redefines[serverUrl];
         }
@@ -156,8 +163,54 @@ export abstract class ApiService<R, B, P = null> {
     }
 
     /**
-     * Обращение к API-методу.
-     *
+     * Get url's list have to be used in queries
+     * @returns {string[]}
+     */
+    public getActualUrls(): string[] {
+        let result: string[];
+
+        switch (this.serversInfo.urlWhitelist) {
+            // allow all server URLs
+            case UrlWhitelistDefinitions.AllowAll:
+                result = this.servers;
+                break;
+            // filter only localhost-based server URLs
+            case UrlWhitelistDefinitions.AllowLocalhost:
+                result =  _.filter(
+                    this.servers,
+                    (s: string) => localhostReg.test(s)
+                );
+                break;
+            // Replaces all url's with http://localhost
+            case UrlWhitelistDefinitions.ForceToLocalhost:
+                result =  ['http://localhost'];
+                break;
+
+            default:
+                // Expected to be array of string
+                if (_.isString(this.serversInfo.urlWhitelist)) {
+                    result = _.intersection(
+                        this.serversInfo.urlWhitelist as string[],
+                        this.servers
+                    );
+                } else {
+                    throw new Error(
+                        'Fatal error in @codegena/ng-api-service: please, set correct `urlWhitelist` in ServersInfo!'
+                    );
+                }
+
+        }
+
+        if (!result.length) {
+            throw new Error(
+                'Fatal error in @codegena/ng-api-service: no allowed url\'s in whitelist!'
+            );
+        }
+
+        return result;
+    }
+
+    /**
      * @param {B} payLoad
      * @param {P} params
      * @param {Object} requestOptions
@@ -350,7 +403,7 @@ export abstract class ApiService<R, B, P = null> {
                 // todo сделать имитацию событий в statusSubject
 
                 // Если обрабочтик вернул `false`,
-                // работа прерывается.
+                // ошибка игнорируется
                 if (handleResult !== false) {
                     subscriber.error(errorData);
                     return false;

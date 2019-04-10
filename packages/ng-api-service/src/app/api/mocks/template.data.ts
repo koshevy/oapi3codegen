@@ -1,7 +1,8 @@
-import {ApiServiceTemplateData} from "../templates";
+import { ApiServiceTemplateData } from "../templates";
+declare const JSON;
 
-export const findPets: ApiServiceTemplateData = {
-    apiSchemaFile: JSON.stringify('./api/mocks/pet-shop.json'),
+export const FindPetsService: ApiServiceTemplateData = {
+    apiSchemaFile: JSON.stringify('../mocks/specs/pet-shop.json'),
     baseTypeName: 'FindPets',
     method: '\'GET\'',
     paramsModelName: 'FindPetsParams',
@@ -21,7 +22,7 @@ export const findPets: ApiServiceTemplateData = {
         }
     }),
     path: JSON.stringify('/pets'),
-    queryParams: ['tags', 'limit'],
+    queryParams: JSON.stringify(['tags', 'limit']),
     responseModelName: 'FindPetsResponse',
     responseSchema: JSON.stringify({
         '200': {
@@ -31,7 +32,7 @@ export const findPets: ApiServiceTemplateData = {
                     "schema": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Pet"
+                            "$ref": "petShop#/components/schemas/Pet"
                         }
                     }
                 }
@@ -42,7 +43,7 @@ export const findPets: ApiServiceTemplateData = {
             "content": {
                 "application/json": {
                     "schema": {
-                        "$ref": "#/components/schemas/Error"
+                        "$ref": "petShop#/components/schemas/Error"
                     }
                 }
             }
@@ -50,7 +51,7 @@ export const findPets: ApiServiceTemplateData = {
     }),
     requestModelName: 'null',
     requestSchema: JSON.stringify(null),
-    servers: [JSON.stringify('http://petstore.swagger.io/api')],
+    servers: JSON.stringify(['http://petstore.swagger.io/api']),
     typingsDependencies: ['FindPetsParams', 'FindPetsResponse'],
-    typingsDirectory: './typings/pets'
+    typingsDirectory: '../mocks/typings'
 };

@@ -1,22 +1,22 @@
 import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { ApiService } from '@codegena/ng-api-service/api-method.base';
-import { ApiSchema } from '@codegena/ng-api-service/api-schema';
+import { ApiService } from '@codegena/ng-api-service/api.service';
+import { ApiSchema } from '@codegena/ng-api-service/lib/api-schema';
 import {
   SERVERS_INFO,
   ServersInfo
-} from '@codegena/ng-api-service/servers.info.provider';
+} from '@codegena/ng-api-service/lib/servers.info.provider';
 
 import {
   API_ERROR_HANDLER,
   ApiErrorHandler
-} from '@codegena/ng-api-service/event-manager.provider';
+} from '@codegena/ng-api-service/lib/event-manager.provider';
 
 // Typings for this API method
 import { {{typingsDependencies}} } from '{{typingsDirectory}}';
 
-import * as domainSchema from './{{apiSchemaFile}}.json';
+import * as domainSchema from {{apiSchemaFile}};
 
 /**
  * Service for angular based on ApiAgent solution.

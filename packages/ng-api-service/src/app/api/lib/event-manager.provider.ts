@@ -143,27 +143,27 @@ export interface ApiErrorHandler {
  * действия API.
  * @type {Subject<any>}
  */
-export const resetApiEvents = new Subject<any>();
+export const resetApiSubscribers = new Subject<any>();
 
 /**
  * Поток для привязки к нему отмены подписки на текущие запросы.
  * todo нужно решить как его использовать (и стоит ли)
  * @type {InjectionToken<Subject<any>>}
  */
-export const RESET_API_EVENTS = new InjectionToken<Subject<any>>('ResetApiEvents');
+export const RESET_API_SUBSCRIBERS = new InjectionToken<Subject<any>>('RESET_API_SUBSCRIBERS');
 
 /**
  * Токен для внедрения  менеджера ошибок, который будет
  * обрабатывать глобальные события.
  * @type {InjectionToken<EventManager>}
  */
-export const API_ERROR_HANDLER = new InjectionToken<ApiErrorHandler>('ApiErrorHandler');
+export const API_ERROR_HANDLER = new InjectionToken<ApiErrorHandler>('API_ERROR_HANDLER');
 
 
 export const ERROR_EVENTS_PROVIDER = [
     {
-        provide: RESET_API_EVENTS,
-        useValue: resetApiEvents
+        provide: RESET_API_SUBSCRIBERS,
+        useValue: resetApiSubscribers
     },
     {
         // по-умолчанию, обработчиков нет

@@ -4,9 +4,10 @@
   "version": "2.0.0",
   "scripts": {
     "ng": "ng",
+    "prepare": "tsc --outDir ./src/dist ./src/prepare.ts && node ./src/dist/prepare.js",
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test",
+    "test": "npm run prepare && ng test",
     "lint": "ng lint"
   },
   "private": true,
