@@ -18,14 +18,14 @@ import {
     Subject
 } from 'rxjs';
 
-import { ApiSchema } from './lib/api-schema';
-import { ServersInfo, UrlWhitelistDefinitions } from './lib/servers.info.provider';
+import { ApiSchema } from './providers/api-schema';
+import { ServersInfo, UrlWhitelistDefinitions } from './providers/servers.info.provider';
 import {
     ApiErrorEventType,
     ApiErrorHandler,
     ValidationType,
     ValidationError
-} from './lib/event-manager.provider';
+} from './providers/event-manager.provider';
 
 /**
  * Reg of localhost-based URLS
@@ -37,6 +37,11 @@ const localhostReg = /^(https?:)?\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)/u;
 _.templateSettings.interpolate = /{([\s\S]+?)}/g;
 
 declare const Error;
+
+export interface RequestMetadataResponse {
+    url?: string;
+    request?: Request
+}
 
 export abstract class ApiService<R, B, P = null> {
 
@@ -133,7 +138,7 @@ export abstract class ApiService<R, B, P = null> {
      */
     public getServerPath(): string | null {
         const serversInfo = this.serversInfo;
-        const allowedUrls = this.getActualUrls();
+        const allowedUrls = this.getActualServerUrls();
 
         const customRedefine = serversInfo.customRedefines
             && _.find(
@@ -166,7 +171,7 @@ export abstract class ApiService<R, B, P = null> {
      * Get url's list have to be used in queries
      * @returns {string[]}
      */
-    public getActualUrls(): string[] {
+    public getActualServerUrls(): string[] {
         let result: string[];
 
         switch (this.serversInfo.urlWhitelist) {
@@ -216,6 +221,10 @@ export abstract class ApiService<R, B, P = null> {
      * @param {Object} requestOptions
      * @param {Subject<HttpEvent<R>>} statusSubject
      * @param {number} remainAttemptsNumber
+     * @param {RequestMetadataResponse} metadataResponse
+     * Object that can be set for getting immediate response
+     * with metadata of request. Mainly has uses in tests.
+     *
      * @returns {Observable<R>}
      */
     public request(
@@ -228,7 +237,8 @@ export abstract class ApiService<R, B, P = null> {
             responseType?: 'arraybuffer' | 'blob' | 'json' | 'text';
             withCredentials?: boolean;
         } = {},
-        statusSubject?: Subject<HttpEvent<R>>
+        statusSubject?: Subject<HttpEvent<R>>,
+        metadataResponse?: RequestMetadataResponse
     ): Observable<R> {
 
         // fixme query не используется
@@ -236,9 +246,15 @@ export abstract class ApiService<R, B, P = null> {
         const path = _.template(this.pathTemplate)(params || {});
         const server = _.trimEnd(this.getServerPath(), '/');
 
-        // fixme FE App: временное решение для получения строки Query
+        // fixme temporary solution. Has to use HttpParams
+        /** {@link https://angular.io/api/common/http/HttpParams} */
         const queryString = _(query)
-            .map((v, k) => `${k}=` + (_.isArray(query) ? query.join(',') : v))
+            .map((v, k) => `${k}=` + (
+                _.isArray(query)
+                    ? query.join(',')
+                    : ((typeof v === 'number') || (typeof v === 'string'))
+                        ? v : JSON.stringify(v)
+            ))
             .value()
             .join('&');
 
@@ -254,6 +270,13 @@ export abstract class ApiService<R, B, P = null> {
 
         const url = `${server || ''}${path}?${queryString}`;
         const request = new HttpRequest<B>(this.method, url, payLoad, requestOptions);
+
+        if (metadataResponse) {
+            _.assign(metadataResponse, {
+                url,
+                request
+            });
+        }
 
         return Observable.create((subscriber: Subscriber<R>) => {
 
@@ -286,10 +309,10 @@ export abstract class ApiService<R, B, P = null> {
     /**
      * Попытка выполнения запроса, которая может быть повторена.
      * Метод используется для повторных запросов при обработке
-     * ошибок, а также, внутри метода `request`.
-     * @see request
+     * ошибок, а также, внутри метода `payload`.
+     * @see payload
      *
-     * @param {HttpRequest<B>} request
+     * @param {HttpRequest<B>} payload
      * @param {Subscriber<R>} subscriber
      * @param {Subject<HttpEvent<R>>} statusSubject
      * @param {HttpErrorResponse} lastError
@@ -297,7 +320,7 @@ export abstract class ApiService<R, B, P = null> {
      * @param {number} remainAttemptsNumber
      */
     public requestAttempt(
-        request: HttpRequest<B>,
+        payload: HttpRequest<B>,
         subscriber: Subscriber<R>,
         statusSubject?: Subject<HttpEvent<R>>,
         lastError?: HttpErrorResponse,
@@ -310,7 +333,7 @@ export abstract class ApiService<R, B, P = null> {
             return;
         }
 
-        this.httpClient.request(request).subscribe(
+        this.httpClient.request(payload).subscribe(
             (event: HttpEvent<any>) => {
                 // отправляется статус загрузки
                 if (statusSubject) {
@@ -326,8 +349,20 @@ export abstract class ApiService<R, B, P = null> {
 
                     // Данные получены успешно
                     case HttpEventType.Response:
+                        const body = (<HttpResponse<R>>event).body;
+                        const statusCode = (<HttpResponse<R>>event).status;
+
+                        // валидация ответа
+                        (this._validate(
+                            body,
+                            ValidationType.ResponseValidation,
+                            subscriber,
+                            statusSubject,
+                          statusCode
+                        ) !== false)
+
                         // передача данных подписчику
-                        subscriber.next((<HttpResponse<R>>event).body);
+                        && subscriber.next((<HttpResponse<R>>event).body);
 
                         break;
                 }
@@ -338,12 +373,11 @@ export abstract class ApiService<R, B, P = null> {
             // окажется положительным.
             (error: HttpErrorResponse) => this._handleHttpError(
                 subscriber,
-                request,
+                payload,
                 error,
                 statusSubject,
                 remainAttemptsNumber - 1
             ),
-
             () => {
                 // Запрос завершен
                 subscriber.complete();
@@ -361,6 +395,8 @@ export abstract class ApiService<R, B, P = null> {
      * Значение, которе нужно валидировать.
      * @param type
      * Тип источника данных валидации
+     * @param {number | null} statusCode
+     * Дополнительный параметр для валидации кода
      * @returns {void | false}
      * Возвращает false в случае прерывания
      * @private
@@ -369,45 +405,95 @@ export abstract class ApiService<R, B, P = null> {
         value: any,
         type: ValidationType,
         subscriber: Subscriber<R>,
-        statusSubject: Subject<HttpEvent<R>>
+        statusSubject: Subject<HttpEvent<R>>,
+        statusCode: number | null = null
     ): void | false {
+        let validationError;
+
         if (!this._ajvCaches) {
             this._ajvCaches = {};
         }
 
-        if (!this.schema[type]) {
-            return null;
-        } else {
-            if (!this._ajvCaches[type]) {
-                this._ajvCaches[type] = this._ajvComplier
-                    .compile(this.schema[type]);
+        if (type === ValidationType.ResponseValidation) {
+            if (!statusCode) {
+                throw new Error(
+                    'You should to pass a status code when the type of validation is a "response"!'
+                );
             }
+        }
 
-            const validate = this._ajvCaches[type];
-            const isValid = validate(value);
-
-            if (!isValid) {
-                const errorData = new ValidationError(
+        if (!this.schema[type]) {
+            if (value) {
+                validationError = new ValidationError(
                     `Validation error at: ${type}`,
                     type,
                     this,
                     this.schema[type],
                     value,
+                    [
+                        {
+                            keyword: null,
+                            message: 'Data without schema should not be set'
+                        }
+                    ]
+                );
+            } else {
+                return;
+            }
+        } else {
+            let schema;
+            let cacheKey;
+
+            if (type === ValidationType.ResponseValidation) {
+                if (!statusCode) {
+                    throw new Error(
+                        'You should to pass a status code when the type of validation is a "response"!'
+                    );
+                }
+
+                cacheKey = `${type}_${statusCode}`;
+                schema = this.schema[type][statusCode] || this.schema[type]['default'];
+
+                if (!schema) {
+                    throw new Error(
+                        `Can\'t find response schema with code ${statusCode}. Please set schema for code, or 'default'.`
+                    );
+                }
+            } else {
+                cacheKey = type;
+                schema = this.schema[type];
+            }
+
+            if (!this._ajvCaches[cacheKey]) {
+                this._ajvCaches[cacheKey] = this._ajvComplier
+                    .compile(schema);
+            }
+
+            const validate = this._ajvCaches[cacheKey];
+
+            if (!validate(value)) {
+                validationError = new ValidationError(
+                    `Validation error at: ${type}`,
+                    type,
+                    this,
+                    schema,
+                    value,
                     validate.errors
                 );
+            }
+        }
 
-                const handleResult = this.errorHandler
-                    ? this.errorHandler.onValidationError(errorData)
-                    : null;
+        // Handle error
+        if (validationError) {
+            const handleResult = this.errorHandler
+                ? this.errorHandler.onValidationError(validationError)
+                : null;
 
-                // todo сделать имитацию событий в statusSubject
-
-                // Если обрабочтик вернул `false`,
-                // ошибка игнорируется
-                if (handleResult !== false) {
-                    subscriber.error(errorData);
-                    return false;
-                }
+            // Если обрабочтик вернул `false`,
+            // ошибка игнорируется
+            if (handleResult !== false) {
+                subscriber.error(validationError);
+                return false;
             }
         }
     }
@@ -450,16 +536,32 @@ export abstract class ApiService<R, B, P = null> {
                 error = ApiErrorEventType.UnknownError;
         }
 
-        if (this.errorHandler) {
-            this.errorHandler.onHttpError({
-                type: error,
-                sender: this,
-                request,
-                originalEvent,
-                subscriber,
-                statusSubject,
-                remainAttemptsNumber
-            });
+        // Error response validation
+        // Stops and falls process if not handled
+        if (this._validate(
+            originalEvent.error,
+            ValidationType.ResponseValidation,
+            subscriber,
+            statusSubject,
+            originalEvent.status
+        ) !== false) {
+            if (this.errorHandler) {
+                this.errorHandler.onHttpError({
+                    type: error,
+                    sender: this,
+                    request,
+                    originalEvent,
+                    subscriber,
+                    statusSubject,
+                    remainAttemptsNumber
+                });
+            } else {
+                subscriber.error(originalEvent);
+
+                if (statusSubject) {
+                    statusSubject.error(originalEvent);
+                }
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 export class CliApplication {
 
     /**
-     * Start point of lib application
+     * Start point of providers application
      */
     public run(): void {
 

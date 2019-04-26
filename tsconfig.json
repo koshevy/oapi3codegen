@@ -12,6 +12,7 @@
         "outDir": "./dist",
         "target": "es5",
         "noImplicitAny": false,
+        "resolveJsonModule": true,
         "sourceMap": false
     },
     "exclude": [

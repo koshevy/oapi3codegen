@@ -9,11 +9,11 @@ enum State {
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
+  templateUrl: './mock.component.html',
+  styleUrls: ['./mock.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {
+export class MockComponent {
   public State = State;
   public title = 'Result of request to an API';
 

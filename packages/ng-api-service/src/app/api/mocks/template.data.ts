@@ -2,7 +2,7 @@ import { ApiServiceTemplateData } from "../templates";
 declare const JSON;
 
 export const FindPetsService: ApiServiceTemplateData = {
-    apiSchemaFile: JSON.stringify('../mocks/specs/pet-shop.json'),
+    apiSchemaFile: JSON.stringify('../mocks/oapi-specs/pet-shop.json'),
     baseTypeName: 'FindPets',
     method: '\'GET\'',
     paramsModelName: 'FindPetsParams',
@@ -26,27 +26,13 @@ export const FindPetsService: ApiServiceTemplateData = {
     responseModelName: 'FindPetsResponse',
     responseSchema: JSON.stringify({
         '200': {
-            "description": "pet response",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "petShop#/components/schemas/Pet"
-                        }
-                    }
-                }
+            "type": "array",
+            "items": {
+                "$ref": "petShop#/components/schemas/Pet"
             }
         },
         'default': {
-            "description": "unexpected error",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "$ref": "petShop#/components/schemas/Error"
-                    }
-                }
-            }
+            "$ref": "petShop#/components/schemas/Error"
         }
     }),
     requestModelName: 'null',

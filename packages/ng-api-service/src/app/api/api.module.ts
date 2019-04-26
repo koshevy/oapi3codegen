@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 
-import { ERROR_EVENTS_PROVIDER } from './lib/event-manager.provider';
-import { SERVERS_INFO_PROVIDER } from './lib/servers.info.provider';
+import { ERROR_EVENTS_PROVIDER } from './providers/event-manager.provider';
+import { SERVERS_INFO_PROVIDER } from './providers/servers.info.provider';
 
 @NgModule({
     declarations: [],

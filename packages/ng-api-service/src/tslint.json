@@ -1,5 +1,6 @@
 {
   "extends": "../tslint.json",
+  "resolveJsonModule": true,
   "rules": {
     "directive-selector": [
       true,

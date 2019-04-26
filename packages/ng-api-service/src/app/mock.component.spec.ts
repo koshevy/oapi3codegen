@@ -1,27 +1,26 @@
 import { async, TestBed } from '@angular/core/testing';
-import { AppComponent } from './app.component';
+import { MockComponent } from './mock.component';
 
 import * as _ from 'lodash';
 
 import { ApiModule } from './api/api.module';
 import { ApiService } from './api/api.service';
-import { SERVERS_INFO, UrlWhitelistDefinitions } from "./api/lib/servers.info.provider";
+import { SERVERS_INFO, UrlWhitelistDefinitions } from "./api/providers/servers.info.provider";
 
 import * as requestData from './api/mocks/request.data';
 import { MockRequestData } from './api/mocks/request.data';
-import * as petShopData from './api/mocks/specs/pet-shop.json';
+import * as petShopData from './api/mocks/oapi-specs/pet-shop.json';
 import * as services from './api/dist';
-
 
 const pageTitle = 'Result of request to an API';
 
 describe('Prepare test application', () => {
-
+/*
     // Provide auto-generated services into module
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             declarations: [
-                AppComponent
+                MockComponent
             ],
             imports: [
                 ApiModule
@@ -40,7 +39,7 @@ describe('Prepare test application', () => {
     }));
 
     it('should create the app', () => {
-        const fixture = TestBed.createComponent(AppComponent);
+        const fixture = TestBed.createComponent(MockComponent);
         const app = fixture.debugElement.componentInstance;
         expect(app).toBeTruthy();
     });
@@ -76,4 +75,5 @@ describe('Prepare test application', () => {
             )
         });
     }));
+*/
 });

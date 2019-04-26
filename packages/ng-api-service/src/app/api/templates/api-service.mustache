@@ -2,16 +2,16 @@ import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 import { ApiService } from '@codegena/ng-api-service/api.service';
-import { ApiSchema } from '@codegena/ng-api-service/lib/api-schema';
+import { ApiSchema } from '@codegena/ng-api-service/providers/api-schema';
 import {
   SERVERS_INFO,
   ServersInfo
-} from '@codegena/ng-api-service/lib/servers.info.provider';
+} from '@codegena/ng-api-service/providers/servers.info.provider';
 
 import {
   API_ERROR_HANDLER,
   ApiErrorHandler
-} from '@codegena/ng-api-service/lib/event-manager.provider';
+} from '@codegena/ng-api-service/providers/event-manager.provider';
 
 // Typings for this API method
 import { {{typingsDependencies}} } from '{{typingsDirectory}}';

@@ -2,12 +2,28 @@ export interface MockRequestData {
     params: any;
     request: any;
     response: any;
+    errorResponse: any;
+    /**
+     * Wrong params has use for tests
+     * of params validation.
+     */
+    wrongParams: any;
+    /**
+     * Wrong request has use for tests
+     * of request validation.
+     */
+    wrongRequest: any;
+    /**
+     * Wrong response has use for tests
+     * of response validation.
+     */
+    wrongResponse: any;
 }
 
 export const FindPetsService: MockRequestData = {
     params: {
         tags: ['cat', 'dog'],
-        limit: []
+        limit: 1000
     },
     request: null,
     response: [
@@ -21,6 +37,20 @@ export const FindPetsService: MockRequestData = {
             id: 2,
             name: 'Scharique',
             tag: 'dog'
+        }
+    ],
+    errorResponse: {
+        code: 500,
+        message: 'Fake server error'
+    },
+    wrongParams: {
+        tags: {},
+        limit: 'wrong value'
+    },
+    wrongRequest: {},
+    wrongResponse: [
+        {
+            wrongKey: 'wrong value'
         }
     ]
 };

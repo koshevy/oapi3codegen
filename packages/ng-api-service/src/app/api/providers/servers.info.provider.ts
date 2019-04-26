@@ -1,5 +1,4 @@
 import { InjectionToken } from '@angular/core';
-import { RESET_API_SUBSCRIBERS, resetApiSubscribers } from "./event-manager.provider";
 
 /**
  * Constants for {@link ServersInfo.urlWhitelist}

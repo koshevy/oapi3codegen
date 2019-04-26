@@ -111,28 +111,25 @@ export class ValidationError {
         /**
          * Сообщения об ошибках валидации.
          */
-        public errorMessages: string[]
+        public errorMessages: string[] | any[]
     ) {}
 }
 
 /**
- * Обработчик ошибок API.
- * Предполагает только один вариант обработчика,
- * чтобы не иметь конфликтов нескольких обработчиков.
+ * The primary use of {@link ApiErrorHandler} is a handling
+ * validation errors and http errors after validation of response.
+ * For instance, error response with status 500 have to be validated
+ * before, and throws {@link ValidationError} error when validation fails.
  */
 export interface ApiErrorHandler {
-
     /**
-     * Обработчик HTTP-ошибок, возникающих при неправильном
-     * ответе от сервера (или неудаче получения ответа).
+     * Handles HTTP-error after validation of response check.
      * @param {ApiErrorEventData} errorData
      */
     onHttpError(errorData: ApiErrorEventData): void;
 
     /**
-     * Обработчик ошибок валидации.
-     * Если возвращает `false`, запрос прерывается и возникает
-     * ошибка.
+     * When returns `false`, error skips.
      * @param {ValidationError} errorData
      */
     onValidationError(errorData: ValidationError): boolean | void;
@@ -158,7 +155,6 @@ export const RESET_API_SUBSCRIBERS = new InjectionToken<Subject<any>>('RESET_API
  * @type {InjectionToken<EventManager>}
  */
 export const API_ERROR_HANDLER = new InjectionToken<ApiErrorHandler>('API_ERROR_HANDLER');
-
 
 export const ERROR_EVENTS_PROVIDER = [
     {
