@@ -3,16 +3,13 @@ import {
     Subscriber
 } from 'rxjs';
 
-import {
-    InjectionToken,
-    EventEmitter
-} from '@angular/core';
-
+import {  InjectionToken  } from '@angular/core';
 import {
     HttpRequest,
     HttpErrorResponse, HttpEvent
 } from '@angular/common/http';
-import { ApiService } from '../api.service';
+
+import { RequestSender } from './request-sender';
 
 /**
  * Тип API-ошибки.
@@ -47,9 +44,8 @@ export interface ApiErrorEventData {
 
     /**
      * Отправитель запроса.
-     * todo нужно связать с ApiService. для этого надо вынести это в интерфейс
      */
-    sender: any;
+    sender: RequestSender;
 
     /**
      * Запрос, который не удалось отправить.

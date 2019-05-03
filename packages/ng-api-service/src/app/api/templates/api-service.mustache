@@ -1,6 +1,6 @@
+import { Subject } from 'rxjs';
 import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
 import { ApiService } from '@codegena/ng-api-service/api.service';
 import { ApiSchema } from '@codegena/ng-api-service/providers/api-schema';
 import {
@@ -10,13 +10,14 @@ import {
 
 import {
   API_ERROR_HANDLER,
+  RESET_API_SUBSCRIBERS,
   ApiErrorHandler
-} from '@codegena/ng-api-service/providers/event-manager.provider';
+} from '../providers/event-manager.provider';
 
 // Typings for this API method
 import { {{typingsDependencies}} } from '{{typingsDirectory}}';
 
-import * as domainSchema from {{apiSchemaFile}};
+const domainSchema = require({{apiSchemaFile}});
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -84,16 +85,19 @@ export class {{baseTypeName}}Service extends ApiService<{{responseModelName}}, {
      * @param {ServersInfo} serversInfo
      */
     constructor(
-        protected httpClient: HttpClient,
-        @Inject(API_ERROR_HANDLER)
-            protected errorHandler: ApiErrorHandler,
-        @Inject(SERVERS_INFO)
-            protected serversInfo: ServersInfo
+      protected httpClient: HttpClient,
+      @Inject(API_ERROR_HANDLER)
+        protected errorHandler: ApiErrorHandler,
+      @Inject(SERVERS_INFO)
+        protected serversInfo: ServersInfo,
+      @Inject(RESET_API_SUBSCRIBERS)
+        protected resetApiSubscribers: Subject<void>
     ) {
         super(
             httpClient,
             errorHandler,
             serversInfo,
+            resetApiSubscribers,
             domainSchema
         );
     }

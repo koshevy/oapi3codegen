@@ -34,7 +34,7 @@ export interface ServersInfo {
      * Redefines of server paths
      */
     redefines?: {
-        [originalUrl: string]: string
+        [originalServerUrl: string]: string
     };
 
     /**

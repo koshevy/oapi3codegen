@@ -17,6 +17,7 @@ import {
     Subscriber,
     Subject
 } from 'rxjs';
+import { takeUntil } from "rxjs/operators";
 
 import { ApiSchema } from './providers/api-schema';
 import { ServersInfo, UrlWhitelistDefinitions } from './providers/servers.info.provider';
@@ -25,7 +26,9 @@ import {
     ApiErrorHandler,
     ValidationType,
     ValidationError
-} from './providers/event-manager.provider';
+} from "./providers/event-manager.provider";
+import { RequestSender } from './providers/request-sender';
+import { Inject } from "@angular/core";
 
 /**
  * Reg of localhost-based URLS
@@ -43,7 +46,7 @@ export interface RequestMetadataResponse {
     request?: Request
 }
 
-export abstract class ApiService<R, B, P = null> {
+export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> {
 
     private static _ajv: {
         [key: string]: Ajv.Ajv
@@ -95,6 +98,7 @@ export abstract class ApiService<R, B, P = null> {
         protected httpClient: HttpClient,
         protected errorHandler: ApiErrorHandler,
         protected serversInfo: ServersInfo,
+        protected resetApiSubscribers: Subject<void>,
         domainSchema
     ) {
         const schemaId = domainSchema['$id'];
@@ -303,16 +307,18 @@ export abstract class ApiService<R, B, P = null> {
             // подробнее в описании ApiErrorHandler):
             // попытка отправить запрос.
             && this.requestAttempt(request, subscriber, statusSubject);
-        });
+        }).pipe(
+            takeUntil(this.resetApiSubscribers)
+        );
     }
 
     /**
      * Попытка выполнения запроса, которая может быть повторена.
      * Метод используется для повторных запросов при обработке
-     * ошибок, а также, внутри метода `payload`.
-     * @see payload
+     * ошибок, а также, внутри метода `request`.
+     * @see request
      *
-     * @param {HttpRequest<B>} payload
+     * @param {HttpRequest<B>} request
      * @param {Subscriber<R>} subscriber
      * @param {Subject<HttpEvent<R>>} statusSubject
      * @param {HttpErrorResponse} lastError
@@ -320,7 +326,7 @@ export abstract class ApiService<R, B, P = null> {
      * @param {number} remainAttemptsNumber
      */
     public requestAttempt(
-        payload: HttpRequest<B>,
+        request: HttpRequest<B>,
         subscriber: Subscriber<R>,
         statusSubject?: Subject<HttpEvent<R>>,
         lastError?: HttpErrorResponse,
@@ -333,7 +339,9 @@ export abstract class ApiService<R, B, P = null> {
             return;
         }
 
-        this.httpClient.request(payload).subscribe(
+        this.httpClient.request(request).pipe(
+            takeUntil(this.resetApiSubscribers)
+        ).subscribe(
             (event: HttpEvent<any>) => {
                 // отправляется статус загрузки
                 if (statusSubject) {
@@ -373,7 +381,7 @@ export abstract class ApiService<R, B, P = null> {
             // окажется положительным.
             (error: HttpErrorResponse) => this._handleHttpError(
                 subscriber,
-                payload,
+                request,
                 error,
                 statusSubject,
                 remainAttemptsNumber - 1
