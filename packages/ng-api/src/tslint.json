@@ -1,0 +1,25 @@
+{
+  "extends": "../tslint.json",
+  "linterOptions": {
+    "exclude": [
+      "*.json",
+      "**/*.json",
+      "src/**/*.json"
+    ]
+  },
+  "resolveJsonModule": true,
+  "rules": {
+    "directive-selector": [
+      true,
+      "attribute",
+      "app",
+      "camelCase"
+    ],
+    "component-selector": [
+      true,
+      "element",
+      "app",
+      "kebab-case"
+    ]
+  }
+}

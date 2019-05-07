@@ -1,0 +1,14 @@
+<div>
+  <h1>{{ title }}</h1>
+  <div [ngSwitch]="state$ | async">
+    <ng-container *ngSwitchCase="Status.New">
+      Heroes list is not initialized yet
+    </ng-container>
+    <ng-container *ngSwitchCase="Status.Pending">
+      Loading data from API...
+    </ng-container>
+    <ng-container *ngSwitchCase="Status.Ready">
+      {{ dataFromApi | async }}
+    </ng-container>
+  </div>
+</div>
