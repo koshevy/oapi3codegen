@@ -3,7 +3,7 @@
  * be used in tests of generated services.
  */
 
-import * as services from '../dist';
+import * as services from '../prepare-dist';
 import * as _lodash from 'lodash';
 const _ = _lodash;
 

@@ -25,6 +25,6 @@ const mockApiTemplate = createApiServiceWithTemplate(
 ) as any;
 
 fs.writeFileSync(
-    path.resolve(__dirname, '../../app/mock-api/dist/mock.api.service.ts'),
+    path.resolve(__dirname, '../../app/mock-api/prepare-dist/mock.api.service.ts'),
     mockApiTemplate
 );

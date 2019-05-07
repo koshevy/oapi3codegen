@@ -23,11 +23,11 @@ const packageName = packageJson.name;
 const findPetsTemplate = createApiServiceWithTemplate(FindPetsService) as any;
 
 fs.writeFileSync(
-    path.resolve(__dirname, '../src/dist/find-pets.api.service.ts'),
+    path.resolve(__dirname, '../src/prepare-dist/find-pets.api.service.ts'),
     findPetsTemplate.replace(new RegExp(`${packageName}\/?(lib\/)?`, 'g'), '../lib/')
 );
 
 fs.writeFileSync(
-    path.resolve(__dirname, '../src/dist/index.ts'),
+    path.resolve(__dirname, '../src/prepare-dist/index.ts'),
     'export * from \'./find-pets.api.service\';\n'
 );

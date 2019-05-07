@@ -1,2 +1,2 @@
-export * from './dist/mock.api.service';
+export * from './prepare-dist/mock.api.service';
 export * from './typings';
