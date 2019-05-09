@@ -166,6 +166,41 @@
           }
         }
       }
+    },
+    "oapi3ts": {
+      "root": "projects/oapi3ts",
+      "sourceRoot": "projects/oapi3ts/src",
+      "projectType": "library",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/oapi3ts/tsconfig.lib.json",
+            "project": "projects/oapi3ts/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/oapi3ts/src/test.ts",
+            "tsConfig": "projects/oapi3ts/tsconfig.spec.json",
+            "karmaConfig": "projects/oapi3ts/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/oapi3ts/tsconfig.lib.json",
+              "projects/oapi3ts/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
     }
   },
   "defaultProject": "ng-api-service"

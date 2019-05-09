@@ -25,6 +25,12 @@
       ],
       "@codegena/ng-api-service/*": [
         "dist/ng-api-service/*"
+      ],
+      "oapi3ts": [
+        "dist/oapi3ts"
+      ],
+      "oapi3ts/*": [
+        "dist/oapi3ts/*"
       ]
     }
   }
