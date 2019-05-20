@@ -1,40 +1,43 @@
 {
-    "compileOnSave": false,
-    "compilerOptions": {
-        "allowJs": true,
-        "declaration": false,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "noEmit": false,
-        "noEmitOnError": false,
-        "outDir": "./dist",
-        "target": "es5",
-        "noImplicitAny": false,
-        "resolveJsonModule": true,
-        "sourceMap": false
-    },
-    "exclude": [
-        "oapi3codegen/node_modules",
-        "**/*.spec.ts"
-    ],
-    "include": [
-        "core/*",
-        "adapters/typescript/*",
-        "adapters/typescript/descriptors/*",
-        "oapi-defs/*",
-        "oapi-defs/common/*",
-        "oapi-defs/components/*",
-      "packages/*"
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es5",
+    "resolveJsonModule": true,
+    "typeRoots": [
+      "node_modules/@types"
     ],
     "lib": [
-        "es2017",
-        "dom"
+      "es2018",
+      "dom"
     ],
-    "maxNodeModuleJsDepth": 2,
-    "files": [
-        "./index.ts",
-        "./cli.ts"
-    ]
+    "paths": {
+      "@codegena/ng-api-service": [
+        "dist/ng-api-service"
+      ],
+      "@codegena/ng-api-service/*": [
+        "dist/ng-api-service/*"
+      ],
+      "oapi3ts": [
+        "dist/oapi3ts"
+      ],
+      "oapi3ts/*": [
+        "dist/oapi3ts/*"
+      ],
+      "oapi3ts-cli": [
+        "dist/oapi3ts-cli"
+      ],
+      "oapi3ts-cli/*": [
+        "dist/oapi3ts-cli/*"
+      ]
+    }
+  }
 }

@@ -1,0 +1,19 @@
+{
+  "description": "Test cases for isolated schema converting tests",
+  "simple": {
+    "number": {
+      "title": "Simple number schema",
+      "description": "Should be converted in numeric schema",
+      "type": "number",
+      "min": 0,
+      "max": 100
+    },
+    "string": {
+      "title": "Simple string schema",
+      "description": "Should be converted in string schema",
+      "type": "string",
+      "minLength": 0,
+      "minLength": 100
+    }
+  }
+}
