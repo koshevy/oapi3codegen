@@ -64,14 +64,14 @@ export class MockApiService extends ApiService<MockResponse, null, MockParams> {
    */
   protected get schema(): ApiSchema {
     return {
-      params: { $ref: 'mockApiDefinitions#/schema/schema/HeroFilter' },
+      params: { $ref: 'mockApiDefinitions#/components/schemas/HeroFilter' },
       request: null,
       response: {
         '200': {
           type: 'array',
-          items: { $ref: 'mockApiDefinitions#/schema/schema/Hero' }
+          items: { $ref: 'mockApiDefinitions#/components/schemas/Hero' }
         },
-        default: { $ref: 'mockApiDefinitions#/schema/schema/Error' }
+        default: { $ref: 'mockApiDefinitions#/components/schemas/Error' }
       }
     } as any;
   }

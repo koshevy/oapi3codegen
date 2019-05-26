@@ -26,16 +26,16 @@
       "@codegena/ng-api-service/*": [
         "dist/ng-api-service/*"
       ],
-      "oapi3ts": [
+      "@codegena/oapi3ts": [
         "dist/oapi3ts"
       ],
-      "oapi3ts/*": [
+      "@codegena/oapi3ts/*": [
         "dist/oapi3ts/*"
       ],
-      "oapi3ts-cli": [
+      "@codegena/oapi3ts-cli": [
         "dist/oapi3ts-cli"
       ],
-      "oapi3ts-cli/*": [
+      "@codegena/oapi3ts-cli/*": [
         "dist/oapi3ts-cli/*"
       ]
     }

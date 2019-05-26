@@ -1,12 +1,12 @@
 import * as _lodash from 'lodash';
 import * as prettier from 'prettier/standalone';
 import * as prettierParserMD from 'prettier/parser-markdown';
+import * as prettierParserTS from 'prettier/parser-typescript';
 
 const _ = _lodash;
 
-const prettierOptions = {
-    parser: 'remark',
-    plugins: [prettierParserMD],
+const commonPrettierOptions = {
+    plugins: [prettierParserMD, prettierParserTS],
     proseWrap: 'always',
     singleQuote: true
 };
@@ -69,17 +69,15 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
 
     /**
      * Получение комментариев для этого дескриптора.
-     * @returns {string}
-     * @private
      */
     public getComments(): string {
-        const description = prettier.format(
+        const description = this.formatCode(
             `${
                 this.schema.title
                     ? `## ${this.schema.title}\n`
                     : ''
             }${ (this.schema.description || '').trim()}`,
-            prettierOptions
+            'markdown'
         );
 
         const commentLines = _.compact(description.split('\n'));
@@ -104,20 +102,37 @@ export abstract class AbstractTypeScriptDescriptor implements DataTypeDescriptor
     }
 
     /**
-     * Рендер типа данных в строку.
+     * Rendering of children {@link DataTypeDescriptor} into string.
      *
-     * @param {DataTypeDescriptor[]} childrenDependencies
+     * @param childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
      * а самостоятельно.
      *
-     * @returns {string}
      */
     public abstract render(
         childrenDependencies: DataTypeDescriptor[],
         rootLevel: boolean
     ): string ;
+
+    /**
+     * Formatting code. Supports TypeScript and Markdown essences.
+     *
+     * @param code
+     * @param codeType
+     */
+    protected formatCode(
+        code: string,
+        codeType: 'typescript' | 'markdown' = 'typescript'
+    ): string {
+        const prettierOptions = {
+            parser: (codeType === 'markdown') ? 'remark' : codeType,
+            ...commonPrettierOptions
+        };
+
+        return prettier.format(code, prettierOptions);
+    }
 }

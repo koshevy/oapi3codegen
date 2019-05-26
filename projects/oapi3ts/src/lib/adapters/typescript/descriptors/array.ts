@@ -12,12 +12,8 @@ export class ArrayTypeScriptDescriptor
     extends AbstractTypeScriptDescriptor
     implements DataTypeDescriptor {
 
-    /**
-     * Описание типа данных для элементов массива.
-     * fixme не поддерживает конкретное перечисление
-     * fixme (items: [...]), пока только общее (items: {...})
-     */
-    protected itemsDescription: DataTypeContainer;
+    protected commonItemType: DataTypeContainer;
+    protected exactlyListedItems: DataTypeContainer[];
 
     constructor(
 
@@ -64,15 +60,27 @@ export class ArrayTypeScriptDescriptor
             originalSchemaPath
         );
 
-        // fixme не поддерживает конкретное перечисление (items: [...]),
-        // fixme пока только общее (items: {...})
-        if (schema.items) {
-            this.itemsDescription = convertor.convert(
+        const parentName = (modelName || suggestedModelName);
+
+        if (schema.items && _.isArray(schema.items)) {
+            this.exactlyListedItems = _.map(
+                schema.items,
+                (schemaItem, index) => convertor.convert(
+                    schemaItem,
+                    context,
+                    null,
+                    parentName
+                        ? `${parentName}Item${index}`
+                        : null
+                )
+            );
+        } else if (schema.items) {
+            this.commonItemType = convertor.convert(
                 schema.items,
                 context,
                 null,
-                (modelName || suggestedModelName)
-                    ? `${(modelName || suggestedModelName)}Items`
+                parentName
+                    ? `${parentName}Items`
                     : null
             );
         }
@@ -81,29 +89,55 @@ export class ArrayTypeScriptDescriptor
     /**
      * Рендер типа данных в строку.
      *
-     * @param {DataTypeDescriptor[]} childrenDependencies
+     * @param childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
      * а самостоятельно.
      *
-     * @returns {string}
      */
     public render(
         childrenDependencies: DataTypeDescriptor[],
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
-
-        return `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
-            this.itemsDescription ? _.map(
-                this.itemsDescription,
-                (descr: DataTypeDescriptor) => {
-                    return `Array<${descr.render(childrenDependencies,false)}>`;
-                }
-            ).join(' | ') : 'any[]'
+        const result = `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
+            this._renderArrayItemsTypes(childrenDependencies)
         }`;
+
+        return rootLevel
+            ? this.formatCode(result)
+            : result;
+    }
+
+    private _renderArrayItemsTypes(childrenDependencies: DataTypeDescriptor[]): string {
+        if (this.exactlyListedItems) {
+            return `[\n${_.map(
+                this.exactlyListedItems,
+                (itemDescrs: DataTypeDescriptor[]) => {
+                    return _.map(
+                        itemDescrs,
+                        (descr: DataTypeDescriptor) => descr.render(
+                            childrenDependencies,
+                            false
+                        ) + (descr.schema['description']
+                            ? `, // ${descr.schema['description']}`
+                            : ',')
+                    );
+                }
+            ).join('\n')}\n]`;
+        } else if (this.commonItemType) {
+            return _.map(
+                this.commonItemType,
+                (descr: DataTypeDescriptor) =>
+                    `Array<${
+                        descr.render(childrenDependencies, false)
+                    }>`
+            ).join(' | ');
+        } else {
+            return 'any[]';
+        }
     }
 }

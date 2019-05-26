@@ -28,7 +28,6 @@ export type DescriptorRule = SchemaObject | DescriptorRuleFn;
  * - rule — это описание условий для JSON Schema-объекта в формате JSON Schema
  * - classConstructor — конструктор для класса, наследующего интерфейс `DataTypeDescriptor`
  *
- * @type {Array}
  */
 export const rules: DescriptorRuleSchema[] = [
     {
@@ -90,10 +89,9 @@ export const rules: DescriptorRuleSchema[] = [
             properties: {
                 enum: {
                     items: {
-                        oneOf: [
+                        anyOf: [
                             {type: 'string'},
-                            {type: 'number'},
-                            {type: 'integer'}
+                            {type: 'number'}
                         ]
                     },
                     type: 'array'

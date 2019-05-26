@@ -7,7 +7,7 @@ export const MockApiService = {
     method: '\'GET\'',
     paramsModelName: 'MockParams',
     paramsSchema: JSON.stringify({
-        $ref: 'mockApiDefinitions#/schema/schema/HeroFilter'
+        $ref: 'mockApiDefinitions#/components/schemas/HeroFilter'
     }),
     path: JSON.stringify('/list'),
     queryParams: JSON.stringify(['universe']),
@@ -15,9 +15,9 @@ export const MockApiService = {
     responseSchema: JSON.stringify({
         '200': {
             type: 'array',
-            items: { $ref: 'mockApiDefinitions#/schema/schema/Hero' }
+            items: { $ref: 'mockApiDefinitions#/components/schemas/Hero' }
         },
-        default: { $ref: 'mockApiDefinitions#/schema/schema/Error' }
+        default: { $ref: 'mockApiDefinitions#/components/schemas/Error' }
     }),
     requestModelName: JSON.stringify(null),
     requestSchema: JSON.stringify(null),

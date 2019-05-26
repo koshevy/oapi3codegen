@@ -3,7 +3,8 @@ import { Subject, Subscriber } from 'rxjs';
 import {
     HttpErrorResponse,
     HttpEvent,
-    HttpRequest
+    HttpRequest,
+    HttpResponse
 } from '@angular/common/http';
 
 /**
@@ -18,14 +19,14 @@ export interface RequestSender<R = any, B = any> {
      *
      * @param request
      * @param subscriber
-     * @param statusSubject
+     * @param statusChanges
      * @param lastError
      * @param remainAttemptsNumber
      */
     requestAttempt(
         request: HttpRequest<B>,
-        subscriber: Subscriber<R>,
-        statusSubject?: Subject<HttpEvent<R>>,
+        subscriber: Subscriber<HttpResponse<R>>,
+        statusChanges: Subject<HttpEvent<R>> | boolean,
         lastError?: HttpErrorResponse,
         remainAttemptsNumber?: number
     ): void;

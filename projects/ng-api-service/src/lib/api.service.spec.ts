@@ -2,7 +2,7 @@ import * as _lodash from 'lodash';
 const _ = _lodash;
 
 import { BehaviorSubject, Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { async, fakeAsync, TestBed } from '@angular/core/testing';
 import { ApiModule } from './api.module';
 import { ApiService, RequestMetadataResponse } from './api.service';
@@ -32,9 +32,7 @@ import * as requestData from './mocks/request.data';
 import { RequestSender } from './providers/request-sender';
 import { ServersInfo, SERVERS_INFO } from './providers/servers.info.provider';
 
-declare const Error;
-
-describe('Correct work of subclasses of `ApiService` in `@codegena/ng-api-service`', () => {
+describe('Correct working of subclasses of `ApiService` in `@codegena/ng-api-service`', () => {
     describe('common requests', () => {
         let httpTestingController: HttpTestingController;
 
@@ -79,8 +77,11 @@ describe('Correct work of subclasses of `ApiService` in `@codegena/ng-api-servic
                     null,
                     requestMetadata
                 ).subscribe(
-                    (response) => {
-                        expect(response).toBe(requestMock.response);
+                    (response: HttpResponse<any>) => {
+                        expect(response instanceof HttpResponse).toBeTruthy(
+                            'Expected response to be `HttpResponse`'
+                        );
+                        expect(response.body).toBe(requestMock.response);
                     },
                     err => fail(err)
                 );
@@ -365,8 +366,12 @@ describe('Correct work of subclasses of `ApiService` in `@codegena/ng-api-servic
                     null,
                     requestMetadata
                 ).subscribe(
-                    (response) => {
-                        expect(response).toBe(requestMock.wrongResponse);
+                    (response: HttpResponse<any>) => {
+                        expect(response instanceof HttpResponse).toBeTruthy(
+                            'Expected response to be `HttpResponse`'
+                        );
+
+                        expect(response.body).toBe(requestMock.wrongResponse);
                         gotResponse = true;
                     },
                     (err: ValidationError) => {
@@ -475,9 +480,13 @@ describe('Correct work of subclasses of `ApiService` in `@codegena/ng-api-servic
                     null,
                     requestMetadata
                 ).subscribe(
-                    (response: { status, title }) => {
-                        expect(response.status).toBe(404);
-                        expect(response.title).toBe(
+                    (response: HttpResponse<any>) => {
+                        expect(response instanceof HttpResponse).toBeTruthy(
+                            'Expected response to be `HttpResponse`'
+                        );
+
+                        expect(response.body.status).toBe(404);
+                        expect(response.body.title).toBe(
                             'Success business-level answer with insignificant error'
                         );
                         gotResponse = true;
@@ -801,8 +810,12 @@ describe('Correct work of subclasses of `ApiService` in `@codegena/ng-api-servic
                     null,
                     requestMetadata
                 ).subscribe(
-                    (response) => {
-                        expect(response).toBe(requestMock.wrongResponse);
+                    (response: HttpResponse<any>) => {
+                        expect(response instanceof HttpResponse).toBeTruthy(
+                            'Expected response to be `HttpResponse`'
+                        );
+
+                        expect(response.body).toBe(requestMock.wrongResponse);
                         gotResponse = true;
                     },
                     (err: ValidationError) => {
@@ -827,7 +840,7 @@ describe('Correct work of subclasses of `ApiService` in `@codegena/ng-api-servic
         }));
     });
 
-    // todo StatusSubject tests
+    // todo statusChanges tests
 });
 
 /**

@@ -1,22 +1,10 @@
 import * as _lodash from 'lodash';
 
-import * as prettier from 'prettier/standalone';
-import * as prettierParserTS from 'prettier/parser-typescript';
-
 const _ = _lodash;
 
-const prettierOptions = {
-    parser: 'typescript',
-    plugins: [prettierParserTS],
-    proseWrap: 'always',
-    singleQuote: true
-};
-
-// todo оптимизировать файлову структуру и типизацию
 import {
     BaseConvertor,
     DataTypeDescriptor,
-    DataTypeContainer,
     Schema,
     SchemaGeneric
 } from '../../../core';
@@ -93,21 +81,21 @@ export class GenericDescriptor
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
-        const keys = _.keys(this.children);
         const rangeOfValues = this.getDeepRangeOfValuesMatrix();
         const rangeOfValuesTypes = _.map(
             rangeOfValues,
-            (valuesOnLevel, level) => `${this.assignedTypes[level]} extends ${_.map(
-                valuesOnLevel,
-                value => JSON.stringify(value)
-            ).join(' | ')}${
-                (_.indexOf(valuesOnLevel, 'default') !== -1)
-                    ? ' = "default"'
-                    : (valuesOnLevel.length === 1
-                        ? ` = ${JSON.stringify(valuesOnLevel[0])}`
-                        : ''
+            (valuesOnLevel, level) => {
+                const valueRange = _.map(
+                    valuesOnLevel,
+                    value => JSON.stringify(
+                        Number(value) || value
                     )
-            }`
+                ).join(' | ');
+
+                return `${
+                    this.assignedTypes[level]
+                } extends ${valueRange} = ${valueRange}`;
+            }
         ).join(', ');
 
         const result = `${rootLevel ? `${comment}export type ${
@@ -116,7 +104,9 @@ export class GenericDescriptor
             this.subRender(childrenDependencies, this.assignedTypes)
         };`;
 
-        return prettier.format(result, prettierOptions);
+        return rootLevel
+            ? this.formatCode(result)
+            : result;
     }
 
     public subRender(
@@ -132,7 +122,9 @@ export class GenericDescriptor
         ) => {
             const [child] = childGroup;
 
-            result += `${assignedToKey} extends ${JSON.stringify(associatedValue)}`;
+            result += `${assignedToKey} extends ${
+                JSON.stringify(Number(associatedValue) || associatedValue)
+            }`;
 
             if (child instanceof GenericDescriptor) {
                 result += ' ? ';

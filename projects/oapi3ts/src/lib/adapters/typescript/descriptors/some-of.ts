@@ -1,6 +1,4 @@
-import * as _ from 'lodash';
-
-// todo оптимизировать файлову структуру и типизацию
+import * as _lodash from 'lodash';
 import {
     DataTypeDescriptor,
     DataTypeContainer
@@ -13,6 +11,8 @@ enum SomeOfType {
     AllOf = 'allOf',
     AnyOf = 'anyOf'
 }
+
+const _ = _lodash;
 
 /**
  * Дескриптор для обслуживания конструкций-вариантов:
@@ -130,15 +130,14 @@ export class SomeOfTypeScriptDescriptor
     /**
      * Рендер типа данных в строку.
      *
-     * @param {DataTypeDescriptor[]} childrenDependencies
+     * @param childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
      * а самостоятельно.
      *
-     * @returns {string}
      */
     public render(
         childrenDependencies: DataTypeDescriptor[],
@@ -146,15 +145,23 @@ export class SomeOfTypeScriptDescriptor
     ): string {
         const comment = this.getComments();
 
-        return `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
+        const result = `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
             this.variants
                 ? _.uniq(_.map(
                     this.variants,
-                    (descr: DataTypeDescriptor) =>
-                        descr.render(childrenDependencies, false)
+                    (descr: DataTypeDescriptor) => [
+                        descr.render(childrenDependencies, false),
+                        descr.schema['description'] !== this.schema['description']
+                            ? `// ${descr.schema['description'].replace(/\s+/, ' ')}\n`
+                            : ''
+                    ].join(' ') + '\n'
                 )).join(' | ')
                 : 'any[]'
         }`;
+
+        return rootLevel
+            ? this.formatCode(result)
+            : result;
     }
 
     /**
@@ -163,9 +170,7 @@ export class SomeOfTypeScriptDescriptor
      *
      * @param schema
      * @param commonPart
-     * @param {SomeOfType} type
-     * @returns {any[]}
-     * @private
+     * @param type
      */
     private _getSomeOfSchemes(schema, commonPart, type: SomeOfType): any[] {
         let schemes = [];

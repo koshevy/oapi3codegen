@@ -1,21 +1,21 @@
 {
   "name": "@codegena/oapi3ts",
   "version": "0.0.1",
-  "dependencies": {
-    "@types/node": "^12.0.0",
+  "peerDependencies": {
     "ajv": ">= 5.0.0",
-    "core-js": "^3.0.1",
     "lodash": "^4.17.11",
-    "prettier": "^1.17.0",
-    "rxjs": "> 5.0.0",
-    "zone.js": "^0.9.1"
+    "prettier": "^1.17.0"
   },
   "devDependencies": {
+    "@types/node": "^12.0.0",
     "@angular/animations": "^7.2.14",
     "@angular/cli": "^7.3.8",
     "@angular/common": "> 5.0.0",
     "@angular/core": "> 5.0.0",
     "@angular/platform-browser-dynamic": "> 5.0.0",
-    "@angular/platform-server": "^7.2.14"
+    "@angular/platform-server": "^7.2.14",
+    "core-js": "^3.0.1",
+    "rxjs": "> 5.0.0",
+    "zone.js": "^0.9.1"
   }
 }

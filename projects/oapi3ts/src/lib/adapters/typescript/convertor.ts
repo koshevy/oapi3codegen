@@ -9,7 +9,7 @@ import {
     DescriptorContext,
     Schema,
     defaultConfig, SchemaObject
-} from "../../core";
+} from '../../core';
 
 // rules that helps determine a type of descriptor
 import {
@@ -42,19 +42,22 @@ export class Convertor extends BaseConvertor {
      * [контенейра дескрипторов типов]{@link DataTypeContainer}
      * с ренлерингом всех их зависиомостей.
      *
-     * @param {DataTypeContainer} typeContainer
+     * @param typeContainer
      * Типы, которые нужно отрендерить.
-     * @param {(descriptor: DataTypeDescriptor, text) => void} renderedCallback
+     * @param renderedCallback
      * Колбэк, который срабатывает при рендеринге типа.
-     * @param {DataTypeContainer} alreadyRendered
+     * @param alreadyRendered
      * Типы, которые уже отрендерены, и их рендерить не нужно
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * `false`, если это дочерний "процес"
-     * @returns {string[]}
      */
     public static renderRecursive(
         typeContainer: DataTypeContainer,
-        renderedCallback: (descriptor: DataTypeDescriptor, text) => void,
+        renderedCallback: (
+            descriptor: DataTypeDescriptor,
+            text,
+            childrenDependencies: DataTypeDescriptor[]
+        ) => void,
         alreadyRendered: DataTypeContainer = []
     ): void {
         const result = [];
@@ -77,7 +80,6 @@ export class Convertor extends BaseConvertor {
 
             /**
              * Рендеринг очередного типа из очереди
-             * @type {string}
              */
             const renderResult = descr.render(
                 childrenDependencies,
@@ -100,14 +102,13 @@ export class Convertor extends BaseConvertor {
 
             // Колбэк вызывается в конце, чтобы типы-зависимости
             // шли впереди использующих их.
-            renderedCallback(descr, renderResult);
+            renderedCallback(descr, renderResult, childrenDependencies);
         });
     }
 
     constructor(
         /**
          * Конфигурация для конвертора.
-         * @type {ConvertorConfig}
          */
         protected config: ConvertorConfig = defaultConfig
     ) {
@@ -121,26 +122,25 @@ export class Convertor extends BaseConvertor {
      * в котором перечисляются типы данных (возможна принадлежность
      * к более чем одному типу данных: `number[] | InterfaceName`).
      *
-     * @param {Schema} schema
+     * @param schema
      * Схема, для которой будет подобрано соответствущее
      * правило, по которому будет определен дескриптор
      * нового типа данных.
-     * @param {Object} context
+     * @param context
      * Контекст, в котором хранятся ранее просчитаные модели
      * в рамках одной цепочки обработки.
-     * @param {string} name
+     * @param name
      * Собственное имя типа данных
-     * @param {string} suggestedName
+     * @param suggestedName
      * Предлагаемое имя для типа данных: может
      * применяться, если тип данных анонимный, но
      * необходимо вынести его за пределы родительской
      * модели по-ситуации (например, в случае с Enum).
-     * @param {string} originalPathSchema
+     * @param originalPathSchema
      * Путь, по которому была взята схема
-     * @param {DataTypeDescriptor[]} ancestors
+     * @param ancestors
      * Родительсткие модели
      *
-     * @returns {DataTypeContainer}
      */
     public convert(
         schema: Schema,
@@ -229,12 +229,10 @@ export class Convertor extends BaseConvertor {
      * Поиск конструктора для дескриптора типа данных,
      * условиям которого, удовлетворяет данная схема.
      *
-     * @param {Schema} schema
-     * @returns {any}
-     * @private
+     * @param schema
      */
     protected _findMatchedConstructor(schema: Schema): any {
-        const foundConstructor = _.find(
+        const foundConstructor = _.find<any>(
             rules,
             (ruleSchema: DescriptorRuleSchema) => {
                 if (_.isFunction(ruleSchema.rule)) {

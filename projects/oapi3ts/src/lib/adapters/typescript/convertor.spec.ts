@@ -1,21 +1,10 @@
-import { async, TestBed, ComponentFixture } from '@angular/core/testing';
-import {
-    HttpClientTestingModule,
-    HttpTestingController
-} from '@angular/common/http/testing';
-
 import { Convertor } from './convertor';
 import { defaultConfig } from '../../core/config';
 import { ApiMetaInfo } from '../../core/api-meta-info';
 
 import * as _ from 'lodash';
-import { OApiOperation } from '../../core/oapi-structure';
-import {
-    DataTypeContainer,
-    DataTypeDescriptor,
-    DescriptorContext
-} from '../../core';
 
+import { ArrayTypeScriptDescriptor } from './descriptors/array';
 import { GenericDescriptor } from './descriptors/generic';
 import { NullTypeScriptDescriptor } from './descriptors/null';
 import { NumberTypeScriptDescriptor } from './descriptors/number';
@@ -46,7 +35,7 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
         expect(container.length).toBe(1);
         expect(descriptor instanceof NumberTypeScriptDescriptor).toBeTruthy();
         expect(comments).toContain('* ## Simple number schema');
-        expect(comments).toContain('* Should be converted in numeric schema');
+        expect(comments).toContain('* Should be converted in numeric type descriptor');
         expect(descriptor.render([], false))
             .toBe('number');
         // Should contain comment
@@ -54,7 +43,7 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
             .toContain(comments);
     });
 
-    it('should convert numeric scheme with sugested name as root', () => {
+    it('should convert numeric scheme with suggested name as root', () => {
         const cases = schemaCases.simple;
         const container = convertor.convert(
             cases.number,
@@ -81,6 +70,130 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
             .toThrow();
     });
 
+    it('should convert array scheme as array of any', () => {
+        const cases = schemaCases.simple;
+        const container = convertor.convert(
+            cases.arrayOfAny,
+            {},
+            'ArrayOfAny'
+        ) as [ArrayTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedArray = descriptor.render([], true);
+
+        expect(renderedArray.replace(/\s+/g, ' ').trim()).toBe([
+            `/**`,
+            `* ## Simple array with common item definitions (any)`,
+            `*/`,
+            `export type ArrayOfAny = any[];`
+        ].join(' '));
+    });
+
+    it('should convert array scheme as array of objects', () => {
+        const cases = schemaCases.simple;
+        const container = convertor.convert(
+            cases.arrayOfObjects,
+            {},
+            'ArrayOfObjects'
+        ) as [ArrayTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedArray = descriptor.render([], true);
+
+        expect(renderedArray.replace(/\s+/g, ' ').trim()).toBe([
+            `/**`,
+            `* ## Simple array with common item definitions (objects)`,
+            `*/`,
+            `export type ArrayOfObjects = Array<{`,
+            `[key: string]: any;`,
+            `}>;`
+        ].join(' '));
+    });
+
+    it('should convert array scheme as array of arrays', () => {
+        const cases = schemaCases.simple;
+        const container = convertor.convert(
+            cases.arrayOfArrays,
+            {},
+            'ArrayOfArrays'
+        ) as [ArrayTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedArray = descriptor.render([], true);
+
+        expect(renderedArray.replace(/\s+/g, ' ').trim()).toBe([
+            `/**`,
+            `* ## Simple array with common item definitions (arrays)`,
+            `*/`,
+            `export type ArrayOfArrays = Array<Array<number>>;`,
+        ].join(' '));
+    });
+
+    it('should convert array scheme with exactly items order', () => {
+        const cases = schemaCases.simple;
+        const container = convertor.convert(
+            cases.arrayExactly,
+            {},
+            'ArrayWithExactlyOrder'
+        ) as [ArrayTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedArray = descriptor.render([], true);
+
+        expect(renderedArray.replace(/\s+/g, ' ').trim()).toBe([
+            `/**`,
+            `* ## Simple array with exactly items order`,
+            `*/`,
+            `export type ArrayWithExactlyOrder = [`,
+            `string,`,
+            `// String item at first place`,
+            `number,`,
+            `// Number item at second place`,
+            `{`,
+            `[key: string]: boolean;`,
+            `}`,
+            `// Object item at third place`,
+            `];`
+        ].join(' '));
+    });
+
+    it('should convert complex `oneOf`-scheme as root', () => {
+        const cases = schemaCases.complex;
+        const container = convertor.convert(
+            cases.complexUnion,
+            {},
+            'ComplexUnionOfObects'
+        ) as [ObjectTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedOneOf = descriptor.render([], true);
+
+        expect(renderedOneOf.replace(/\s+/g, ' ').trim()).toBe([
+            `/**`,
+            `* ## Complex union schema`,
+            `* Complex union of diferrent types with complex condition`,
+            `*/`,
+            `export type ComplexUnionOfObects =`,
+            `| {`,
+            `/**`,
+            `* Type of person`,
+            `*/`,
+            `type: 'individual' | 'person';`,
+            `firstName: string;`,
+            `lastName: string;`,
+            `}`,
+            `// First case: a person`,
+            `| {`,
+            `/**`,
+            `* Type of commercial organization`,
+            `*/`,
+            `type: 'commercial-company' | 'non-government-organization';`,
+            `companyName: string;`,
+            `branch?: 'it' | 'horeca' | 'retail' | 'sport';`,
+            `}`,
+            `// Second case: an organization`,
+            `| '[PROFILE_FROM_STORAGE]'`,
+            `// Information should be obtained by last OPERATION_ID in cookies`,
+            `| -1;`,
+            `// Information should be obtained by last unsaved request`
+        ].join(' '));
+    });
+
     // TODO At same way do simple tests of string
     // TODO At same way do simple tests of boolean
     // TODO At same way do simple tests of null
@@ -97,7 +210,6 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
     // FIXME Important test! Array with enum
     // FIXME Important test! Array with someof
     // FIXME Important test! Object with array and enum and someof
-    // FIXME Important test! Complex SomeOf
 });
 
 describe('Convert and rendering combined schema with $refs to local `#/components/schemas`', () => {
@@ -251,9 +363,10 @@ describe('Convert and rendering combined schema with $refs to local `#/component
         const createListResponseCode = affectedModelsRendered['CreateListResponse'];
         expect(createListResponseCode.replace(/\s+/g, ' ').trim()).toBe([
             'export type CreateListResponse<',
-            'TCode extends \'201\' | \'400\' | \'500\',',
+            'TCode extends 201 | 400 | 500 =',
+            '201 | 400 | 500,',
             'TContentType extends \'application/json\' = \'application/json\'',
-            '> = TCode extends \'201\'',
+            '> = TCode extends 201',
             '? TContentType extends \'application/json\'',
             '/**',
             '* ## Todo\'s list',
@@ -261,11 +374,11 @@ describe('Convert and rendering combined schema with $refs to local `#/component
             '*/',
             '? ToDosList',
             ': any',
-            ': TCode extends \'400\'',
+            ': TCode extends 400',
             '? TContentType extends \'application/json\'',
             '? HttpErrorBadRequest',
             ': any',
-            ': TCode extends \'500\'',
+            ': TCode extends 500',
             '? TContentType extends \'application/json\'',
             '? HttpErrorServer',
             ': any',
@@ -333,9 +446,10 @@ describe('Convert and rendering combined schema with $refs to local `#/component
         const rewriteListResponseCode = affectedModelsRendered['RewriteListResponse'];
         expect(rewriteListResponseCode.replace(/\s+/g, ' ').trim()).toBe([
             `export type RewriteListResponse<`,
-            `TCode extends '200' | '204' | '400' | '404' | '409' | '500',`,
+            `TCode extends 200 | 204 | 400 | 404 | 409 | 500`,
+            `= | 200 | 204 | 400 | 404 | 409 | 500,`,
             `TContentType extends 'application/json' = 'application/json'`,
-            `> = TCode extends '200'`,
+            `> = TCode extends 200`,
             `? TContentType extends 'application/json'`,
             `/**`,
             `* ## Todo's list`,
@@ -343,26 +457,26 @@ describe('Convert and rendering combined schema with $refs to local `#/component
             `*/`,
             `? ToDosList`,
             `: any`,
-            `: TCode extends '204'`,
+            `: TCode extends 204`,
             `? TContentType extends 'application/json'`,
             `/**`,
             `* No changes. Should no have a response!`,
             `*/`,
             `? null`,
             `: any`,
-            `: TCode extends '400'`,
+            `: TCode extends 400`,
             `? TContentType extends 'application/json'`,
             `? HttpErrorBadRequest`,
             `: any`,
-            `: TCode extends '404'`,
+            `: TCode extends 404`,
             `? TContentType extends 'application/json'`,
             `? HttpErrorNotFound`,
             `: any`,
-            `: TCode extends '409'`,
+            `: TCode extends 409`,
             `? TContentType extends 'application/json'`,
             `? HttpErrorConflict`,
             `: any`,
-            `: TCode extends '500'`,
+            `: TCode extends 500`,
             `? TContentType extends 'application/json'`,
             `? HttpErrorServer`,
             `: any`,
@@ -485,9 +599,6 @@ describe(
                 'Response 200, application/json should be converted to `ObjectTypeScriptDescriptor`'
             );
         });
-
-        console.log(affectedModels);
-        console.log(affectedModelsRendered);
     });
 
 // TODO test extract server info by operationId

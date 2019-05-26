@@ -29,11 +29,11 @@ export const FindPetsService: ApiServiceTemplateData = {
         '200': {
             "type": "array",
             "items": {
-                "$ref": "petShop#/schema/schema/Pet"
+                "$ref": "petShop#/components/schemas/Pet"
             }
         },
         'default': {
-            "$ref": "petShop#/schema/schema/Error"
+            "$ref": "petShop#/components/schemas/Error"
         }
     }),
     requestModelName: 'null',

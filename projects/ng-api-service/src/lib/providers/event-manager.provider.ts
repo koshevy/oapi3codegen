@@ -7,7 +7,9 @@ import {
 import {  InjectionToken  } from '@angular/core';
 import {
     HttpRequest,
-    HttpErrorResponse, HttpEvent
+    HttpErrorResponse,
+    HttpEvent,
+    HttpResponse
 } from '@angular/common/http';
 
 import { RequestSender } from './request-sender';
@@ -57,12 +59,12 @@ export interface ApiErrorEventData {
     /**
      * Subscriber of request at business layer of app
      */
-    subscriber: Subscriber<any>;
+    subscriber: Subscriber<HttpResponse<any>>;
 
     /**
      * Channel for additional events, such as progress.
      */
-    statusSubject: Subject<HttpEvent<any>>;
+    statusChanges: Subject<HttpEvent<any>> | boolean;
 
     type: ApiErrorEventType;
 

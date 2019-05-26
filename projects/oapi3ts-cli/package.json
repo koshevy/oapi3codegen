@@ -1,8 +1,23 @@
 {
-  "name": "oapi3ts-cli",
+  "name": "@codegena/oapi3ts-cli",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^7.2.0",
-    "@angular/core": "^7.2.0"
+    "ajv": ">= 5.0.0",
+    "lodash": "^4.17.11",
+    "prettier": "^1.17.0",
+    "@codegena/oapi3ts": "^ 0.0.0",
+    "@codegena/ng-api-service": "^ 0.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^12.0.0",
+    "@angular/animations": "^7.2.14",
+    "@angular/cli": "^7.3.8",
+    "@angular/common": "> 5.0.0",
+    "@angular/core": "> 5.0.0",
+    "@angular/platform-browser-dynamic": "> 5.0.0",
+    "@angular/platform-server": "^7.2.14",
+    "core-js": "^3.0.1",
+    "rxjs": "> 5.0.0",
+    "zone.js": "^0.9.1"
   }
 }

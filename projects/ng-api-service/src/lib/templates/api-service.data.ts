@@ -3,7 +3,7 @@ export interface ApiServiceTemplateData {
      * Filename of external JSON Schema that should be used
      * as a library of JSON Schema definitions, without extension.
      *
-     * Should be a pure string without quotes.
+     * Should be prepared as JSON-string
      */
     apiSchemaFile: string;
 
@@ -43,6 +43,7 @@ export interface ApiServiceTemplateData {
 
     /**
      * Params have to be placed in query string.
+     * Should be a technical name in a string without quotes.
      */
     queryParams: string[];
 

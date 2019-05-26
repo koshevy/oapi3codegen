@@ -3,6 +3,7 @@
  * be used in tests of generated services.
  */
 
+import { HttpResponse } from '@angular/common/http';
 import * as services from '../prepare-dist';
 import * as _lodash from 'lodash';
 const _ = _lodash;
@@ -33,7 +34,7 @@ export const errorHandler: ApiErrorHandler = {
                 errorData.sender.requestAttempt(
                     errorData.request,
                     errorData.subscriber,
-                    errorData.statusSubject,
+                    errorData.statusChanges,
                     errorData.originalEvent,
                     errorData.remainAttemptsNumber
                 );
@@ -45,7 +46,7 @@ export const errorHandler: ApiErrorHandler = {
                     errorData.sender.requestAttempt(
                         errorData.request,
                         errorData.subscriber,
-                        errorData.statusSubject,
+                        errorData.statusChanges,
                         errorData.originalEvent,
                         errorData.remainAttemptsNumber
                     );
@@ -53,11 +54,19 @@ export const errorHandler: ApiErrorHandler = {
                 break;
             // 404 response will be replaced by success answers
             case 404:
-                errorData.subscriber.next({
+                const body = {
                     message: 'Not found item you find! Please, continue searching.',
                     status: 404,
                     title: 'Success business-level answer with insignificant error'
-                });
+                };
+
+                errorData.subscriber.next(new HttpResponse<any>({
+                    body,
+                    headers: errorData.originalEvent.headers,
+                    status: 404,
+                    statusText: 'NotFound',
+                    url: errorData.originalEvent.url
+                }));
                 break;
             default:
                 throw new Error('Unexpected error code!');

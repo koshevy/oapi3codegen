@@ -1,16 +1,6 @@
 import * as _lodash from 'lodash';
 
-import * as prettier from 'prettier/standalone';
-import * as prettierParserTS from 'prettier/parser-typescript';
-
 const _ = _lodash;
-
-const prettierOptions = {
-    parser: 'typescript',
-    plugins: [prettierParserTS],
-    proseWrap: 'always',
-    singleQuote: true
-};
 
 // todo оптимизировать файлову структуру и типизацию
 import {
@@ -40,7 +30,6 @@ export class ObjectTypeScriptDescriptor
     /**
      * Свойства, относящиеся к этому объекту
      * (интерфейсы и классы).
-     * @type {{}}
      */
     public propertiesSets: [{
         [name: string]: PropertyDescriptor
@@ -186,15 +175,14 @@ export class ObjectTypeScriptDescriptor
     /**
      * Рендер типа данных в строку.
      *
-     * @param {DataTypeDescriptor[]} childrenDependencies
+     * @param childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
      * а самостоятельно.
      *
-     * @returns {string}
      */
     public render(
         childrenDependencies: DataTypeDescriptor[],
@@ -242,10 +230,13 @@ export class ObjectTypeScriptDescriptor
             )).join('; ')} }`
         ).join(' | ');
 
-        return prettier.format(
-            [prefix, properties].join(''),
-            prettierOptions
-        );
+        if (rootLevel) {
+            return this.formatCode(
+                [prefix, properties].join('')
+            );
+        } else {
+            return [prefix, properties].join('');
+        }
     }
 
     public getExampleValue(): {[key: string]: any} {
@@ -257,8 +248,6 @@ export class ObjectTypeScriptDescriptor
 
     /**
      * Превращение "ancestors" в строку.
-     * @returns {string}
-     * @private
      */
     private _renderExtends(dependencies: DataTypeDescriptor[]): string {
         let filteredAncestors = [];

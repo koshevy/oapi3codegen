@@ -231,8 +231,13 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
      * @param payLoad
      * @param params
      * @param requestOptions
-     * @param statusSubject
+     * @param statusChanges
+     * - `true` — emit status changes in result
+     * - `false` — don't emit status changes in result
+     * - Object of `Subject` — emit status changes in this channel
+     *
      * @param metadataResponse
+     * Used mainly in tests. Don't use it.
      *
      * Object that can be set for getting immediate response
      * with metadata of request. Mainly has uses in tests.
@@ -247,9 +252,9 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
             responseType?: 'arraybuffer' | 'blob' | 'json' | 'text';
             withCredentials?: boolean;
         } = {},
-        statusSubject?: Subject<HttpEvent<R>>,
+        statusChanges: Subject<HttpEvent<any>> | boolean = false,
         metadataResponse?: RequestMetadataResponse
-    ): Observable<R> {
+    ): Observable<HttpResponse<R> | HttpEvent<R>> {
 
         // fixme query не используется
         const query = _.pick(params || {}, this.queryParams);
@@ -289,7 +294,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
             });
         }
 
-        return Observable.create((subscriber: Subscriber<R>) => {
+        return Observable.create((subscriber: Subscriber<HttpResponse<R>>) => {
 
             // todo should validate headers
 
@@ -298,7 +303,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 params,
                 ValidationType.ParamsValidation,
                 subscriber,
-                statusSubject
+                statusChanges
             ) !== false)
 
             // валидация тела запроса
@@ -306,14 +311,14 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 payLoad,
                 ValidationType.RequestValidation,
                 subscriber,
-                statusSubject
+                statusChanges
             ) !== false)
 
             // Если ошибки валидации не прерывали запрос
             // (зависит от того, как реализован обработчик,
             // подробнее в описании ApiErrorHandler):
             // попытка отправить запрос.
-            && this.requestAttempt(request, subscriber, statusSubject);
+            && this.requestAttempt(request, subscriber, statusChanges);
         }).pipe(
             takeUntil(this.resetApiSubscribers)
         );
@@ -327,15 +332,15 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
      *
      * @param request
      * @param subscriber
-     * @param statusSubject
+     * @param statusChanges
      * @param lastError
      * Последняя возникшая ошибка, если это не первая попытка.
      * @param remainAttemptsNumber
      */
     public requestAttempt(
         request: HttpRequest<B>,
-        subscriber: Subscriber<R>,
-        statusSubject?: Subject<HttpEvent<R>>,
+        subscriber: Subscriber<HttpResponse<R> | HttpEvent<any>>,
+        statusChanges: Subject<HttpEvent<any>> | boolean = false,
         lastError?: HttpErrorResponse,
         remainAttemptsNumber = 10
     ): void {
@@ -349,24 +354,14 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
 
         // Starts from BehaviorSubject with a connection status.
         // Coninue if (or when) a got status `true`.
-        this.virtualConnectionStatus.pipe(
+        const subscription = this.virtualConnectionStatus.pipe(
             filter<boolean>(status => status),
             switchMap<boolean, HttpEvent<R>>(() => this.httpClient.request(request)),
             takeUntil(this.resetApiSubscribers)
         ).subscribe(
             (event: HttpEvent<any>) => {
-                // отправляется статус загрузки
-                if (statusSubject) {
-                    statusSubject.next(event);
-                }
-
                 // todo надо понять что приходит здесь
                 switch (event.type) {
-                    case HttpEventType.Sent:
-                        break;
-
-                    // todo дописать другие варианты
-
                     // Данные получены успешно
                     case HttpEventType.Response:
                         const body = (event as HttpResponse<R>).body;
@@ -377,14 +372,30 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                             body,
                             ValidationType.ResponseValidation,
                             subscriber,
-                            statusSubject,
+                            statusChanges,
                             statusCode
                         ) !== false)
 
-                        // передача данных подписчику
-                        && subscriber.next((event as HttpResponse<R>).body);
+                        // send data to subscriber and complete
+                        && subscriber.next(event as HttpResponse<R>)
+
+                        subscriber.complete();
+
+                        if (subscription && !subscription.closed) {
+                            subscription.unsubscribe();
+                        }
 
                         break;
+
+                    default:
+                        if (statusChanges) {
+                            // send status changes event
+                            if (statusChanges instanceof Subject) {
+                                statusChanges.next(event);
+                            } else {
+                                subscriber.next(event);
+                            }
+                        }
                 }
             },
             // Произошла ошибка, и ее нужно обработать;
@@ -395,15 +406,17 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 subscriber,
                 request,
                 error,
-                statusSubject,
+                statusChanges,
                 remainAttemptsNumber - 1
             ),
             () => {
                 // Запрос завершен
-                subscriber.complete();
+                if (!subscriber.closed) {
+                    subscriber.complete();
+                }
 
-                if (statusSubject) {
-                    statusSubject.complete();
+                if (statusChanges instanceof Subject && !statusChanges.closed) {
+                    statusChanges.complete();
                 }
             }
         );
@@ -413,14 +426,14 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
      * @param value
      * @param type
      * @param subscriber
-     * @param statusSubject
+     * @param statusChanges
      * @param statusCode
      */
     protected _validate(
         value: any,
         type: ValidationType,
-        subscriber: Subscriber<R>,
-        statusSubject: Subject<HttpEvent<R>>,
+        subscriber: Subscriber<HttpResponse<R>>,
+        statusChanges: Subject<HttpEvent<any>> | boolean = false,
         statusCode: number | null = null
     ): void | false {
         let validationError;
@@ -524,14 +537,14 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
      * @param subscriber
      * @param request
      * @param originalEvent
-     * @param statusSubject
+     * @param statusChanges
      * @param remainAttemptsNumber
      */
     protected _handleHttpError(
-        subscriber: Subscriber<R>,
+        subscriber: Subscriber<HttpResponse<R>>,
         request: HttpRequest<B>,
         originalEvent: HttpErrorResponse,
-        statusSubject: Subject<HttpEvent<R>>,
+        statusChanges: Subject<HttpEvent<any>> | boolean = false,
         remainAttemptsNumber: number
     ) {
         let error;
@@ -565,7 +578,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
             originalEvent.error,
             ValidationType.ResponseValidation,
             subscriber,
-            statusSubject,
+            statusChanges,
             originalEvent.status
         ) !== false) {
             if (this.errorHandler) {
@@ -574,7 +587,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                     remainAttemptsNumber,
                     request,
                     sender: this,
-                    statusSubject,
+                    statusChanges,
                     subscriber,
                     type: error,
                     virtualConnectionStatus: this.virtualConnectionStatus
@@ -582,8 +595,8 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
             } else {
                 subscriber.error(originalEvent);
 
-                if (statusSubject) {
-                    statusSubject.error(originalEvent);
+                if (statusChanges instanceof Subject) {
+                    statusChanges.error(originalEvent);
                 }
             }
         }

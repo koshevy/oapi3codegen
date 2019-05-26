@@ -11,17 +11,6 @@ import { OApiServer } from './oapi-structure';
  * Интерфейс конфигурации для ковертора.
  */
 export interface ConvertorConfig {
-    /**
-     * Default content-type contains no prefixes/suffixes
-     * in type names.
-     */
-    defaultContentType: string;
-
-    /**
-     * A key using for content type short describing
-     * assumed as a default key
-     */
-    defaultContentTypeKey: string;
 
     /**
      * Regex which is using for extract JSON Path parts.
@@ -60,7 +49,6 @@ export interface ConvertorConfig {
      * @param baseTypeName
      * @param code
      * @param contentType
-     * @returns {string}
      * fixme contentType is not using now
      */
     parametersModelName: (baseTypeName) => string;
@@ -73,7 +61,6 @@ export interface ConvertorConfig {
      * @param baseTypeName
      * @param code
      * @param contentType
-     * @returns {string}
      * fixme contentType is not using now
      */
     headersModelName: (baseTypeName, code, contentType?) => string;
@@ -86,7 +73,6 @@ export interface ConvertorConfig {
      * @param baseTypeName
      * @param code
      * @param contentType
-     * @returns {string}
      * fixme contentType is not using now
      */
     requestModelName: (baseTypeName, contentType?) => string;
@@ -99,7 +85,6 @@ export interface ConvertorConfig {
      * @param baseTypeName
      * @param contentType
      * @param code
-     * @returns {string}
      * fixme contentType is not using now
      */
     responseModelName: (baseTypeName, code, contentType?) => string;
@@ -108,12 +93,6 @@ export interface ConvertorConfig {
      * Name of directory with extracted models and types.
      */
     typingsDirectory: string;
-
-    /**
-     * Name of directory with dist API-services
-     * for Angular.
-     */
-    servicesDirectory: string;
 
     /**
      * Name of directory with extracted mocks
@@ -135,21 +114,8 @@ export interface ConvertorConfig {
 
 /**
  * Настройки конфига по-умолчанию.
- * @type {ConvertorConfig}
  */
 export const defaultConfig: ConvertorConfig = {
-
-    /**
-     * Default content-type contains no prefixes/suffixes
-     * in type names.
-     */
-    defaultContentType: 'application/json',
-
-    /**
-     * A key using for content type short describing
-     * assumed as a default key
-     */
-    defaultContentTypeKey: 'json',
 
     /**
      * Regex which is using for extract JSON Path parts.
@@ -200,7 +166,6 @@ export const defaultConfig: ConvertorConfig = {
      * @param baseTypeName
      * @param code
      * @param contentType
-     * @returns {string}
      * fixme contentType is not using now
      */
     headersModelName: (baseTypeName, code, contentType = null) =>
@@ -214,7 +179,6 @@ export const defaultConfig: ConvertorConfig = {
      * @param baseTypeName
      * @param code
      * @param contentType
-     * @returns {string}
      * fixme contentType is not using now
      */
     requestModelName: (baseTypeName, contentType = null) =>
@@ -228,26 +192,15 @@ export const defaultConfig: ConvertorConfig = {
      * @param baseTypeName
      * @param contentType
      * @param code
-     * @returns {string}
      * fixme contentType is not using now
      */
     responseModelName: (baseTypeName, code, contentTypeKey = null) =>
-        `${baseTypeName}${
-            (contentTypeKey && contentTypeKey !== defaultConfig.defaultContentTypeKey)
-                ? `_${_.capitalize(contentTypeKey)}`
-                : ''
-        }Response${code != 200 ? code : ''}`,
+        `${baseTypeName}${_.capitalize(contentTypeKey)}Response${code}`,
 
     /**
      * Name of directory with extracted models and types.
      */
     typingsDirectory: './typings',
-
-    /**
-     * Name of directory with dist API-services
-     * for Angular.
-     */
-    servicesDirectory: './services',
 
     /**
      * Name of directory with extracted mocks

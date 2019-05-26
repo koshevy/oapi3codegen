@@ -17,7 +17,6 @@ export class EnumTypeScriptDescriptor
     /**
      * Свойства, относящиеся к этому объекту
      * (интерфейсы и классы).
-     * @type {{}}
      */
     protected propertiesSets: [{
         [name: string]: PropertyDescriptor
@@ -94,15 +93,14 @@ export class EnumTypeScriptDescriptor
     /**
      * Рендер типа данных в строку.
      *
-     * @param {DataTypeDescriptor[]} childrenDependencies
+     * @param childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
      * а самостоятельно.
      *
-     * @returns {string}
      */
     public render(
         childrenDependencies: DataTypeDescriptor[],
@@ -113,8 +111,12 @@ export class EnumTypeScriptDescriptor
 
         // especially case: string variants
         if ( !rootLevel &&
-             (type === 'string' ||
-                 (_.isArray(type) && type[0] === 'string'))) {
+             (
+                 (type === 'string') ||
+                 (type === 'number') ||
+                 (_.isArray(type) && _.includes(['string', 'number'], type[0]))
+             )
+        ) {
 
             return _.map(this.schema.enum, (v) => JSON.stringify(v))
                 .join(' | ');

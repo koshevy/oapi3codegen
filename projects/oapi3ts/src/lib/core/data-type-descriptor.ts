@@ -52,15 +52,14 @@ export interface DataTypeDescriptor {
     /**
      * Рендер типа данных в строку.
      *
-     * @param {DataTypeDescriptor[]} childrenDependencies
+     * @param childrenDependencies
      * Immutable-массив, в который складываются все зависимости
      * типов-потомков (если такие есть).
-     * @param {boolean} rootLevel
+     * @param rootLevel
      * Говорит о том, что это рендер "корневого"
      * уровня — то есть, не в составе другого типа,
      * а самостоятельно.
      *
-     * @returns {string}
      */
     render(
         childrenDependencies: DataTypeDescriptor[],
@@ -69,8 +68,6 @@ export interface DataTypeDescriptor {
 
     /**
      * Получение комментариев для этого дескриптора.
-     * @returns {string}
-     * @private
      */
     getComments(): string;
 }

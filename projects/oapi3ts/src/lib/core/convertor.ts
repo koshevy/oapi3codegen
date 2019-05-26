@@ -48,7 +48,6 @@ type ApiMethod = | 'CONNECT'
 /**
  * Регулярное выражение для JSON Path-путей.
  * todo вынести в конфиг. если конфига нет — учредить
- * @type {RegExp}
  */
 const pathRegex = /([\w:\/\\\.]+)?#(\/?[\w+\/?]+)/;
 
@@ -63,14 +62,13 @@ export abstract class BaseConvertor {
     constructor(
         /**
          * Конфигурация для конвертора.
-         * @type {ConvertorConfig}
          */
         protected config: ConvertorConfig = defaultConfig
     ) {}
 
     /**
      * Загрузка структуры OpenAPI3-документа в конвертор.
-     * @param {OApiStructure} structure
+     * @param structure
      */
     public loadOAPI3Structure(structure: OApiStructure) {
         this._structure = structure;
@@ -79,7 +77,7 @@ export abstract class BaseConvertor {
     /**
      * Метод для установки функции, с помощью которой происходит обращение
      * к сторонней схеме (которая находится в другом файле).
-     * @param {(resourcePath: string) => Schema} fn
+     * @param fn
      */
     public setForeignSchemeFn(fn: (resourcePath: string) => Schema): void {
         this._foreignSchemaFn = fn;
@@ -162,10 +160,8 @@ export abstract class BaseConvertor {
      * возвращает уже созданный ранее, или создает
      * новый при первом упоминании.
      *
-     * @param {string} path
-     * @param {DescriptorContext} context
-     * @returns {DataTypeDescriptor}
-     * @private
+     * @param path
+     * @param context
      */
     public findTypeByPath(
         path: string,
@@ -214,26 +210,25 @@ export abstract class BaseConvertor {
      * в котором перечисляются типы данных (возможна принадлежность
      * к более чем одному типу данных: `number[] | InterfaceName`).
      *
-     * @param {Schema} schema
+     * @param schema
      * Схема, для которой будет подобрано соответствущее
      * правило, по которому будет определен дескриптор
      * нового типа данных.
-     * @param {Object} context
+     * @param context
      * Контекст, в котором хранятся ранее просчитаные модели
      * в рамках одной цепочки обработки.
-     * @param {string} name
+     * @param name
      * Собственное имя типа данных
-     * @param {string} suggestedName
+     * @param suggestedName
      * Предлагаемое имя для типа данных: может
      * применяться, если тип данных анонимный, но
      * необходимо вынести его за пределы родительской
      * модели по-ситуации (например, в случае с Enum).
-     * @param {string} originalSchemaPath
+     * @param originalSchemaPath
      * Путь, по которому была взята схема
-     * @param {DataTypeDescriptor[]} ancestors
+     * @param ancestors
      * Родительсткие модели
      *
-     * @returns {DataTypeContainer}
      */
     public abstract convert(
         schema: Schema | SchemaGeneric,
@@ -246,10 +241,8 @@ export abstract class BaseConvertor {
 
     /**
      * Извлечени схем из параметров, ответов и тел запросов для API.
-     * @param {ApiMetaInfo[]} metaInfo
+     * @param metaInfo
      * Place for storing meta-info of API-method.
-     * @returns {{[p: string]: Schema}}
-     * @private
      */
     public getMethodsSchemes(
         metaInfo: ApiMetaInfo[]
@@ -538,10 +531,8 @@ export abstract class BaseConvertor {
      * Получение нового дескриптора на основе JSON Path
      * из текущей структуры.
      *
-     * @param {string} path
-     * @param {DescriptorContext} context
-     * @returns {DataTypeDescriptor}
-     * @private
+     * @param path
+     * @param context
      */
     protected _processSchema(
         path: string,
@@ -574,10 +565,8 @@ export abstract class BaseConvertor {
 
     /**
      * Получение сторонней схемы.
-     * @param {string} resourcePath
+     * @param resourcePath
      * URL или путь до файла, содержащего стороннюю схему.
-     * @returns {Schema}
-     * @private
      */
     protected _getForeignSchema(resourcePath: string): Schema {
         if (this._foreignSchemaFn) {
