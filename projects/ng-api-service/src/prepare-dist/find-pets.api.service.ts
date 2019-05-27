@@ -16,8 +16,8 @@ import {
 
 // Typings for this API method
 import { FindPetsParams, FindPetsResponse } from '../lib/mocks/typings';
-
-const domainSchema = require('../lib/mocks/oapi-specs/pet-shop.json');
+// Schemas
+import { schema as domainSchema } from '../lib/mocks/oapi-specs/pet-shop';
 
 /**
  * Service for angular based on ApiAgent solution.

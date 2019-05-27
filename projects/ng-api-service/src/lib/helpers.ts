@@ -1,13 +1,12 @@
 import * as _lodash from 'lodash';
 
 import {
-    MonoTypeOperatorFunction,
     Observable,
     OperatorFunction,
     Subscriber
 } from 'rxjs';
 
-import { map, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 const _ = _lodash;
@@ -224,3 +223,8 @@ export function pickResponseBody<R, S = R>(
         })
     );
 }
+
+// TODO catchErrorResponse<R, S>(codes: ErrorCodeRange[]?, contentTypes?)
+// TODO tapHeaderResponse<R, S>(codes?, contentTypes?)
+// TODO tapProgress
+// TODO tapSent

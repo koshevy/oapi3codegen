@@ -1,5 +1,6 @@
 import * as _lodash from 'lodash';
 import { CliConfig } from './cli-config';
+import { sha256 } from 'hash.js';
 
 import {
     Convertor,

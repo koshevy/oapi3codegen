@@ -1,6 +1,6 @@
 import * as _lodash from 'lodash';
 import { GlobalPartial } from 'lodash/common/common';
-import { getArvgParam, prepareJsonToSave } from './helpers';
+import { getArvgParam, getHash, prepareJsonToSave, purifyJson } from './helpers';
 import { CliConfig, defaultCliConfig } from './cli-config';
 import { AbstractApplication } from './abstract-application';
 
@@ -48,6 +48,8 @@ export class CliApplication extends AbstractApplication {
     public createServices(engine: 'angular') {
         const context = {}, metaInfoList: ApiMetaInfo[] = [];
         const structure = this.getOApiStructure();
+        const schemaId = `schema.${getHash(structure).slice(4, 26).toLowerCase()}`;
+        const replacer = purifyJson.bind({ $id: schemaId });
 
         this.convertor.loadOAPI3Structure(structure);
         this.convertor.getOAPI3EntryPoints(context, metaInfoList);
@@ -56,17 +58,17 @@ export class CliApplication extends AbstractApplication {
             metaInfoList,
             (metaInfo: ApiMetaInfo) => {
                 return {
-                    apiSchemaFile: JSON.stringify(metaInfo.apiSchemaFile),
+                    apiSchemaFile: JSON.stringify(`./${schemaId}`),
                     baseTypeName: metaInfo.baseTypeName,
                     method: JSON.stringify(metaInfo.method),
                     paramsModelName: metaInfo.paramsModelName || 'null',
-                    paramsSchema: JSON.stringify(metaInfo.paramsSchema),
+                    paramsSchema: JSON.stringify(metaInfo.paramsSchema, replacer),
                     path: JSON.stringify(metaInfo.path),
                     queryParams: JSON.stringify(metaInfo.queryParams),
                     requestModelName: metaInfo.requestModelName || 'null',
-                    requestSchema: JSON.stringify(metaInfo.requestSchema),
+                    requestSchema: JSON.stringify(metaInfo.requestSchema, replacer),
                     responseModelName: metaInfo.responseModelName || 'null',
-                    responseSchema: JSON.stringify(metaInfo.responseSchema),
+                    responseSchema: JSON.stringify(metaInfo.responseSchema, replacer),
                     servers: JSON.stringify(metaInfo.servers),
                     typingsDependencies: metaInfo.typingsDependencies,
                     typingsDirectory: this.cliConfig.typingsFromServices
@@ -86,7 +88,7 @@ export class CliApplication extends AbstractApplication {
             }
         );
 
-        this.saveSchemaLib(structure);
+        this.saveSchemaLib(structure, schemaId);
     }
 
     /**
@@ -149,7 +151,7 @@ export class CliApplication extends AbstractApplication {
         schemaId = 'domainSchema'
     ): void {
         this.saveFile(
-            `${_.kebabCase(schemaId)}.schema`,
+            schemaId,
             this.cliConfig.servicesDirectory,
             `export const schema = ${
                 prepareJsonToSave(jsonSchema, schemaId)

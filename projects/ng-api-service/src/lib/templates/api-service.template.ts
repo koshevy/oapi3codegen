@@ -18,8 +18,8 @@ import {
 
 // Typings for this API method
 import { {{typingsDependencies}} } from '{{typingsDirectory}}';
-
-const domainSchema = require({{apiSchemaFile}});
+// Schemas
+import { schema as domainSchema } from {{apiSchemaFile}};
 
 /**
  * Service for angular based on ApiAgent solution.

@@ -1,6 +1,7 @@
 import * as _lodash from 'lodash';
 import { OApiStructure } from '@codegena/oapi3ts';
 import { GlobalPartial } from 'lodash/common/common';
+import { sha1 } from 'hash.js';
 
 type Partial<T> = GlobalPartial<T>;
 type PreparedSchema = Partial<OApiStructure & { $id: string; }>;
@@ -69,14 +70,18 @@ export function purifyJson(key, value: any) {
 
     // cut off titles and descriptions
     if (_.includes(['description', 'title'], key)
-        && ('string' === typeof key)) {
+        && ('string' === typeof value)) {
 
         return;
     }
 
     // cut off examples
     if (key === 'example') {
-        return undefined;
+        return;
+    }
+
+    if (this.$id && key === '$ref') {
+        return `${this.$id}${value}`;
     }
 
     return value;
@@ -111,4 +116,11 @@ export function prepareJsonToSave(
 
     // Removes waste examples, titles and descriptions
     return JSON.stringify(jsonSchemaCopy, purifyJson, '  ');
+}
+
+/**
+ * Get hash of loaded structure. Used for compare and unique naming.
+ */
+export function getHash(structure: any): string {
+    return sha1().update(JSON.stringify(structure)).digest('hex');
 }

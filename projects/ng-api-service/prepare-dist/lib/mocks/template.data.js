@@ -2,7 +2,7 @@
 exports.__esModule = true;
 /* tslint:disable */
 exports.FindPetsService = {
-    apiSchemaFile: JSON.stringify('../lib/mocks/oapi-specs/pet-shop.json'),
+    apiSchemaFile: JSON.stringify('../lib/mocks/oapi-specs/pet-shop.ts'),
     baseTypeName: 'FindPets',
     method: '\'GET\'',
     paramsModelName: 'FindPetsParams',

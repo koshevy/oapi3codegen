@@ -492,7 +492,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                     ].join(' '));
                 }
 
-                cacheKey = `${type}_${statusCode}`;
+                cacheKey = `${type}_${statusCode}_${contentType}`;
                 schema = _.get(this.schema, [type, statusCode, contentType])
                     || _.get(this.schema, [type, 'default', contentType]);
 
@@ -502,6 +502,9 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                         'Please set schema for code, or 'default'.`
                     ].join(' '));
                 }
+            } else if (type === ValidationType.RequestValidation) {
+                cacheKey = `${type}_${contentType}`;
+                schema = _.get(this.schema, [type, contentType]);
             } else {
                 cacheKey = type;
                 schema = this.schema[cacheKey];

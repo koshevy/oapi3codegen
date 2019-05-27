@@ -3,7 +3,7 @@ declare const JSON;
 
 /* tslint:disable */
 export const FindPetsService: ApiServiceTemplateData = {
-    apiSchemaFile: JSON.stringify('../lib/mocks/oapi-specs/pet-shop.json'),
+    apiSchemaFile: JSON.stringify('../lib/mocks/oapi-specs/pet-shop'),
     baseTypeName: 'FindPets',
     method: '\'GET\'',
     paramsModelName: 'FindPetsParams',
