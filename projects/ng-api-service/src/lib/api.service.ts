@@ -43,10 +43,10 @@ import { RequestSender } from './providers/request-sender';
  */
 const localhostReg = /^(https?:)?\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)/u;
 
+const defaultContentType = 'application/json';
+
 // переопределение глобальных настроек `Lodash template`
 _.templateSettings.interpolate = /{([\s\S]+?)}/g;
-
-declare const Error;
 
 export interface RequestMetadataResponse {
     url?: string;
@@ -286,6 +286,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
 
         const url = `${server || ''}${path}?${queryString}`;
         const request = new HttpRequest<B>(this.method, url, payLoad, requestOptions);
+        const contentType = request.headers.get('content-type') || defaultContentType;
 
         if (metadataResponse) {
             _.assign(metadataResponse, {
@@ -303,7 +304,9 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 params,
                 ValidationType.ParamsValidation,
                 subscriber,
-                statusChanges
+                statusChanges,
+                null,
+                contentType
             ) !== false)
 
             // валидация тела запроса
@@ -311,7 +314,9 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 payLoad,
                 ValidationType.RequestValidation,
                 subscriber,
-                statusChanges
+                statusChanges,
+                null,
+                contentType
             ) !== false)
 
             // Если ошибки валидации не прерывали запрос
@@ -366,6 +371,8 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                     case HttpEventType.Response:
                         const body = (event as HttpResponse<R>).body;
                         const statusCode = (event as HttpResponse<R>).status;
+                        const contentType = (event as HttpResponse<R>).headers.get('content-type')
+                            || defaultContentType;
 
                         // валидация ответа
                         (this._validate(
@@ -373,11 +380,12 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                             ValidationType.ResponseValidation,
                             subscriber,
                             statusChanges,
-                            statusCode
+                            statusCode,
+                            contentType
                         ) !== false)
 
                         // send data to subscriber and complete
-                        && subscriber.next(event as HttpResponse<R>)
+                        && subscriber.next(event as HttpResponse<R>);
 
                         subscriber.complete();
 
@@ -434,7 +442,8 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
         type: ValidationType,
         subscriber: Subscriber<HttpResponse<R>>,
         statusChanges: Subject<HttpEvent<any>> | boolean = false,
-        statusCode: number | null = null
+        statusCode: number | null = null,
+        contentType: string = defaultContentType
     ): void | false {
         let validationError;
 
@@ -473,8 +482,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 return;
             }
         } else {
-            let schema;
-            let cacheKey;
+            let schema, cacheKey;
 
             if (type === ValidationType.ResponseValidation) {
                 if (!statusCode) {
@@ -485,7 +493,8 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 }
 
                 cacheKey = `${type}_${statusCode}`;
-                schema = this.schema[type][statusCode] || this.schema[type]['default'];
+                schema = _.get(this.schema, [type, statusCode, contentType])
+                    || _.get(this.schema, [type, 'default', contentType]);
 
                 if (!schema) {
                     throw new Error([
@@ -495,7 +504,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 }
             } else {
                 cacheKey = type;
-                schema = this.schema[type];
+                schema = this.schema[cacheKey];
             }
 
             if (!this._ajvCaches[cacheKey]) {
@@ -579,7 +588,8 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
             ValidationType.ResponseValidation,
             subscriber,
             statusChanges,
-            originalEvent.status
+            originalEvent.status,
+            originalEvent.headers.get('content-type') || defaultContentType
         ) !== false) {
             if (this.errorHandler) {
                 this.errorHandler.onHttpError({

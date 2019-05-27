@@ -27,13 +27,17 @@ export const FindPetsService: ApiServiceTemplateData = {
     responseModelName: 'FindPetsResponse',
     responseSchema: JSON.stringify({
         '200': {
-            "type": "array",
-            "items": {
-                "$ref": "petShop#/components/schemas/Pet"
+            "application/json": {
+                "type": "array",
+                "items": {
+                    "$ref": "petShop#/components/schemas/Pet"
+                }
             }
         },
         'default': {
-            "$ref": "petShop#/components/schemas/Error"
+            "application/json": {
+                "$ref": "petShop#/components/schemas/Error"
+            }
         }
     }),
     requestModelName: 'null',

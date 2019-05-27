@@ -77,8 +77,15 @@ export class FindPetsService extends ApiService<
       },
       request: null,
       response: {
-        '200': { type: 'array', items: { $ref: 'petShop#/components/schemas/Pet' } },
-        default: { $ref: 'petShop#/components/schemas/Error' }
+        '200': {
+          'application/json': {
+            type: 'array',
+            items: { $ref: 'petShop#/components/schemas/Pet' }
+          }
+        },
+        default: {
+          'application/json': { $ref: 'petShop#/components/schemas/Error' }
+        }
       }
     } as any;
   }

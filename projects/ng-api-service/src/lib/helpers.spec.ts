@@ -177,15 +177,47 @@ describe('Testing helpers', () => {
             null,
             requestMetadata
         ).pipe(
-            pickResponseBody<FindPetsResponse>(204, null, true)
+            pickResponseBody<FindPetsResponse>(
+                204,
+                null,
+                true
+            )
         ).subscribe(
             (response: HttpResponse<FindPetsResponse>) => fail(
                 'Not expected reponse with code 204!'
             ),
-            error => {
-                console.log(error);
+            (error: UnexpectedResponse) => {
+                expect(error.response instanceof HttpResponse).toBeTruthy(
+                    'Error should contain HttpResponse'
+                );
+                gotErrors.push('204 with error');
             },
             () => gotCompleted.push('204 with error')
+        );
+
+        /**
+         * Request 4
+         */
+        apiService.request(
+            mockFindPetsService.request,
+            mockFindPetsService.params,
+            {},
+            null,
+            requestMetadata
+        ).pipe(
+            pickResponseBody<FindPetsResponse>(
+                [200, 202, 204],
+                ['application/json', 'application/x-json']
+            )
+        ).subscribe(
+            (response: HttpResponse<FindPetsResponse>) => {
+                gotNext.push(`200, 202, 204 / application/json, application/x-json`);
+                expect(response).toBe(mockFindPetsService.response);
+            },
+            error => fail(error),
+            () => gotCompleted.push(
+                `200, 202, 204 / application/json, application/x-json`
+            )
         );
 
         // find last sent request
@@ -202,5 +234,18 @@ describe('Testing helpers', () => {
                 })
             });
         });
+
+        expect(gotCompleted).toEqual(
+            [200, 204, '200, 202, 204 / application/json, application/x-json'],
+            'Not all request have to be completed have completed in fact'
+        );
+        expect(gotErrors).toEqual(
+            ['204 with error'],
+            'Not all errors have to be thrown have thrown in fact'
+        );
+        expect(gotNext).toEqual(
+            [200, '200, 202, 204 / application/json, application/x-json'],
+            'Not all request have to get "next" have emited in fact'
+        );
     }));
 });
