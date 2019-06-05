@@ -1,12 +1,22 @@
 import * as _lodash from 'lodash';
 import { CliConfig } from './cli-config';
-import { sha256 } from 'hash.js';
 
 import {
+    getHash,
+    prepareJsonToSave,
+    purifyJson
+} from './helpers';
+import {
+    ApiMetaInfo,
     Convertor,
     DataTypeDescriptor,
     OApiStructure
 } from '@codegena/oapi3ts';
+
+import {
+    ApiServiceTemplateData,
+    createApiServiceWithTemplate
+} from '@codegena/ng-api-service';
 
 const _ = _lodash;
 
@@ -56,10 +66,10 @@ export abstract class AbstractApplication {
                 const fileName = this.getFilenameOf(descriptor);
                 const fileContents = [
                     ...this.cliConfig.separatedFiles
-                        ? this.getImports(depencies)
+                        ? [this.getImports(depencies).join('\n')]
                         : [],
                     text
-                ].join('\n');
+                ].join('\n\n').trim();
 
                 this.renderedTypings[fileName] = fileContents;
 
@@ -67,7 +77,7 @@ export abstract class AbstractApplication {
                     this.saveFile(
                         fileName,
                         this.cliConfig.typingsDirectory,
-                        fileContents
+                        `/* tslint:disable */\n${fileContents}`
                     );
                 }
             },
@@ -82,17 +92,87 @@ export abstract class AbstractApplication {
                 _(this.renderedTypings)
                     .keys()
                     .sort()
-                    .map(fileName => `export * from './${fileName}'`)
+                    .map(fileName => `export * from './${fileName}';`)
                     .value()
-                    .join(';\n')
+                    .join('\n')
             );
         } else {
             this.saveFile(
                 'index',
                 this.cliConfig.typingsDirectory,
-                _.values(this.renderedTypings).join('\n')
+                `/* tslint:disable */\n${
+                    _.values(this.renderedTypings).join('\n')
+                }`
             );
         }
+    }
+
+    /**
+     * @experimental
+     * Create service for specified engine
+     * @param engine
+     * Destination engine. At moment supports only Angular.
+     */
+    public createServices(engine: 'angular') {
+        const context = {}, metaInfoList: ApiMetaInfo[] = [];
+        const structure = this.getOApiStructure();
+        const schemaId = `schema.${getHash(structure).slice(4, 26).toLowerCase()}`;
+        const replacer = purifyJson.bind({ $id: schemaId });
+        const fileIndex: string[] = [];
+
+        this.convertor.loadOAPI3Structure(structure);
+        this.convertor.getOAPI3EntryPoints(context, metaInfoList);
+
+        const templatesData = _.map<ApiMetaInfo, ApiServiceTemplateData>(
+            metaInfoList,
+            (metaInfo: ApiMetaInfo) => {
+                return {
+                    apiSchemaFile: JSON.stringify(`./${schemaId}`),
+                    baseTypeName: metaInfo.baseTypeName,
+                    method: JSON.stringify(metaInfo.method),
+                    paramsModelName: metaInfo.paramsModelName || 'null',
+                    paramsSchema: JSON.stringify(metaInfo.paramsSchema, replacer),
+                    path: JSON.stringify(metaInfo.path),
+                    queryParams: JSON.stringify(metaInfo.queryParams),
+                    requestModelName: metaInfo.requestModelName || 'null',
+                    requestSchema: JSON.stringify(metaInfo.requestSchema, replacer),
+                    responseModelName: metaInfo.responseModelName || 'null',
+                    responseSchema: JSON.stringify(metaInfo.responseSchema, replacer),
+                    servers: JSON.stringify(metaInfo.servers),
+                    typingsDependencies: metaInfo.typingsDependencies,
+                    typingsDirectory: this.cliConfig.typingsFromServices
+                } as any as ApiServiceTemplateData;
+            }
+        );
+
+        // Save rendered templates
+        _.each(
+            templatesData,
+            (templateData: ApiServiceTemplateData) => {
+                const fileName = `${_.kebabCase(templateData.baseTypeName)}.api.service`;
+
+                fileIndex.push(fileName);
+
+                this.saveFile(
+                    fileName,
+                    this.cliConfig.servicesDirectory,
+                    createApiServiceWithTemplate(templateData)
+                );
+            }
+        );
+
+        // index for all services
+        this.saveFile(
+            'index',
+            this.cliConfig.servicesDirectory,
+            `/* tslint:disable */\n${
+                _.map(fileIndex, (fileName) =>
+                    `export * from './${fileName}';`
+                ).join('\n')
+                }\n`
+        );
+
+        this.saveSchemaLib(structure, schemaId);
     }
 
     /**
@@ -119,7 +199,25 @@ export abstract class AbstractApplication {
         fileContents: string
     ): void;
 
-    // Privates
+    /**
+     * Save OpenApi components and definitions as library of JSON Schema models
+     *
+     * @param jsonSchema
+     */
+    protected saveSchemaLib(
+        jsonSchema: OApiStructure,
+        schemaId = 'domainSchema'
+    ): void {
+        this.saveFile(
+            schemaId,
+            this.cliConfig.servicesDirectory,
+            `/* tslint:disable */\nexport const schema = ${
+                prepareJsonToSave(jsonSchema, schemaId)
+                };\n`
+        );
+    }
+
+    // Private
 
     private getFilenameOf(descriptor: DataTypeDescriptor): string {
         return `${_.kebabCase(descriptor.modelName)}`;
@@ -127,6 +225,7 @@ export abstract class AbstractApplication {
 
     private getImports(descriptors: DataTypeDescriptor[]): string[] {
         return _(descriptors)
+            .uniq()
             .sort()
             .map<DataTypeDescriptor, string>(
                 (descriptor: DataTypeDescriptor) =>

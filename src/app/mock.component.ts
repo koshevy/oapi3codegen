@@ -5,8 +5,6 @@ import {
 } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { MockApiService, Hero } from './mock-api';
-
 // TODO should complete test app
 
 enum Status {
@@ -26,17 +24,17 @@ export class MockComponent implements OnInit {
     public title = 'Result of request to an API';
 
     public status$: BehaviorSubject<Status> = new BehaviorSubject(Status.New);
-    public state$: BehaviorSubject<Hero[] | null> = new BehaviorSubject(null);
+    // public state$: BehaviorSubject<Hero[] | null> = new BehaviorSubject(null);
 
-    constructor(public mockApiService: MockApiService) {}
+    // constructor(public mockApiService: MockApiService) {}
 
     ngOnInit() {
         // TODO complete data flow
-        this.mockApiService.request(
-            null,
-            {
-                universe: 'DC'
-            }
-        ).subscribe(this.state$);
+        // this.mockApiService.request(
+        //     null,
+        //     {
+        //         universe: 'DC'
+        //     }
+        // ).subscribe(this.state$);
     }
 }

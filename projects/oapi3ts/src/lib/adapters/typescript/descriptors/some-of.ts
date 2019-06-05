@@ -151,7 +151,9 @@ export class SomeOfTypeScriptDescriptor
                     this.variants,
                     (descr: DataTypeDescriptor) => [
                         descr.render(childrenDependencies, false),
-                        descr.schema['description'] !== this.schema['description']
+                        (   (typeof descr.schema['description'] === 'string')
+                            && (descr.schema['description'] !== this.schema['description'])
+                        )
                             ? `// ${descr.schema['description'].replace(/\s+/, ' ')}\n`
                             : ''
                     ].join(' ') + '\n'

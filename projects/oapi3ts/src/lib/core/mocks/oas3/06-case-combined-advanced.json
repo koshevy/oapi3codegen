@@ -6,7 +6,7 @@
     "description": "Describe example api of TODO app. Uses `#/components/schemas` section for storing shared models."
   },
   "paths": {
-    "/lists": {
+    "/list": {
       "summary": "Get lists of TODO's",
       "get": {
         "summary": "Get list of todo's lists",
@@ -62,9 +62,28 @@
         }
       }
     },
-    "/lists/{listId}": {
+    "/list/{listId}": {
       "operationId": "rewriteList",
-      "summary": "Update existing list of TODO's",
+      "get": {
+        "summary": "Get todo's list",
+        "operationId": "getList",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/listId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/todoItemSaved"
+          },
+          "400": {
+            "$ref": "#/components/responses/errorBadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/errorServer"
+          }
+        }
+      },
       "put": {
         "description": "Rewrite an entire todo's list",
         "operationId": "rewriteList",
@@ -156,7 +175,7 @@
         }
       }
     },
-    "/lists/{listId}/item": {
+    "/list/{listId}/item": {
       "summary": "List item",
       "get": {
         "operationId": "getListItems",
@@ -232,7 +251,7 @@
         }
       }
     },
-    "/lists/{listId}/item/{itemId}": {
+    "/list/{listId}/item/{itemId}": {
       "put": {
         "operationId": "rewriteListItem",
         "description": "Rewrite list item",
@@ -442,6 +461,109 @@
       }
     },
     "schemas": {
+      "AttachmentMeta": {
+        "description": "Common meta data model of any type of attachment",
+        "oneOf": [
+          {"$ref": "#/components/schemas/AttachmentMetaImage"},
+          {"$ref": "#/components/schemas/AttachmentMetaDocument"},
+          {"$ref": "#/components/schemas/ExternalResource"}
+        ]
+      },
+      "AttachmentMetaImage": {
+        "type": "object",
+        "description": "Meta data of image attached to task",
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "description": "An unique id of media. Metadata with unique get from server in return of uploaded image file.",
+            "pattern": "^[a-z0-9]{16}$"
+          },
+          "type": {
+            "type": "string",
+            "description": "Marks attachment as an image",
+            "enum": ["image"]
+          },
+          "url": {
+            "description": "Url of uploaded image",
+            "$ref": "#/components/schemas/Url"
+          },
+          "thumbs": {
+            "type": "object",
+            "description": "Possible thumbnails of uploaded image",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "description": "Url of cached thumb",
+                  "$ref": "#/components/schemas/Url"
+                },
+                "imageOptions": {
+                  "description": "Information of image",
+                  "$ref": "#/components/schemas/ImageOptions"
+                }
+              }
+            }
+          },
+          "format": {
+            "description": "Format of uploaded image",
+            "type": "string",
+            "enum": ["png", "jpeg", "gif", "svg", "tiff"]
+          },
+          "imageOptions": {
+            "description": "Url of cached thumb",
+            "$ref": "#/components/schemas/ImageOptions"
+          }
+        },
+        "required": [
+          "mediaId",
+          "type",
+          "url",
+          "format",
+          "imageOptions"
+        ]
+      },
+      "AttachmentMetaDocument": {
+        "type": "object",
+        "description": "Meta data of document attached to task",
+        "properties": {
+          "docId": {
+            "type": "string",
+            "description": "An unique id of document. Metadata with unique get from server in return of uploaded image file.",
+            "pattern": "^[a-z0-9]{16}$"
+          },
+          "type": {
+            "type": "string",
+            "description": "Marks attachment as an document",
+            "enum": ["document"]
+          },
+          "url": {
+            "description": "Url of uploaded document",
+            "$ref": "#/components/schemas/Url"
+          },
+          "format": {
+            "type": "string",
+            "description": "Format of document",
+            "enum": ["doc", "docx", "pdf", "rtf", "xls", "xlsx", "txt"]
+          },
+          "size": {
+            "type": "number",
+            "description": "File size",
+            "min": 0,
+            "max": 8388607
+          }
+        },
+        "required": [
+          "docId",
+          "type",
+          "url",
+          "format",
+          "size"
+        ]
+      },
+      "ExternalResource": {
+        "description": "Link to any external resource in attachment",
+        "$ref": "#/components/schemas/Url"
+      },
       "HttpErrorBadRequest": {
         "type": "object",
         "required": [
@@ -508,6 +630,31 @@
             ]
           }
         }
+      },
+      "ImageOptions": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "number",
+            "min": 1,
+            "max": 3000
+          },
+          "height": {
+            "type": "number",
+            "min": 1,
+            "max": 3000
+          },
+          "size": {
+            "type": "number",
+            "min": 0,
+            "max": 8388607
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "size"
+        ]
       },
       "JsonError": {
         "type": "object",
@@ -576,6 +723,14 @@
             "type": "number",
             "min": 0,
             "max": 4096
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Any material attached to the task: may be screenshots, photos, pdf- or doc- documents on something else",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentMeta"
+            },
+            "maxItems": 16
           }
         },
         "required": [
@@ -632,6 +787,11 @@
           "title",
           "items"
         ]
+      },
+      "Url": {
+        "description": "Link to any external resource",
+        "type": "string",
+        "pattern": "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
       }
     }
   }

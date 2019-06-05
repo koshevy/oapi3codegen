@@ -1,14 +1,10 @@
 import * as _lodash from 'lodash';
 import { GlobalPartial } from 'lodash/common/common';
-import { getArvgParam, getHash, prepareJsonToSave, purifyJson } from './helpers';
+import { getArvgParam } from './helpers';
 import { CliConfig, defaultCliConfig } from './cli-config';
 import { AbstractApplication } from './abstract-application';
 
-import { ApiMetaInfo, OApiStructure } from '@codegena/oapi3ts';
-import {
-    ApiServiceTemplateData,
-    createApiServiceWithTemplate
-} from '@codegena/ng-api-service';
+import { OApiStructure } from '@codegena/oapi3ts';
 
 const _ = _lodash;
 
@@ -38,58 +34,6 @@ export class CliApplication extends AbstractApplication {
     }
 
     // *** Methods
-
-    /**
-     * @experimental
-     * Create service for specified engine
-     * @param engine
-     * Destination engine. At moment supports only Angular.
-     */
-    public createServices(engine: 'angular') {
-        const context = {}, metaInfoList: ApiMetaInfo[] = [];
-        const structure = this.getOApiStructure();
-        const schemaId = `schema.${getHash(structure).slice(4, 26).toLowerCase()}`;
-        const replacer = purifyJson.bind({ $id: schemaId });
-
-        this.convertor.loadOAPI3Structure(structure);
-        this.convertor.getOAPI3EntryPoints(context, metaInfoList);
-
-        const templatesData = _.map<ApiMetaInfo, ApiServiceTemplateData>(
-            metaInfoList,
-            (metaInfo: ApiMetaInfo) => {
-                return {
-                    apiSchemaFile: JSON.stringify(`./${schemaId}`),
-                    baseTypeName: metaInfo.baseTypeName,
-                    method: JSON.stringify(metaInfo.method),
-                    paramsModelName: metaInfo.paramsModelName || 'null',
-                    paramsSchema: JSON.stringify(metaInfo.paramsSchema, replacer),
-                    path: JSON.stringify(metaInfo.path),
-                    queryParams: JSON.stringify(metaInfo.queryParams),
-                    requestModelName: metaInfo.requestModelName || 'null',
-                    requestSchema: JSON.stringify(metaInfo.requestSchema, replacer),
-                    responseModelName: metaInfo.responseModelName || 'null',
-                    responseSchema: JSON.stringify(metaInfo.responseSchema, replacer),
-                    servers: JSON.stringify(metaInfo.servers),
-                    typingsDependencies: metaInfo.typingsDependencies,
-                    typingsDirectory: this.cliConfig.typingsFromServices
-                } as any as ApiServiceTemplateData;
-            }
-        );
-
-        // Save rendered templates
-        _.each(
-            templatesData,
-            (templateData: ApiServiceTemplateData) => {
-                this.saveFile(
-                    `${_.kebabCase(templateData.baseTypeName)}.api.service`,
-                    this.cliConfig.servicesDirectory,
-                    createApiServiceWithTemplate(templateData)
-                );
-            }
-        );
-
-        this.saveSchemaLib(structure, schemaId);
-    }
 
     /**
      * Get config merged with data from CLI
@@ -134,28 +78,19 @@ export class CliApplication extends AbstractApplication {
         // Only by demand: in order to support isomorphism.
         const fs = require('fs');
         const path = require('path');
+        const dir = path.resolve(this.destPathAbs, subdir);
+
+        if (!fs.existsSync(dir)) {
+            try {
+                fs.mkdirSync(dir);
+            } catch (err) {
+                console.error(`Directory creation failed: ${dir}`);
+            }
+        }
 
         fs.writeFileSync(
-            path.resolve(this.destPathAbs, subdir, `${fileName}.ts`),
-            fileContents
-        );
-    }
-
-    /**
-     * Save OpenApi components and definitions as library of JSON Schema models
-     *
-     * @param jsonSchema
-     */
-    protected saveSchemaLib(
-        jsonSchema: OApiStructure,
-        schemaId = 'domainSchema'
-    ): void {
-        this.saveFile(
-            schemaId,
-            this.cliConfig.servicesDirectory,
-            `export const schema = ${
-                prepareJsonToSave(jsonSchema, schemaId)
-            };\n`
+            path.resolve(dir, `${fileName}.ts`),
+            `${fileContents}\n`
         );
     }
 }

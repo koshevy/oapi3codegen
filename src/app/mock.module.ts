@@ -6,7 +6,6 @@ import { ApiModule } from '@codegena/ng-api-service';
 /* tslint:enable no-implicit-dependencies */
 
 import { MockComponent } from './mock.component';
-import { MockApiService } from './mock-api';
 
 @NgModule({
     bootstrap: [
@@ -18,9 +17,6 @@ import { MockApiService } from './mock-api';
     imports: [
         ApiModule,
         BrowserModule
-    ],
-    providers: [
-        MockApiService
     ]
 })
 export class MockModule {

@@ -218,7 +218,7 @@ export class ObjectTypeScriptDescriptor
                 (descr: PropertyDescriptor, name) => {
                     const propName = name.match(/\-/) ? `'${name}'` : name;
 
-                    return `\n\n${descr.comment}${
+                    return `\n${descr.comment}${
                         descr.readOnly ? 'readonly ' : ''
                     }${propName}${!descr.required ? '?' : ''}: ${
                         _.map(

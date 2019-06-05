@@ -1,6 +1,7 @@
 {
   "name": "@codegena/oapi3ts",
   "version": "0.0.1",
+  "description": "Compiler from OpenApi3 to TypeScript",
   "peerDependencies": {
     "ajv": ">= 5.0.0",
     "lodash": "^4.17.11",

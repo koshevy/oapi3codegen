@@ -15,9 +15,13 @@ import {
 } from '@codegena/ng-api-service';
 
 // Typings for this API method
-import { MockParams, MockResponse } from '../typings';
-
-const domainSchema = require('../mock-api.schema.json');
+import {
+  CreateListItemParameters,
+  CreateListItemResponse,
+  CreateListItemRequest
+} from '../typings';
+// Schemas
+import { schema as domainSchema } from './schema.b959b5153d0bd7b94dda1b';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -25,30 +29,34 @@ const domainSchema = require('../mock-api.schema.json');
  * validation and common errors handling scheme.
  */
 @Injectable()
-export class MockApiService extends ApiService<MockResponse, null, MockParams> {
-  protected get method(): 'GET' {
-    return 'GET';
+export class CreateListItemService extends ApiService<
+  CreateListItemResponse,
+  CreateListItemRequest,
+  CreateListItemParameters
+> {
+  protected get method(): 'POST' {
+    return 'POST';
   }
 
   /**
    * Path template, example: `/some/path/{id}`.
    */
   protected get pathTemplate(): string {
-    return '/list';
+    return '/list/{listId}/item';
   }
 
   /**
    * Parameters in a query.
    */
   protected get queryParams(): string[] {
-    return ['universe'];
+    return ['forceSave'];
   }
 
   /**
    * API servers.
    */
   protected get servers(): string[] {
-    return ['https://heroes.agency/api'];
+    return ['http://localhost'];
   }
 
   /**
@@ -64,14 +72,49 @@ export class MockApiService extends ApiService<MockResponse, null, MockParams> {
    */
   protected get schema(): ApiSchema {
     return {
-      params: { $ref: 'mockApiDefinitions#/components/schemas/HeroFilter' },
-      request: null,
-      response: {
-        '200': {
-          type: 'array',
-          items: { $ref: 'mockApiDefinitions#/components/schemas/Hero' }
+      params: {
+        properties: {
+          listId: { type: 'number' },
+          forceSave: { type: ['boolean', 'null'], default: null }
         },
-        default: { $ref: 'mockApiDefinitions#/components/schemas/Error' }
+        required: ['listId'],
+        type: 'object'
+      },
+      request: {
+        'application/json': {
+          $ref: 'schema.b959b5153d0bd7b94dda1b#/components/schemas/ToDosItem'
+        }
+      },
+      response: {
+        '202': {
+          'application/json': {
+            $ref: 'schema.b959b5153d0bd7b94dda1b#/components/schemas/ToDosItem'
+          }
+        },
+        '400': {
+          'application/json': {
+            $ref:
+              'schema.b959b5153d0bd7b94dda1b#/components/schemas/HttpErrorBadRequest'
+          }
+        },
+        '404': {
+          'application/json': {
+            $ref:
+              'schema.b959b5153d0bd7b94dda1b#/components/schemas/HttpErrorNotFound'
+          }
+        },
+        '409': {
+          'application/json': {
+            $ref:
+              'schema.b959b5153d0bd7b94dda1b#/components/schemas/HttpErrorConflict'
+          }
+        },
+        '500': {
+          'application/json': {
+            $ref:
+              'schema.b959b5153d0bd7b94dda1b#/components/schemas/HttpErrorServer'
+          }
+        }
       }
     } as any;
   }
@@ -103,3 +146,4 @@ export class MockApiService extends ApiService<MockResponse, null, MockParams> {
     );
   }
 }
+

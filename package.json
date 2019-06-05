@@ -3,15 +3,13 @@
   "description": "Root project of @codegena scope",
   "version": "0.0.0",
   "scripts": {
-    "prepare:app": "tsc --outDir ./src/dist ./src/prepare.ts && node ./src/dist/src/prepare.js",
+    "prepare:app": "ng build oapi3ts-cli && node ./prepare.js --srcPath ./projects/oapi3ts/src/lib/core/mocks/oas3/06-case-combined-advanced.json --destPath ./src/app/mock-api/prepare-dist --separatedFiles true",
     "prepare:ng-api-service": "tsc --outDir ./projects/ng-api-service/dist ./projects/ng-api-service/src/prepare.ts && node ./projects/ng-api-service/dist/prepare.js",
     "prepare": "npm run prepare:app && npm run prepare:ng-api-service",
     "test": "npm run prepare && ng test",
     "lint": "ng lint",
     "check": "npm run prepare && npm run lint && ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "publish:ng-api-service": "ng build ng-api-service && npm run check && cd ./dist/ng-api-service && npm version patch && npm publish",
-    "oapi3ts-cli-run": "node ./oapi3ts-cli-run.js --srcPath /DATA/plugin_projects/oapi3codegen/projects/oapi3ts/src/lib/core/mocks/oas3/06-case-combined-advanced.json --destPath /DATA/plugin_projects/oapi3codegen/dist/_code --separatedFiles true",
-    "oapi3ts-cli-run:build": "ng build oapi3ts-cli && npm run oapi3ts-cli-run"
+    "publish:ng-api-service": "ng build ng-api-service && npm run check && cd ./dist/ng-api-service && npm version patch && npm publish"
   },
   "private": true,
   "dependencies": {
@@ -25,7 +23,10 @@
     "@angular/common": ">= 5.0.0",
     "@angular/compiler": ">= 5.0.0",
     "@angular/core": ">= 5.0.0",
-    "rxjs": ">= 5.0.0"
+    "rxjs": ">= 5.0.0",
+    "@codegena/oapi3ts": "^ 0.0.0",
+    "@codegena/ng-api-service": "^ 0.0.0",
+    "@codegena/oapi3ts-cli": "^ 0.0.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.13.0",

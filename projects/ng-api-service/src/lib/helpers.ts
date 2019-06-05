@@ -7,7 +7,7 @@ import {
 } from 'rxjs';
 
 import { tap } from 'rxjs/operators';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpEvent, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 const _ = _lodash;
 
@@ -67,7 +67,7 @@ export function tapResponse<R, S = R>(
     code: CodeRange | CodeRange[],
     contentType: string | string[],
     handler: ResponseBodyHandler<S>,
-): OperatorFunction<HttpResponse<R>, S>;
+): OperatorFunction<HttpResponse<R>, HttpResponse<R> | HttpEvent<any>>;
 
 /**
  * Handle response with specified `code`,
@@ -80,7 +80,7 @@ export function tapResponse<R, S = R>(
 export function tapResponse<R, S = R>(
     code: CodeRange | CodeRange[],
     handler: ResponseBodyHandler<S>,
-): OperatorFunction<HttpResponse<R>, S>;
+): OperatorFunction<HttpResponse<R>, HttpResponse<R> | HttpEvent<any>>;
 
 /**
  * Handle response using response body, and continue with no result changes.
@@ -91,9 +91,11 @@ export function tapResponse<R, S = R>(
  */
 export function tapResponse<R, S = R>(
     handler: ResponseBodyHandler<S>
-): OperatorFunction<HttpResponse<R>, S>;
+): OperatorFunction<HttpResponse<R>, HttpResponse<R> | HttpEvent<any>>;
 
-export function tapResponse<R, S = R>(...args): OperatorFunction<HttpResponse<R>, S> {
+export function tapResponse<R, S = R>(...args)
+    : OperatorFunction<HttpResponse<R>, HttpResponse<R> | HttpEvent<any>> {
+
     const [handler] = args.slice(-1);
     let code: CodeRange | CodeRange [],
         contentType: string | string[];
@@ -158,8 +160,7 @@ export function pickResponseBody<R, S = R>(
     }
 
     /**
-     * Will throw error if `throwIfOther`.
-     * @param {HttpResponse<R>} response
+     * Will throw error if `throwIfOther`
      */
     const assertOther = (
         response: HttpResponse<R>,
