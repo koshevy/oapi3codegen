@@ -4,6 +4,7 @@ import { ApiMetaInfo } from '../../core/api-meta-info';
 
 import * as _ from 'lodash';
 
+import { AllOfTypeScriptDescriptor } from './descriptors/all-of';
 import { ArrayTypeScriptDescriptor } from './descriptors/array';
 import { GenericDescriptor } from './descriptors/generic';
 import { NullTypeScriptDescriptor } from './descriptors/null';
@@ -583,7 +584,6 @@ describe(
                 const name = desc.modelName || desc.suggestedModelName;
                 affectedModels[name] = desc;
                 affectedModelsRendered[name] = text;
-                console.log(text);
             },
             []
         );
@@ -613,11 +613,10 @@ describe(
             const rewriteListItemParametersCode
                 = affectedModelsRendered['RewriteListItemParameters'];
             expect(rewriteListItemParametersCode.replace(/\s+/g, ' ').trim()).toBe([
-                '/** * Model of parameters for API `/lists/{listId}/item/{itemId}`',
-                '*/ export interface RewriteListItemParameters {',
-                '/** * Uid of TODO list */ listId: number;',
-                '/** * Uid of TODO list item */ itemId: number;',
-                '/** * Force save list despite conflicts */ forceSave?: any; }'
+                '/** * Model of parameters for API `/list/{listId}/item/{itemId}` */',
+                'export interface RewriteListItemParameters { /** * Uid of TODO list */',
+                'listId: number; /** * Uid of TODO list item */ itemId: number; /** *',
+                'Force save list despite conflicts */ forceSave?: any; }'
             ].join(' '));
         });
 
@@ -639,8 +638,9 @@ describe(
             expect(response200[0] instanceof GenericDescriptor).toBeTruthy(
                 'Cant\'t fint Response 200, application/json'
             );
-            expect(jsonResponse[0] instanceof ObjectTypeScriptDescriptor).toBeTruthy(
-                'Response 200, application/json should be converted to `ObjectTypeScriptDescriptor`'
+
+            expect(jsonResponse[0] instanceof AllOfTypeScriptDescriptor).toBeTruthy(
+                'Response 200, application/json should be converted to `AllOfTypeScriptDescriptor`'
             );
         });
     });

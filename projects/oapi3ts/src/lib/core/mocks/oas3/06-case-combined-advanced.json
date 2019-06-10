@@ -37,7 +37,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosList"
+                "$ref": "#/components/schemas/ToDosListBlank"
               }
             }
           }
@@ -101,7 +101,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosList"
+                "$ref": "#/components/schemas/ToDosListBlank"
               }
             }
           }
@@ -144,7 +144,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosList"
+                "$ref": "#/components/schemas/ToDosListBlank"
               }
             }
           }
@@ -220,7 +220,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosItem"
+                "$ref": "#/components/schemas/ToDosItemBlank"
               }
             }
           }
@@ -272,7 +272,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosItem"
+                "$ref": "#/components/schemas/ToDosItemBlank"
               }
             }
           }
@@ -322,7 +322,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosItem"
+                "$ref": "#/components/schemas/ToDosItemBlank"
               }
             }
           }
