@@ -6,21 +6,26 @@ import { ArrayTypeScriptDescriptor } from './array';
 import { BooleanTypeScriptDescriptor } from './boolean';
 import { EnumTypeScriptDescriptor } from './enum';
 import { GenericDescriptor } from './generic';
-import { Instanceof } from './instanceof';
+import { InstanceofDescriptior } from './instanceof';
 import { NullTypeScriptDescriptor } from './null';
 import { NumberTypeScriptDescriptor } from './number';
 import { ObjectTypeScriptDescriptor } from './object';
 import { SomeOfTypeScriptDescriptor } from './some-of';
+import { AllOfTypeScriptDescriptor } from './all-of';
 import { StringTypeScriptDescriptor } from './string';
 
 export interface DescriptorRuleSchema {
     _schemaComplied?: any;
-    rule: DescriptorRule;
+    rule?: DescriptorRule | {
+        allOf?: DescriptorRuleSchema[];
+        anyOf?: DescriptorRuleSchema[];
+        oneOf?: DescriptorRuleSchema[];
+    };
     classConstructor: typeof AbstractTypeScriptDescriptor;
 }
 
 export type DescriptorRuleFn = (schema: SchemaObject) => boolean;
-export type DescriptorRule = SchemaObject | DescriptorRuleFn;
+export type DescriptorRule = SchemaObject | DescriptorRuleFn | any;
 
 /**
  * Правила для определения: какой тип данных будет использоваться.
@@ -67,7 +72,7 @@ export const rules: DescriptorRuleSchema[] = [
         }
     },
     {
-        classConstructor: SomeOfTypeScriptDescriptor,
+        classConstructor: AllOfTypeScriptDescriptor,
         rule: {
             additionalProperties: true,
             properties: {
@@ -132,15 +137,43 @@ export const rules: DescriptorRuleSchema[] = [
     {
         classConstructor: ObjectTypeScriptDescriptor,
         rule: {
-            additionalProperties: true,
-            properties: {
-                type: {
-                    pattern: 'object',
-                    type: 'string'
+            allOf: [
+                {
+                    additionalProperties: true,
+                    properties: {
+                        additionalProperties: {
+                            type: ['boolean', 'object']
+                        },
+                        properties: {
+                            type: 'object'
+                        },
+                        required: {
+                            type: 'array'
+                        },
+                        type: {
+                            pattern: 'object',
+                            type: 'string'
+                        }
+                    },
+                    type: 'object',
+                },
+                {
+                    anyOf: [
+                        {
+                            required: ['additionalProperties'],
+                        },
+                        {
+                            required: ['properties'],
+                        },
+                        {
+                            required: ['required'],
+                        },
+                        {
+                            required: ['type'],
+                        }
+                    ]
                 }
-            },
-            required: ['type'],
-            type: 'object',
+            ]
         },
     },
     {
@@ -186,7 +219,7 @@ export const rules: DescriptorRuleSchema[] = [
         },
     },
     {
-        classConstructor: Instanceof,
+        classConstructor: InstanceofDescriptior,
         rule: {
             additionalProperties: true,
             properties: {

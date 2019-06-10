@@ -156,9 +156,9 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
     it('should convert complex `oneOf`-scheme as root', () => {
         const cases = schemaCases.complex;
         const container = convertor.convert(
-            cases.complexUnion,
+            cases.complexOneOf,
             {},
-            'ComplexUnionOfObects'
+            'ComplexUnionOfObjects'
         ) as [ObjectTypeScriptDescriptor];
         const [descriptor] = container;
         const renderedOneOf = descriptor.render([], true);
@@ -166,9 +166,9 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
         expect(renderedOneOf.replace(/\s+/g, ' ').trim()).toBe([
             `/**`,
             `* ## Complex union schema`,
-            `* Complex union of diferrent types with complex condition`,
+            `* Complex union of different types with complex condition`,
             `*/`,
-            `export type ComplexUnionOfObects =`,
+            `export type ComplexUnionOfObjects =`,
             `| {`,
             `/**`,
             `* Type of person`,
@@ -194,6 +194,49 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
         ].join(' '));
     });
 
+    it('should convert simple `allOf`-scheme as root', () => {
+        const cases = schemaCases.complex;
+        const container = convertor.convert(
+            cases.simpleAllOf,
+            {},
+            'SimpleMixedAllOfType'
+        ) as [ObjectTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedAllOf = descriptor.render([], true);
+
+        expect(renderedAllOf.replace(/\s+/g, ' ').trim()).toBe([
+            `/** * ## Simple merging schema * Simple merging of object types */`,
+            `export interface SimpleMixedAllOfType { /** * Type of commercial`,
+            `organization */ type: 'commercial-company' | 'non-government-organization';`,
+            `firstName?: string; lastName: string; companyName: string; branch?:`,
+            `'it' | 'horeca' | 'retail' | 'sport'; }`
+        ].join(' '));
+    });
+
+    it('should convert complex `allOf`-scheme as root', () => {
+        const cases = schemaCases.complex;
+        const container = convertor.convert(
+            cases.complexAllOf,
+            {},
+            'ComplexMixedAllOfType'
+        ) as [ObjectTypeScriptDescriptor];
+        const [descriptor] = container;
+        const renderedAllOf = descriptor.render([], true);
+
+        expect(renderedAllOf.replace(/\s+/g, ' ').trim()).toBe([
+            `/** * ## Complex merging schema * Complex merging of different types`,
+            `with complex condition */ export type ComplexMixedAllOfType = |`,
+            `{ /** * Type of commercial organization */ type: 'commercial-company'`,
+            `| 'non-government-organization'; firstName?: string; lastName: string;`,
+            `/** * A rare property added to typical organization data */ readonly`,
+            `rareOrganizationCode?: boolean; companyName: string; branch?: 'it' |`,
+            `'horeca' | 'retail' | 'sport'; } | '[PROFILE_FROM_STORAGE]' // Information`,
+            `should be obtained by last OPERATION_ID in cookies | -1 // Information`,
+            `should be obtained by last unsaved request | 1 // Data, wrapped by`,
+            `OneOf (1 item) | 2; // Data, wrapped by OneOf (2 item)`
+        ].join(' '));
+    });
+
     // TODO At same way do simple tests of string
     // TODO At same way do simple tests of boolean
     // TODO At same way do simple tests of null
@@ -204,7 +247,7 @@ describe('Typescript convertor isolated schema\'s rendering', () => {
     // FIXME Important test! Array
     // FIXME Important test! Object
     // FIXME Important test! Enum
-    // FIXME Important test! Simple SomeOf
+    // FIXME Important test! Simple anyOf
     // FIXME Important test! Array with object
     // FIXME Important test! Array with array
     // FIXME Important test! Array with enum
@@ -540,6 +583,7 @@ describe(
                 const name = desc.modelName || desc.suggestedModelName;
                 affectedModels[name] = desc;
                 affectedModelsRendered[name] = text;
+                console.log(text);
             },
             []
         );

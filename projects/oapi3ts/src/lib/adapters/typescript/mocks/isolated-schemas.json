@@ -59,9 +59,9 @@
     }
   },
   "complex": {
-    "complexUnion": {
+    "complexOneOf": {
       "title": "Complex union schema",
-      "description": "Complex union of diferrent types with complex condition",
+      "description": "Complex union of different types with complex condition",
       "oneOf": [
         {
           "type": "object",
@@ -127,6 +127,172 @@
           "type": "number",
           "description": "Information should be obtained by last unsaved request",
           "enum": [-1]
+        }
+      ]
+    },
+    "simpleAllOf": {
+      "title": "Simple merging schema",
+      "description": "Simple merging of object types",
+      "allOf": [
+        {
+          "type": "object",
+          "description": "First case: a person",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of person",
+              "enum": [
+                "individual",
+                "person"
+              ]
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "firstName",
+            "lastName"
+          ]
+        },
+        {
+          "type": "object",
+          "description": "Second case: an organization",
+          "properties": {
+            "type": {
+              "description": "Type of commercial organization",
+              "type": "string",
+              "enum": [
+                "commercial-company",
+                "non-government-organization"
+              ]
+            },
+            "companyName": {
+              "type": "string"
+            },
+            "branch": {
+              "type": "string",
+              "enum": [
+                "it",
+                "horeca",
+                "retail",
+                "sport"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "companyName"
+          ]
+        }
+      ]
+    },
+    "complexAllOf": {
+      "title": "Complex merging schema",
+      "description": "Complex merging of different types with complex condition",
+      "allOf": [
+        {
+          "type": "object",
+          "description": "First case: a person",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of person",
+              "enum": [
+                "individual",
+                "person"
+              ]
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "firstName",
+            "lastName"
+          ]
+        },
+        {
+          "description": "Nested 'allOf' rule",
+          "allOf": [
+            {
+              "description": "A simple case for merging",
+              "type": "object",
+              "properties": {
+                "rareOrganizationCode": {
+                  "readOnly": "true",
+                  "description": "A rare property added to typical organization data",
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "description": "Second case: an organization",
+              "properties": {
+                "type": {
+                  "description": "Type of commercial organization",
+                  "type": "string",
+                  "enum": [
+                    "commercial-company",
+                    "non-government-organization"
+                  ]
+                },
+                "companyName": {
+                  "type": "string"
+                },
+                "branch": {
+                  "type": "string",
+                  "enum": [
+                    "it",
+                    "horeca",
+                    "retail",
+                    "sport"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "companyName"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "description": "Information should be obtained by last OPERATION_ID in cookies",
+          "enum": ["[PROFILE_FROM_STORAGE]"]
+        },
+        {
+          "type": "number",
+          "description": "Information should be obtained by last unsaved request",
+          "enum": [-1]
+        },
+        {
+          "type": "boolean",
+          "description": "Simple value should not be included in variants"
+        },
+        {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Data, wrapped by OneOf (1 item)",
+              "enum": [1]
+            },
+            {
+              "type": "number",
+              "description": "Data, wrapped by OneOf (2 item)",
+              "enum": [2]
+            }
+          ]
         }
       ]
     }

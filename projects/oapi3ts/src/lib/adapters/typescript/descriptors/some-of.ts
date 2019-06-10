@@ -33,7 +33,12 @@ export class SomeOfTypeScriptDescriptor
      * При рендеринге будут исключены те типы, которые
      * рендерятся в одинаковый результат.
      */
-    protected variants: DataTypeContainer;
+    public variants: DataTypeContainer;
+
+    /**
+     * `anyOf` | `oneOf` | `allOf`
+     */
+    protected conditionType: SomeOfType;
 
     constructor(
 
@@ -89,7 +94,6 @@ export class SomeOfTypeScriptDescriptor
 
         let suggestedNameBase = (modelName || suggestedModelName);
         let subSchemas;
-        let conditionType;
 
         if (suggestedNameBase) {
             suggestedNameBase = suggestedNameBase.replace(
@@ -101,17 +105,17 @@ export class SomeOfTypeScriptDescriptor
         const commonPart = _.omit(schema, ['oneOf', 'anyOf', 'allOf']);
 
         if (schema.oneOf) {
-            conditionType = SomeOfType.OneOf;
+            this.conditionType = SomeOfType.OneOf;
         } else if (schema.anyOf) {
-            conditionType = SomeOfType.AnyOf;
+            this.conditionType = SomeOfType.AnyOf;
         } else if (schema.allOf) {
-            conditionType = SomeOfType.AllOf;
+            this.conditionType = SomeOfType.AllOf;
         }
 
         subSchemas = this._getSomeOfSchemes(
             schema,
             commonPart,
-            conditionType
+            this.conditionType
         );
 
         this.variants = _(subSchemas)
@@ -120,7 +124,9 @@ export class SomeOfTypeScriptDescriptor
                     _.merge(_.cloneDeep(commonPart), variant),
                     context,
                     null,
-                    `${suggestedNameBase}_${i}`
+                    suggestedNameBase
+                        ? `${suggestedNameBase}_${i}`
+                        : null
                 );
             })
             .flattenDeep<DataTypeDescriptor>()
@@ -144,6 +150,9 @@ export class SomeOfTypeScriptDescriptor
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
+        const variantsSeparator = (this.conditionType === SomeOfType.AllOf)
+            ? ' & '
+            : ' | ';
 
         const result = `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
             this.variants
@@ -157,8 +166,8 @@ export class SomeOfTypeScriptDescriptor
                             ? `// ${descr.schema['description'].replace(/\s+/, ' ')}\n`
                             : ''
                     ].join(' ') + '\n'
-                )).join(' | ')
-                : 'any[]'
+                )).join(variantsSeparator)
+                : 'any'
         }`;
 
         return rootLevel
@@ -179,21 +188,7 @@ export class SomeOfTypeScriptDescriptor
 
         switch (type) {
             case SomeOfType.AllOf:
-                schemes.push(_.merge.apply(
-                    _,
-                    _.map(
-                        schema[type],
-                        (s) => {
-                            if (s.$ref) {
-                                const refSchema = this.convertor.getSchemaByPath(s.$ref);
-
-                                return refSchema || {};
-                            } else {
-                                return _.cloneDeep(s);
-                            }
-                        }
-                    )
-                ));
+                schemes = _.flattenDeep([schemes, schema[type]]);
 
             case SomeOfType.AnyOf:
             case SomeOfType.OneOf:

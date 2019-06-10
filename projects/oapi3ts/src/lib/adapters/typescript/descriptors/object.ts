@@ -108,7 +108,7 @@ export class ObjectTypeScriptDescriptor
                         v => v === propName
                     ) !== -1,
 
-                    readOnly: propSchema.readOnly,
+                    readOnly: propSchema.readOnly || propSchema['readonly'],
 
                     typeContainer,
 

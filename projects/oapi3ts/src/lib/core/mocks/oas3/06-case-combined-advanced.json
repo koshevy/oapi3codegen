@@ -674,17 +674,10 @@
           }
         }
       },
-      "ToDosItem": {
-        "title": "Item in todo's list",
-        "description": "Describe data structure of an item in list of tasks",
-        "type": "object",
+      "ToDosItemBlank": {
+        "title": "Base part of data of item in todo's list",
+        "description": "Data about list item needed for creation of it",
         "properties": {
-          "uid": {
-            "description": "An unique id of task",
-            "type": "number",
-            "min": 1,
-            "max": 2147483647
-          },
           "listUid": {
             "description": "An unique id of list that item belongs to",
             "type": "number",
@@ -708,22 +701,6 @@
             "type": "boolean",
             "default": "false"
           },
-          "dateCreated": {
-            "description": "Date/time (ISO) when task was created",
-            "type": "string",
-            "format": "date-time"
-          },
-          "dateChanged": {
-            "description": "Date/time (ISO) when task was changed last time",
-            "type": "string",
-            "format": "date-time"
-          },
-          "position": {
-            "description": "Position of a task in list. Allows to track changing of state of a concrete item, including changing od position.",
-            "type": "number",
-            "min": 0,
-            "max": 4096
-          },
           "attachments": {
             "type": "array",
             "description": "Any material attached to the task: may be screenshots, photos, pdf- or doc- documents on something else",
@@ -734,22 +711,62 @@
           }
         },
         "required": [
-          "title",
+          "description",
           "isDone",
-          "position"
+          "listUid",
+          "title"
         ]
       },
-      "ToDosList": {
-        "title": "Todo's list",
-        "description": "Object with todo's list of items",
+      "ToDosItem": {
+        "title": "Item in todo's list",
+        "description": "Describe data structure of an item in list of tasks",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ToDosItemBlank"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "uid": {
+                "description": "An unique id of task",
+                "type": "number",
+                "min": 1,
+                "max": 2147483647,
+                "readOnly": true
+              },
+              "dateCreated": {
+                "description": "Date/time (ISO) when task was created",
+                "type": "string",
+                "format": "date-time",
+                "readOnly": true
+              },
+              "dateChanged": {
+                "description": "Date/time (ISO) when task was changed last time",
+                "type": "string",
+                "format": "date-time",
+                "readOnly": true
+              },
+              "position": {
+                "description": "Position of a task in list. Allows to track changing of state of a concrete item, including changing od position.",
+                "type": "number",
+                "min": 0,
+                "max": 4096
+              }
+            },
+            "required": [
+              "dateChanged",
+              "dateCreated",
+              "position",
+              "uid"
+            ]
+          }
+        ]
+      },
+      "ToDosListBlank": {
+        "title": "Base part of data of list",
+        "description": "Data needed for list creation",
         "type": "object",
         "properties": {
-          "uid": {
-            "description": "An unique id of task",
-            "type": "number",
-            "min": 1,
-            "max": 2147483647
-          },
           "title": {
             "description": "Title of a list",
             "type": "string",
@@ -771,6 +788,24 @@
           "isComplete": {
             "description": "Whether all tasks in list are complete",
             "type": "boolean"
+          }
+        },
+        "required": [
+          "isComplete",
+          "items",
+          "title"
+        ]
+      },
+      "ToDosListExtendedData": {
+        "title": "Extended data of list",
+        "description": "Extended data has to be obtained after first save",
+        "type": "object",
+        "properties": {
+          "uid": {
+            "description": "An unique id of task",
+            "type": "number",
+            "min": 1,
+            "max": 2147483647
           },
           "dateCreated": {
             "description": "Date/time (ISO) when task was created",
@@ -784,8 +819,19 @@
           }
         },
         "required": [
-          "title",
-          "items"
+          "dateChanged",
+          "dateCreated",
+          "uid"
+        ]
+      },
+      "ToDosList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ToDosListBlank"
+          },
+          {
+            "$ref": "#/components/schemas/ToDosListExtendedData"
+          }
         ]
       },
       "Url": {

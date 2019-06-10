@@ -6,7 +6,7 @@ import {
 import { BaseConvertor } from '../../../core';
 import { AbstractTypeScriptDescriptor } from './abstract';
 
-export class Instanceof extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
+export class InstanceofDescriptior extends AbstractTypeScriptDescriptor {
 
     protected instanceOf: string;
     protected genericOf: DataTypeContainer | DataTypeDescriptor;
