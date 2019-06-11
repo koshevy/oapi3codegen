@@ -6,24 +6,13 @@ import {
 import { BaseConvertor, Schema } from '../../../core';
 import { AbstractTypeScriptDescriptor } from './abstract';
 
+const _ = _lodash;
+
 enum SomeOfType {
     OneOf = 'oneOf',
-    AllOf = 'allOf',
     AnyOf = 'anyOf'
 }
 
-const _ = _lodash;
-
-/**
- * Дескриптор для обслуживания конструкций-вариантов:
- *
- *  - oneOf
- *  - anyOf
- *  - allOf
- */
-// fixme allOf должны проверять типы
-// fixme (не может number смешиваться с object) и проставлять extends для интерфейсов
-// fixme allOf should make common interface (if it s a object) and set "extends"
 export class SomeOfTypeScriptDescriptor
     extends AbstractTypeScriptDescriptor
     implements DataTypeDescriptor {
@@ -34,11 +23,6 @@ export class SomeOfTypeScriptDescriptor
      * рендерятся в одинаковый результат.
      */
     public variants: DataTypeContainer;
-
-    /**
-     * `anyOf` | `oneOf` | `allOf`
-     */
-    protected conditionType: SomeOfType;
 
     constructor(
 
@@ -85,50 +69,27 @@ export class SomeOfTypeScriptDescriptor
             originalSchemaPath
         );
 
-        if (!schema.oneOf && !schema.anyOf && !schema.allOf) {
+        if (!schema[SomeOfType.AnyOf] && !schema[SomeOfType.OneOf]) {
             throw new Error([
                 'Error: descriptor, recognized as "SomeOf"',
-                'should have "oneOf", "anyOf" or "allOf" properties.'
+                'should have "oneOf" or "allOf" properties.'
             ].join(' '));
         }
 
-        let suggestedNameBase = (modelName || suggestedModelName);
-        let subSchemas;
+        const conditionType = !!schema.oneOf
+            ? SomeOfType.OneOf
+            : SomeOfType.AnyOf;
 
-        if (suggestedNameBase) {
-            suggestedNameBase = suggestedNameBase.replace(
-                /^./, suggestedNameBase[0]
-            );
-        }
-
-        // обработка разных вариантов
-        const commonPart = _.omit(schema, ['oneOf', 'anyOf', 'allOf']);
-
-        if (schema.oneOf) {
-            this.conditionType = SomeOfType.OneOf;
-        } else if (schema.anyOf) {
-            this.conditionType = SomeOfType.AnyOf;
-        } else if (schema.allOf) {
-            this.conditionType = SomeOfType.AllOf;
-        }
-
-        subSchemas = this._getSomeOfSchemes(
-            schema,
-            commonPart,
-            this.conditionType
-        );
+        const subSchemas = schema[conditionType];
 
         this.variants = _(subSchemas)
-            .map<Schema, DataTypeDescriptor[]>((variant, i) => {
-                return convertor.convert(
-                    _.merge(_.cloneDeep(commonPart), variant),
+            .map<Schema, DataTypeDescriptor[]>((variant, i) =>
+                convertor.convert(
+                    variant,
                     context,
                     null,
-                    suggestedNameBase
-                        ? `${suggestedNameBase}_${i}`
-                        : null
-                );
-            })
+                    null
+                ))
             .flattenDeep<DataTypeDescriptor>()
             .value();
     }
@@ -150,9 +111,6 @@ export class SomeOfTypeScriptDescriptor
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
-        const variantsSeparator = (this.conditionType === SomeOfType.AllOf)
-            ? ' & '
-            : ' | ';
 
         const result = `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}${
             this.variants
@@ -166,36 +124,12 @@ export class SomeOfTypeScriptDescriptor
                             ? `// ${descr.schema['description'].replace(/\s+/, ' ')}\n`
                             : ''
                     ].join(' ') + '\n'
-                )).join(variantsSeparator)
+                )).join(' | ')
                 : 'any'
         }`;
 
         return rootLevel
             ? this.formatCode(result)
             : result;
-    }
-
-    /**
-     * Получение схем для конвертации, которые исходят
-     * из условий 'allOf', 'anyOf', 'allOff'
-     *
-     * @param schema
-     * @param commonPart
-     * @param type
-     */
-    private _getSomeOfSchemes(schema, commonPart, type: SomeOfType): any[] {
-        let schemes = [];
-
-        switch (type) {
-            case SomeOfType.AllOf:
-                schemes = _.flattenDeep([schemes, schema[type]]);
-
-            case SomeOfType.AnyOf:
-            case SomeOfType.OneOf:
-                schemes = _.flattenDeep([schemes, schema[type]]);
-        }
-
-        // ко всем вариантам "подмещивается" общая часть
-        return schemes;
     }
 }
