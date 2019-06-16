@@ -9,8 +9,9 @@
     "test": "npm run prepare && ng test",
     "lint": "ng lint",
     "check": "npm run prepare && npm run lint && ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "publish:ng-api-service": "ng build ng-api-service && npm run check && cd ./dist/ng-api-service && npm version patch && npm publish",
-    "publish:oapi3ts": "ng build oapi3ts && rm -rf ./node_modules/@codegena/oapi3ts && cp -R ./dist/oapi3ts ./node_modules/@codegena/oapi3ts && npm run check && npm version patch && cd ./dist/oapi3ts && npm version patch && npm publish"
+    "publish:ng-api-service": "ng build ng-api-service && rm -rf ./node_modules/@codegena/ng-api-service && cp -R ./dist/ng-api-service ./node_modules/@codegena/ng-api-service && npm run check && npm version patch && cd ./dist/ng-api-service && npm version patch && npm publish",
+    "publish:oapi3ts": "ng build oapi3ts && rm -rf ./node_modules/@codegena/oapi3ts && cp -R ./dist/oapi3ts ./node_modules/@codegena/oapi3ts && npm run check && npm version patch && cd ./dist/oapi3ts && npm version patch && npm publish",
+    "publish:oapi3ts-cli": "ng build oapi3ts-cli && rm -rf ./node_modules/@codegena/oapi3ts-cli && cp -R ./dist/oapi3ts-cli ./node_modules/@codegena/oapi3ts-cli && npm run check && npm version patch && cd ./dist/oapi3ts-cli && npm version patch && npm publish"
   },
   "private": true,
   "dependencies": {
