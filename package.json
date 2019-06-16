@@ -1,7 +1,7 @@
 {
   "name": "@codegena/codegena",
   "description": "Root project of @codegena scope",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "prepare:app": "ng build oapi3ts-cli && node ./prepare.js --srcPath ./projects/oapi3ts/src/lib/core/mocks/oas3/06-case-combined-advanced.json --destPath ./src/app/mock-api/prepare-dist --separatedFiles true",
     "prepare:ng-api-service": "tsc --outDir ./projects/ng-api-service/dist ./projects/ng-api-service/src/prepare.ts && node ./projects/ng-api-service/dist/prepare.js",
