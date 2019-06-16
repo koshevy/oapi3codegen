@@ -711,7 +711,6 @@
           }
         },
         "required": [
-          "description",
           "isDone",
           "listUid",
           "title"

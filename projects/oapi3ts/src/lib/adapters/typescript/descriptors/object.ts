@@ -132,8 +132,6 @@ export class ObjectTypeScriptDescriptor
                     ancestor['propertiesSets'][0] || {}
                 );
             });
-
-            // todo: do additionalProperties support when additionalProperties === true
         } else if (
             // если по итогам, свойств нет, указывается
             // универсальное описание

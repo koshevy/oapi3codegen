@@ -1,12 +1,12 @@
 
 // todo оптимизировать файлову структуру и типизацию
-import { BaseConvertor } from "../../../core";
-import { DataTypeDescriptor } from "../../../core/data-type-descriptor";
-import { AbstractTypeScriptDescriptor } from "./abstract";
+import { BaseConvertor } from '../../../core';
+import { DataTypeDescriptor } from '../../../core/data-type-descriptor';
+import { AbstractTypeScriptDescriptor } from './abstract';
 
-export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor implements DataTypeDescriptor {
+export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor {
 
-    constructor (
+    constructor(
 
         public schema: any,
 
@@ -69,6 +69,11 @@ export class StringTypeScriptDescriptor extends AbstractTypeScriptDescriptor imp
         rootLevel: boolean = true
     ): string {
         const comment = this.getComments();
-        return `${rootLevel ? `${comment}export type ${this.modelName} = ` : ''}string`;
+
+        return `${
+            rootLevel
+                ? `${comment}export type ${this.modelName} = `
+                : ''
+        }string`;
     }
 }

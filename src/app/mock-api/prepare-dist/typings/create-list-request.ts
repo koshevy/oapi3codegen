@@ -1,12 +1,12 @@
 /* tslint:disable */
-import { ToDosList } from './to-dos-list';
+import { ToDosListBlank } from './to-dos-list-blank';
 
 export type CreateListRequest<
   TCode extends 'application/json' = 'application/json'
 > = TCode extends 'application/json'
 /**
- * ## Todo's list
- * Object with todo's list of items
+ * ## Base part of data of list
+ * Data needed for list creation
  */
-  ? ToDosList
+  ? ToDosListBlank
   : any;

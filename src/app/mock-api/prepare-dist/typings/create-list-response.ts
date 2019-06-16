@@ -8,10 +8,6 @@ export type CreateListResponse<
   TContentType extends 'application/json' = 'application/json'
 > = TCode extends 201
   ? TContentType extends 'application/json'
-    /**
-     * ## Todo's list
-     * Object with todo's list of items
-     */
     ? ToDosList
     : any
   : TCode extends 400

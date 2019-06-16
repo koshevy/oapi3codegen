@@ -10,10 +10,6 @@ export type UpdateListResponse<
   TContentType extends 'application/json' = 'application/json'
 > = TCode extends 200
   ? TContentType extends 'application/json'
-    /**
-     * ## Todo's list
-     * Object with todo's list of items
-     */
     ? ToDosList
     : any
   : TCode extends 400

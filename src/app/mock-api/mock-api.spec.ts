@@ -22,6 +22,7 @@ import {
     CreateListRequest,
     CreateListResponse,
     ToDosList,
+    ToDosListBlank,
     ToDosItem
 } from './prepare-dist/typings';
 
@@ -46,31 +47,47 @@ describe('Test of integration generated services into external project', () => {
     it('POST request from `CreateListService`', () => {
         const requestMetadata: RequestMetadataResponse = {};
         const service: CreateListService = TestBed.get(CreateListService);
-        const todoListResult = {
+        const todoListResult: ToDosList = {
             dateChanged: '2019-06-02T09:00:12+00:00',
             dateCreated: '2019-06-02T09:00:12+00:00',
             description: 'List contains some home home tasks at weekend',
             isComplete: false,
             items: [
                 {
+                    dateChanged: '2019-06-02T09:00:12+00:00',
+                    dateCreated: '2019-06-02T09:00:12+00:00',
                     isDone: false,
+                    listUid: 1,
                     position: 0,
-                    title: 'Remove default example tasks'
+                    title: 'Remove default example tasks',
+                    uid: 0
                 },
                 {
+                    dateChanged: '2019-06-02T09:00:12+00:00',
+                    dateCreated: '2019-06-02T09:00:12+00:00',
                     isDone: false,
+                    listUid: 1,
                     position: 0,
-                    title: 'Make own real tasks'
+                    title: 'Make own real tasks',
+                    uid: 1
                 },
                 {
+                    dateChanged: '2019-06-02T09:00:12+00:00',
+                    dateCreated: '2019-06-02T09:00:12+00:00',
                     isDone: false,
+                    listUid: 1,
                     position: 0,
-                    title: 'Change list title'
+                    title: 'Change list title',
+                    uid: 3
                 },
                 {
+                    dateChanged: '2019-06-02T09:00:12+00:00',
+                    dateCreated: '2019-06-02T09:00:12+00:00',
                     isDone: false,
+                    listUid: 1,
                     position: 0,
-                    title: 'Change list description'
+                    title: 'Change list description',
+                    uid: 14
                 }
             ],
             title: 'First todo list',
@@ -78,7 +95,10 @@ describe('Test of integration generated services into external project', () => {
         };
 
         service.request(
-            _.pick(todoListResult, ['description', 'items', 'title']),
+            _.pick(
+                todoListResult,
+                ['description', 'items', 'title', 'isComplete']
+            ),
             null,
             {},
             null,
@@ -95,6 +115,8 @@ describe('Test of integration generated services into external project', () => {
                 'Wrong response'
             );
         });
+
+        console.log('requestMetadata', requestMetadata);
 
         // find last sent request
         const [testRequest] = httpTestingController.match({
