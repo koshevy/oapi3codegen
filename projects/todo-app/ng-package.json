@@ -1,0 +1,20 @@
+{
+  "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
+  "dest": "../../dist/todo-app",
+  "lib": {
+    "entryFile": "public-api.ts"
+  },
+  "rootDir": "./",
+  "whitelistedNonPeerDependencies": [
+    "@ng-bootstrap/ng-bootstrap",
+    "@codegena/oapi3ts-cli",
+    "@nestjs/common",
+    "@nestjs/core",
+    "@nestjs/platform-express",
+    "@types/lodash",
+    "bootstrap",
+    "reflect-metadata",
+    "rimraf",
+    "rxjs"
+  ]
+}

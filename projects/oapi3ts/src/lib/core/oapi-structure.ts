@@ -258,17 +258,9 @@ export enum OApiPathItemMethods {
 }
 
 /**
- * Describes a single operation parameter.
- * A unique parameter is defined by a combination of a
- * {@link https://swagger.io/specification/#parameterName | name}
- * and
- * {@link https://swagger.io/specification/#parameterIn | location}.
- *
- * @see https://swagger.io/specification/#parameterObject
- * @see https://swagger.io/docs/specification/describing-parameters/
+ * Base ancestor for {@link OApiParameter} and {@link OApiHeaderParameter}.
  */
-export interface OApiParameter extends HasRef, HasExamples {
-
+export interface OApiParameterBase {
     /**
      * Determines whether the parameter value SHOULD allow reserved characters,
      * as defined by
@@ -325,34 +317,11 @@ export interface OApiParameter extends HasRef, HasExamples {
     explode?: boolean;
 
     /**
-     * REQUIRED. The location of the parameter. Possible values are:
-     * - "query",
-     * - "header"
-     * - "path"
-     * - "cookie"
-     */
-    in: OApiParameterIn;
-
-    /**
-     * REQUIRED. The name of the parameter. Parameter names are case sensitive.
-     *
-     * @see https://swagger.io/specification/#parameterObject
-     */
-    name: string;
-
-    /**
      * Determines whether this parameter is mandatory. If the `in`
      * is "path", this property is REQUIRED and its value MUST be true.
      * Otherwise, the property MAY be included and its default value is false.
      */
     required: boolean;
-
-    /**
-     * @deprecated
-     * Not in {@link https://swagger.io/specification/#parameterObject | Open API specification }.
-     * Makes extracted schema of params supporting `readonly` params.
-     */
-    readOnly?: boolean;
 
     /**
      * The schema defining the type used for the parameter.
@@ -379,6 +348,63 @@ export interface OApiParameter extends HasRef, HasExamples {
      * FIXME describe and support style in parameter. now is not. Important!
      */
     style?: OApiParameterStyle;
+}
+
+/**
+ * Describes a single operation parameter.
+ * A unique parameter is defined by a combination of a
+ * {@link https://swagger.io/specification/#parameterName | name}
+ * and
+ * {@link https://swagger.io/specification/#parameterIn | location}.
+ *
+ * @see https://swagger.io/specification/#parameterObject
+ * @see https://swagger.io/docs/specification/describing-parameters/
+ */
+export interface OApiParameter extends HasRef, HasExamples, OApiParameterBase {
+
+    /**
+     * REQUIRED. The location of the parameter. Possible values are:
+     * - "query",
+     * - "header"
+     * - "path"
+     * - "cookie"
+     */
+    in: OApiParameterIn;
+
+    /**
+     * REQUIRED. The name of the parameter. Parameter names are case sensitive.
+     *
+     * @see https://swagger.io/specification/#parameterObject
+     */
+    name: string;
+
+    /**
+     * @deprecated
+     * Not in {@link https://swagger.io/specification/#parameterObject | Open API specification }.
+     * Makes extracted schema of params supporting `readonly` params.
+     */
+    readOnly?: boolean;
+}
+
+/**
+ * Parameter in {@link https://swagger.io/specification/#headerObject}.
+ */
+export interface OApiHeaderParameter extends HasRef, HasExamples, OApiParameterBase {
+    /**
+     * Describes how the parameter value will be serialized depending on the
+     * type of the parameter value. Default values (based on value of `in`):
+     *  - for `'query'` - `'form'`;
+     *  - for `'path'` - `'simple'`;
+     *  - for `'header'` - `'simple'`;
+     *  - for `'cookie'` - `'form'`.
+     *
+     * @see https://swagger.io/docs/specification/serialization/
+     * @see OApiParameter.explode
+     *
+     * TODO describe and support style in parameter. now is not. Important!
+     * FIXME describe and support style in parameter. now is not. Important!
+     */
+    style?: OApiParameterStyle.Simple;
 }
 
 /**
@@ -617,6 +643,8 @@ export enum OApiParameterStyle {
  * Holds a set of reusable objects for different aspects of the OAS. All objects
  * defined within the schema object will have no effect on the API unless
  * they are explicitly referenced from properties outside the schema object.
+ *
+ * @see https://swagger.io/specification/#componentsObject
  */
 export interface OApiReusableComponents {
     /**
@@ -641,11 +669,8 @@ export interface OApiReusableComponents {
     /**
      * An object to hold reusable
      * {https://swagger.io/specification/#headerObject | Header Objects}.
-     * TODO describe and support component headers. now is not
      */
-    headers: {
-        [key: string]: any;
-    };
+    headers: OApiHeaders;
 
     /**
      * An object to hold reusable
@@ -795,7 +820,7 @@ export interface OApiResponse extends HasRef, HasContent, HasRef {
      *
      * TODO describe and support headers in response. now is not. Important!
      */
-    headers: any;
+    headers: OApiHeaders;
 
     /**
      * A map of operations links that can be followed from the response.
@@ -814,6 +839,10 @@ export interface OApiResponse extends HasRef, HasContent, HasRef {
      * Not OAS3: in order to maintain OAS2
      */
     schema: AnySchema;
+}
+
+export interface OApiHeaders {
+    [parameterName: string]: OApiHeaderParameter;
 }
 
 type AnySchema = | SchemaArray

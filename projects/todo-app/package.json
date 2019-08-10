@@ -1,0 +1,26 @@
+{
+  "name": "@codegena/todo-app",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": ">= 5.2.11",
+    "@angular/core": ">= 5.2.11",
+    "@angular/material": "8.1.2",
+    "@angular/router": ">= 5.2.11",
+    "@angular/platform-browser": ">= 5.2.11",
+    "@angular/http": ">= 5.2.11",
+    "@angular/forms": "^8.1.1",
+    "@codegena/ng-api-service": ">= 0.0.0",
+    "lodash": "^4.17.15",
+    "rxjs": "> 5.0.0"
+  },
+  "scripts": {
+    "update:typings": "rm -rf ./app/api/* && node ./scripts/update-typings.js --srcPath ./specs/todo-app-spec.json --destPath ./app/api --separatedFiles true && cd ./app/api && git add *",
+    "docs:serve": "redoc-cli serve ./specs/todo-app-spec.json --watch"
+  },
+  "dependencies": {
+    "@codegena/oapi3ts-cli": "0.0.2",
+    "@ng-bootstrap/ng-bootstrap": "^5.1.0",
+    "@types/lodash": "^4.14.136",
+    "bootstrap": "^4.3.1"
+  }
+}

@@ -8,7 +8,6 @@
       "sourceRoot": "src",
       "projectType": "application",
       "prefix": "app",
-      "schematics": {},
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -25,8 +24,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [],
-            "es5BrowserSupport": true
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -44,32 +42,25 @@
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": true,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
-                }
-              ]
+              "buildOptimizer": true
             }
           }
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ng-api-service:build"
+            "browserTarget": "ng-api:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "ng-api-service:build:production"
+              "browserTarget": "ng-api:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ng-api-service:build"
+            "browserTarget": "ng-api:build"
           }
         },
         "test": {
@@ -229,6 +220,41 @@
             "tsConfig": [
               "projects/oapi3ts-cli/tsconfig.lib.json",
               "projects/oapi3ts-cli/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "todo-app": {
+      "root": "projects/todo-app",
+      "sourceRoot": "projects/todo-app/src",
+      "projectType": "library",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/todo-app/tsconfig.lib.json",
+            "project": "projects/todo-app/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/todo-app/src/test.ts",
+            "tsConfig": "projects/todo-app/tsconfig.spec.json",
+            "karmaConfig": "projects/todo-app/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/todo-app/tsconfig.lib.json",
+              "projects/todo-app/tsconfig.spec.json"
             ],
             "exclude": [
               "**/node_modules/**"

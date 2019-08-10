@@ -1,0 +1,75 @@
+@import '~bootstrap/scss/bootstrap';
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+@import '~@angular/material/theming';
+
+:host {
+  display: block;
+}
+
+a {
+  &.text-dark:hover {
+    color: $info !important;
+  }
+}
+
+.badge {
+  transform: translateY(-2px);
+}
+
+.material-icons {
+  line-height: 80%;
+  vertical-align: middle;
+}
+
+.text-muted {
+  opacity: 0.5 !important;
+}
+
+.dropdown-toggle{
+  &:after{
+    display: none;
+  }
+}
+
+// Forms
+
+.form-control {
+  &.ng-invalid.ng-touched {
+    border-color: $danger;
+    outline-color: $danger;
+    box-shadow: 0 0 0 $input-btn-focus-width rgba($form-feedback-invalid-color, .4);
+  }
+}
+
+// Validation
+
+.validation-error {
+  .tooltip-inner {
+    background-color: $danger;
+    color: white;
+  }
+
+  &.bs-tooltip-bottom {
+    .arrow::before {
+      border-bottom-color: $danger;
+    }
+  }
+
+  &.bs-tooltip-top {
+    .arrow::before {
+      border-top-color: $danger;
+    }
+  }
+
+  &.bs-tooltip-right {
+    .arrow::before {
+      border-right-color: $danger;
+    }
+  }
+
+  &.bs-tooltip-left {
+    .arrow::before {
+      border-left-color: $danger;
+    }
+  }
+}

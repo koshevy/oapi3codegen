@@ -18,6 +18,15 @@ export interface ApiMetaInfo {
     baseTypeName: string;
 
     /**
+     * JSON Schema of body request.
+     */
+    headersSchema: {
+        [mediaType in keyof OApiMediaTypes]?: any
+    } | null;
+
+    headersModelName: string;
+
+    /**
      * Mock data, expracted from examples.
      */
     mockData: any;

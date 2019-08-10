@@ -37,6 +37,12 @@
       ],
       "@codegena/oapi3ts-cli/*": [
         "dist/oapi3ts-cli/*"
+      ],
+      "@codegena/todo-app": [
+        "dist/todo-app"
+      ],
+      "@codegena/todo-app/*": [
+        "projects/todo-app/*"
       ]
     }
   }

@@ -191,8 +191,7 @@ export abstract class BaseConvertor {
 
             const result = _.get(
                 src,
-                _.trim(schemaPath, '#/\\')
-                    .replace(/[\\\/]/g, '.')
+                _.trim(schemaPath, '#/\\').replace(/[\\\/]/g, '.')
             );
 
             return result;
@@ -584,7 +583,11 @@ export abstract class BaseConvertor {
         methodName: OApiPathItemMethods,
         path: string
     ): string {
-        return _.upperFirst(apiOperation.operationId) || [
+        const operationId = _.camelCase(
+            apiOperation.operationId.trim().replace(/[^\w+]/g, '_')
+        );
+
+        return _.upperFirst(operationId) || [
             _.capitalize(methodName),
             _.upperFirst(_.camelCase(path))
         ].join('');

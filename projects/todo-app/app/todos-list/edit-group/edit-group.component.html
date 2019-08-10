@@ -1,0 +1,35 @@
+<form [formGroup]="formGroup">
+  <div class="form-group">
+    <label for="groupTitle">Tasks group name</label>
+    <input formControlName="title"
+           autocomplete="off"
+           type="text"
+           class="form-control"
+           id="groupTitle"
+           placeholder="E.g., Work affairs"
+           tooltipClass="validation-error">
+  </div>
+  <div class="form-group">
+    <label for="editGroupDescription">Description</label>
+    <input formControlName="description"
+           autocomplete="off"
+           type="text"
+           class="form-control"
+           id="editGroupDescription"
+           placeholder="E.g., Work tasks and meetings"
+           tooltipClass="validation-error">
+  </div>
+  <div class="form-group">
+    <label for="editGroupTasks">Create with tasks</label>
+    <textarea id="editGroupTasks" type="text" class="form-control">
+[x] Close reviews of Andromeda and Big Dipper
+Do planing of sprint Cassiopeia
+</textarea>
+    <small class="form-text text-muted">
+      Write your tasks on each row
+    </small>
+  </div>
+  <button type="button" class="btn btn-info" [disabled]="!(context$ | async).saveEnabled">Create</button>
+  &nbsp;
+  <button type="button" class="btn btn-light" (click)="cancel();">Cancel</button>
+</form>

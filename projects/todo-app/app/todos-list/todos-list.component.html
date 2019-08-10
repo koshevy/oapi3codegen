@@ -1,0 +1,95 @@
+<h1 class="display-2">Your group of tasks</h1>
+<p class="lead">Summary 3 of 11 tasks done in 3 groups</p>
+
+<ng-container *ngIf="context$ | async as context" class="list-group">
+
+  <hr class="my-4">
+
+  <p class="lead">
+    <!--
+    Show:
+    <span class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="inlineRadioOptions" id="showAll" value="option1">
+      <label class="form-check-label" for="showAll">all</label>
+    </span>
+    <span class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="inlineRadioOptions" id="showComplete" value="option1">
+      <label class="form-check-label" for="showComplete">complete</label>
+    </span>
+    <span class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="inlineRadioOptions" id="showIncomplete" value="option1">
+      <label class="form-check-label" for="showIncomplete">incomplete</label>
+    </span>
+    -->
+
+    <a href="javascript:;" class="text-dark text-decoration-none" (click)="openCreateGroupPopup()">
+      <mat-icon>add_circle</mat-icon>
+      Add group
+    </a>
+    &nbsp;
+    <a href="#" class="text-dark text-decoration-none">
+      <mat-icon>done_all</mat-icon>
+      Complete all
+    </a>
+    &nbsp;
+    <a href="#" class="text-dark text-decoration-none">
+      <mat-icon>not_interested</mat-icon>
+      Reset all
+    </a>
+    &nbsp;
+    <span class="text-muted">|</span>
+    &nbsp;
+    <a href="#" class="text-muted text-decoration-none">
+      <mat-icon>check_box</mat-icon>
+      Show completed
+    </a>
+    &nbsp;
+    <a href="#" class="text-muted text-decoration-none">
+      <mat-icon>indeterminate_check_box</mat-icon>
+      Show uncompleted
+    </a>
+  </p>
+
+  <ul *ngIf="context.lists; else noItems" class="list-group">
+    <li *ngFor="let list of context.lists" class="list-group-item">
+      <h3 ngbDropdown>
+        {{list.title}} <span class="badge badge-pill badge-info">4 / 11</span>
+        &nbsp;
+        <a href="#" class="text-muted text-decoration-none" ngbDropdownToggle>
+          <mat-icon [inline]="true">more_horiz</mat-icon>
+        </a>
+        <div ngbDropdownMenu aria-labelledby="Actions menu">
+          <button ngbDropdownItem>
+            <mat-icon>done_all</mat-icon>
+            Mark all as done
+          </button>
+          <button ngbDropdownItem>
+            <mat-icon>check_box_outline_blank</mat-icon>
+            Mark all as undone
+          </button>
+          <button ngbDropdownItem>
+            <mat-icon>edit</mat-icon>
+            Edit
+          </button>
+          <button ngbDropdownItem>
+            <mat-icon>delete_outline</mat-icon>
+            Delete
+          </button>
+        </div>
+      </h3>
+      <p>
+        <span class="text-muted">
+          <mat-icon>done_all</mat-icon>
+        </span>
+        {{list.description}}
+      </p>
+    </li>
+  </ul>
+
+  <ng-template #noItems>
+    You have no lists of task yet! Do you want to create?
+  </ng-template>
+
+</ng-container>
+
+<!--<lib-edit-group></lib-edit-group>-->

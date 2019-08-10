@@ -93,7 +93,6 @@ export abstract class AbstractApplication {
                     .keys()
                     .sort()
                     .map(fileName => `export * from './${fileName}';`)
-                    .value()
                     .join('\n')
             );
         } else {
@@ -116,7 +115,7 @@ export abstract class AbstractApplication {
     public createServices(engine: 'angular') {
         const context = {}, metaInfoList: ApiMetaInfo[] = [];
         const structure = this.getOApiStructure();
-        const schemaId = `schema.${getHash(structure).slice(4, 26).toLowerCase()}`;
+        const schemaId = `schema.${getHash(this.getOApiStructure()).slice(4, 26).toLowerCase()}`;
         const replacer = purifyJson.bind({ $id: schemaId });
         const fileIndex: string[] = [];
 
@@ -169,7 +168,7 @@ export abstract class AbstractApplication {
                 _.map(fileIndex, (fileName) =>
                     `export * from './${fileName}';`
                 ).join('\n')
-                }\n`
+                }\n\nexport { schema } from './${schemaId}';`
         );
 
         this.saveSchemaLib(structure, schemaId);
@@ -227,7 +226,8 @@ export abstract class AbstractApplication {
         return _(descriptors)
             .uniq()
             .sort()
-            .map<DataTypeDescriptor, string>(
+            // todo here was <DataTypeDescriptor, string> but TS caused error
+            .map<any>(
                 (descriptor: DataTypeDescriptor) =>
                     `import { ${descriptor.modelName} } from './${this.getFilenameOf(descriptor)}';`
             )

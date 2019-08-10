@@ -10,8 +10,8 @@ import {
     HttpResponse,
     HttpEventType
 } from '@angular/common/http';
-import { HttpParams } from '@angular/common/http/src/params';
-import { HttpHeaders } from '@angular/common/http/src/headers';
+import { HttpParams } from '@angular/common/http';
+import { HttpHeaders } from '@angular/common/http';
 
 import {
     BehaviorSubject,
@@ -361,12 +361,15 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
         // Coninue if (or when) a got status `true`.
         const subscription = this.virtualConnectionStatus.pipe(
             filter<boolean>(status => status),
-            switchMap<boolean, HttpEvent<R>>(() => this.httpClient.request(request)),
+            switchMap<boolean, Observable<HttpEvent<R>>>(
+                () => this.httpClient.request(request)
+            ),
             takeUntil(this.resetApiSubscribers)
         ).subscribe(
             (event: HttpEvent<any>) => {
                 // todo надо понять что приходит здесь
                 switch (event.type) {
+
                     // Данные получены успешно
                     case HttpEventType.Response:
                         const body = (event as HttpResponse<R>).body;
@@ -492,6 +495,9 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                     ].join(' '));
                 }
 
+                // cutoff charset
+                contentType = contentType.split(';')[0];
+
                 cacheKey = `${type}_${statusCode}_${contentType}`;
                 schema = _.get(this.schema, [type, statusCode, contentType])
                     || _.get(this.schema, [type, 'default', contentType]);
@@ -575,6 +581,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 error = ApiErrorEventType.NotFound;
                 break;
             case 500:
+            case 501:
             case 502:
             case 503:
             case 504:
@@ -584,16 +591,20 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                 error = ApiErrorEventType.UnknownError;
         }
 
+        const isErrorTypeValid = (error === ApiErrorEventType.UnknownError)
+            // Validate format of known errors
+            || (this._validate(
+                originalEvent.error,
+                ValidationType.ResponseValidation,
+                subscriber,
+                statusChanges,
+                originalEvent.status,
+                originalEvent.headers.get('content-type') || defaultContentType
+            ) !== false)
+
         // Error response validation
-        // Stops and falls process if not handled
-        if (this._validate(
-            originalEvent.error,
-            ValidationType.ResponseValidation,
-            subscriber,
-            statusChanges,
-            originalEvent.status,
-            originalEvent.headers.get('content-type') || defaultContentType
-        ) !== false) {
+        if (isErrorTypeValid) {
+            // Try to handle
             if (this.errorHandler) {
                 this.errorHandler.onHttpError({
                     originalEvent,
@@ -606,6 +617,7 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                     virtualConnectionStatus: this.virtualConnectionStatus
                 });
             } else {
+                // Stops and falls process if not handled
                 subscriber.error(originalEvent);
 
                 if (statusChanges instanceof Subject) {
