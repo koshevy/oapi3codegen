@@ -1,4 +1,36 @@
+@import '~bootstrap/scss/functions';
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/mixins';
+@import '~bootstrap/scss/progress';
+
 :host {
   display: block;
   padding: 32px;
+}
+
+.list-group-item {
+
+  &.optimistic {
+    .badge {
+      @include gradient-striped(rgba($white, .25));
+      animation: progress-bar-stripes $progress-bar-animation-timing;
+      background-size: 1rem 1rem;
+    }
+
+    @include gradient-striped(rgba($info, .05));
+    animation: progress-bar-stripes $progress-bar-animation-timing;
+    background-size: 1rem 1rem
+  }
+
+  &.failed {
+    .badge {
+      @include gradient-striped(rgba($danger, .15));
+      animation: progress-bar-stripes $progress-bar-animation-timing;
+      background-size: 1rem 1rem;
+    }
+
+    @include gradient-striped(rgba($danger, .15));
+    animation: progress-bar-stripes $progress-bar-animation-timing;
+    background-size: 1rem 1rem
+  }
 }

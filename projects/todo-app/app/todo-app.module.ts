@@ -16,7 +16,7 @@ import { TodoAppRoutingModule } from './todo-app-routing.module';
 import { TodoAppComponent } from './todo-app.component';
 import { TodosListComponent } from './todos-list/todos-list.component';
 
-import { GetListsService } from './api/services';
+import { GetListsService, CreateListService } from './api/services';
 import { EditGroupComponent } from './todos-list/edit-group/edit-group.component';
 import { JsonValidationService } from './lib/json-validation.service';
 
@@ -54,6 +54,7 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
         MatIconModule
     ],
     providers: [
+        CreateListService,
         GetListsService,
         JsonValidationService,
         ERROR_DIRECTIVE_FLASH_PROVIDER

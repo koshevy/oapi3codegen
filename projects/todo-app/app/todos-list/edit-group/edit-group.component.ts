@@ -1,19 +1,48 @@
 import * as _ from 'lodash';
 import { GlobalPartial } from 'lodash/common/common';
-import { combineLatest, Observable } from 'rxjs';
-import { distinctUntilChanged, map, startWith } from 'rxjs/operators';
+import {
+    combineLatest,
+    merge,
+    of,
+    Observable,
+    Subject,
+    Subscription
+} from 'rxjs';
+import {
+    debounceTime,
+    distinctUntilChanged,
+    map,
+    scan,
+    share,
+    shareReplay,
+    publishReplay,
+    startWith
+} from 'rxjs/operators';
 
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
 
 import { ToDosListBlank, ToDosItemBlank } from '../../api/typings';
 import { schema } from '../../api/services';
 import { JsonValidationService } from '../../lib/json-validation.service';
+import {
+    clearComponentData,
+    loadComponentData,
+    saveComponentData,
+    todosItemsFromText
+} from '../../lib/helpers';
 
 // ***
 
 type Partial<T> = GlobalPartial<T>;
+
+const enum ActionTypes {
+    Initialization = '[Initialization]',
+    ValidationStatusChange = '[Validation status change]',
+    UserChangeForm = '[User Change Form]',
+    UserSaveForm = '[User Save Form]'
+}
 
 interface ComponentTruth {
     /**
@@ -26,6 +55,7 @@ interface ComponentTruth {
     };
 
     isFormDataValid: boolean;
+    lastAction: ActionTypes;
 }
 
 interface ComponentContext extends ComponentTruth {
@@ -36,7 +66,7 @@ interface ComponentContext extends ComponentTruth {
      */
     completeToDosListBlank?: ToDosListBlank | null;
 
-    saveEnabled: boolean;
+    savingEnabled: boolean;
 }
 
 // ***
@@ -47,7 +77,16 @@ interface ComponentContext extends ComponentTruth {
     styleUrls: ['./edit-group.component.scss'],
     templateUrl: './edit-group.component.html'
 })
-export class EditGroupComponent implements OnInit {
+export class EditGroupComponent implements OnInit, OnDestroy {
+
+    public defaultFormData = {
+        description: null,
+        tasksText: [
+            '[x] Close reviews of Andromeda and Big Dipper',
+            'Do planing of sprint Cassiopeia'
+        ].join('\n'),
+        title: null
+    };
 
     /**
      * Messages to be merged with `#/components.schemas.ToDosListBlank`
@@ -60,7 +99,7 @@ export class EditGroupComponent implements OnInit {
             errorMessage: {
                 maxLenth: 'Description should be understandable, but not redundant',
                 minLength: 'Please, set description in one/two sequences',
-                type: 'Description of task group helps you to understand intention of that'
+                type: 'Description of task group helps you to remember intention of task group'
             }
         },
         title: {
@@ -72,10 +111,28 @@ export class EditGroupComponent implements OnInit {
         }
     };
 
-    public truth$: Observable<Partial<ComponentTruth>>;
+    /**
+     * "Truth" of component: prepared data flow has to be
+     * a source for context.
+     * @see context$
+     */
+    public truth$: Observable<ComponentTruth>;
+
+    /**
+     * Manual actions (such as "Save") have to be kind
+     * of source for the {@see truth$}.
+     */
+    public actions$: Subject<Partial<ComponentTruth>> = new Subject();
+
+    /**
+     * Flow of complete context (state) of component.
+     * Context is based on "truth" with additional
+     * calculations and interpretations.
+     */
     public context$: Observable<ComponentContext>;
 
     public formGroup: FormGroup;
+    protected subscriptions: Subscription[] = [];
 
     constructor(
         protected matBottomSheetRef: MatBottomSheetRef
@@ -85,23 +142,44 @@ export class EditGroupComponent implements OnInit {
             validatorFactory
         );
 
+        /**
+         * Loaded form data. Has to be saved here — {@link listenEffects}.
+         */
+        const initFormData = loadComponentData(this, 'formData')
+            || this.defaultFormData;
+
         validatorFactory.setScheme(
             this.getFormJsonSchemaWithMessages()
         );
 
         this.formGroup = new FormGroup({
-            description: new FormControl(null, createValidator('description')),
-            tasksText: new FormControl(null),
-            title: new FormControl(null, createValidator('title'))
+            description: new FormControl(
+                initFormData.description,
+                createValidator('description')
+            ),
+            tasksText: new FormControl(initFormData.tasksText),
+            title: new FormControl(
+                initFormData.title,
+                createValidator('title')
+            )
         });
     }
 
     ngOnInit() {
-        this.initTruth();
-        this.initContext();
+        this.initTruthFlow();
+        this.initContextFlow();
+        this.listenEffects();
     }
 
-    initTruth() {
+    ngOnDestroy() {
+        _.each(this.subscriptions, subscription => {
+            if (!subscription.closed) {
+                subscription.unsubscribe();
+            }
+        });
+    }
+
+    initTruthFlow(): void {
         /**
          * Local source of truth — is a two parts of it:
          * FormData and validity status.
@@ -112,70 +190,114 @@ export class EditGroupComponent implements OnInit {
         ];
 
         // Listening sources of thruth
-        this.truth$ = combineLatest([
+        this.truth$ = merge(
+            // Init data
+            of({
+                formData: this.formGroup.value,
+                isFormDataValid: this.formGroup.status === 'VALID',
+                lastAction: ActionTypes.Initialization
+            }),
+            // User input
             this.formGroup.valueChanges.pipe(
-                map(formData => ({formData}))
+                map(formData => ({
+                    formData,
+                    lastAction: ActionTypes.UserChangeForm
+                }))
             ),
+            // Form Validation
             this.formGroup.statusChanges.pipe(
                 distinctUntilChanged(),
                 map((status: 'VALID' | any) =>
-                    ({isFormDataValid: status === 'VALID'})
+                    ({
+                        isFormDataValid: status === 'VALID',
+                        lastAction: ActionTypes.ValidationStatusChange
+                    })
                 )
-            )
-        ]).pipe(
+            ),
+            // Manual user actions
+            this.actions$
+        ).pipe(
             // And transform to complete truth
-            map<
-                ComponentContextTruthSrc,
-                ComponentTruth
-                >(([{formData}, {isFormDataValid}]) => {
-                return {
-                    formData,
-                    isFormDataValid
-                };
-            }),
-            startWith({
-                formData: this.formGroup.value,
-                isFormDataValid: this.formGroup.status === 'VALID'
-            })
+            scan<Partial<ComponentTruth>, ComponentTruth>(
+                (acc: ComponentTruth, cur: Partial<ComponentTruth>) => {
+                    return _.assign(acc, cur);
+                }
+            )
         );
     }
 
-    initContext() {
+    initContextFlow(): void {
         this.context$ = this.truth$.pipe(
             map((truth: ComponentTruth) => {
                 let completeToDosListBlank: ToDosListBlank | null;
-                let saveEnabled: boolean;
+                let savingEnabled: boolean;
 
                 if (truth.isFormDataValid) {
                     const { tasksText } = truth.formData;
-                    const items = _.map<string, ToDosItemBlank>(
-                        (tasksText || '').split('\n'),
-                        (srcLine) => ({
-                            description: null,
-                            isDone: false,
-                            listUid: 0,
-                            title: srcLine
-                        })
-                    );
 
                     completeToDosListBlank = {
                         description: truth.formData.description,
-                        items,
+                        items: todosItemsFromText(tasksText),
                         title: truth.formData.title
-                    }
-                    saveEnabled = true;
+                    };
+
+                    savingEnabled = true;
                 } else {
                     completeToDosListBlank = null;
-                    saveEnabled = false;
+                    savingEnabled = false;
                 }
 
                 return {
                     ...truth,
                     completeToDosListBlank,
-                    saveEnabled
+                    savingEnabled
                 };
-            })
+            }),
+            shareReplay(1)
         );
+    }
+
+    /**
+     * Effects of context changing: interaction of component with
+     * environment.
+     */
+    listenEffects() {
+        let autoSaveSubscr, saveFormSubscr;
+
+        // Autosave drafts
+        autoSaveSubscr = this.context$.pipe(debounceTime(1500)).subscribe(
+            (context: ComponentContext) => {
+                if (context.isFormDataValid) {
+                    saveComponentData(
+                        this,
+                        'formData',
+                        context.formData
+                    );
+                }
+            }
+        );
+
+        // Interactions
+        saveFormSubscr = this.context$.subscribe((context: ComponentContext) => {
+            switch (context.lastAction) {
+                // Close and return result
+                case ActionTypes.UserSaveForm:
+                    if (context.savingEnabled) {
+                        // clearComponentData(this, 'formData');
+                        this.matBottomSheetRef.dismiss(
+                            context.completeToDosListBlank
+                        );
+                    }
+
+                    saveFormSubscr.unsubscribe();
+                    // no more autosaves needed
+                    autoSaveSubscr.unsubscribe();
+
+                    break ;
+            }
+        });
+
+        this.subscriptions.push(autoSaveSubscr, saveFormSubscr);
     }
 
     /**
@@ -197,7 +319,15 @@ export class EditGroupComponent implements OnInit {
         });
     }
 
-    cancel() {
-        this.matBottomSheetRef.dismiss();
+    // ***
+
+    onSave() {
+        this.actions$.next({
+            lastAction: ActionTypes.UserSaveForm
+        });
+    }
+
+    onCancel() {
+        this.matBottomSheetRef.dismiss(null);
     }
 }

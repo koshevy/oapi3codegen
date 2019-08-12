@@ -26,7 +26,7 @@ export class NullableAccessorDirective implements OnInit, OnDestroy {
      * Устанавливать null принудительно к текущему контролу,
      * если значение = пустой строке
      */
-    @Input('nullableControl') nullableControl = false;
+    @Input('nullableControl') nullableControl = true;
 
     private subscriber: Subscription;
 

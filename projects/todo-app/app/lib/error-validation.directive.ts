@@ -53,7 +53,7 @@ export class ErrorValidationDirective extends NgbTooltip implements AfterViewIni
     public useValidation = true;
 
     @Input() autoClose = false;
-    @Input() placement: PlacementArray = ['bottom', 'top', 'right', 'left'];
+    @Input() placement: PlacementArray = ['right', 'bottom', 'top', 'left'];
     @Input() triggers = 'manual';
     @Input() tooltipClass = 'tooltip-error';
     @Input() container = 'body';

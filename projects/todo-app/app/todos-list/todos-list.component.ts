@@ -1,3 +1,27 @@
+import * as _ from 'lodash';
+import { GlobalPartial } from 'lodash/common/common';
+import {
+    merge,
+    of,
+    BehaviorSubject,
+    Observable,
+    Subject
+} from 'rxjs';
+import {
+    catchError,
+    distinctUntilChanged,
+    filter,
+    map,
+    mergeMap,
+    mergeScan,
+    publishReplay,
+    share,
+    shareReplay,
+    scan,
+    takeUntil,
+    tap
+} from 'rxjs/operators';
+
 import {
   Component,
   OnInit,
@@ -8,28 +32,19 @@ import { ActivatedRoute } from '@angular/router';
 import { tapResponse, pickResponseBody } from '@codegena/ng-api-service';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 
-import {
-    BehaviorSubject,
-    Observable
-} from 'rxjs';
-import {
-    distinctUntilChanged,
-    map,
-    mergeMap,
-    share,
-    tap
-} from 'rxjs/operators';
-
-import * as _ from 'lodash';
-
-import { ToDosList, GetListsResponse } from '../api/typings';
-import { GetListsService } from '../api/services';
+import { ToDosList } from '../api/typings';
+import { GetListsService, CreateListService } from '../api/services';
 
 import { EditGroupComponent } from './edit-group/edit-group.component';
 
-interface InParams {
-    isComplete: boolean | null;
-    isCurrentList: number | null;
+// ***
+
+type Partial<T> = GlobalPartial<T>;
+
+const enum ActionType {
+    InitializeWithRouteParams = '[Initialize with route params]',
+    AddNewGroupOptimistic = '[Add new group optimistic]',
+    AddNewGroup = '[Add new group]'
 }
 
 /**
@@ -39,16 +54,28 @@ interface InParams {
  */
 interface ToDosListTeaser extends ToDosList {
     /**
-     * Marks that TodosList added to lists optimistically.
+     * Marks this item added to lists optimistically.
      */
     optimistic?: boolean;
+
+    /**
+     * Marks this item was failed during adding
+     */
+    failed?: boolean;
 }
 
-interface CompleteContext {
-    lists: ToDosListTeaser[];
+interface ComponentTruth {
     isComplete: boolean | null;
     isCurrentList: number | null;
+    createdGroup?: ToDosList;
+    lastAction: ActionType;
 }
+
+interface ComponentContext extends ComponentTruth {
+    lists: ToDosListTeaser[];
+}
+
+// ***
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,48 +85,182 @@ interface CompleteContext {
 })
 export class TodosListComponent implements OnInit {
 
-    inParams$: Observable<InParams>;
+    truth$: Observable<ComponentTruth>;
     context$: Observable<ToDosListTeaser[]>;
+    manualActions$: Subject<Partial<ComponentTruth>> = new Subject();
+
+    private tempIdCounter = -1;
 
     constructor(
         public activatedRoute: ActivatedRoute,
-        public getListsService: GetListsService,
+        protected getListsService: GetListsService,
+        protected createListService: CreateListService,
         protected matBottomSheet: MatBottomSheet
     ) {
         /**
-         * Define of input component params.
+         * Merge sources of truth
          */
-        this.inParams$ = this.activatedRoute.queryParams.pipe(
+        this.truth$ = merge(
+            // From route
+            this.getTruthFromRouteParams(),
+            // Actions, dispatched manually
+            this.manualActions$
+        ).pipe(
+            // And transform to complete truth
+            scan<Partial<ComponentTruth>, ComponentTruth>(
+                (acc: ComponentTruth, cur: Partial<ComponentTruth>) => {
+                    return _.assign(acc, cur);
+                }
+            )
+        );
+    }
+
+    ngOnInit() {
+        this.context$ = this.truth$.pipe(
+            mergeScan(this.reduceContext.bind(this), {}),
+            shareReplay(1)
+        ) as any;
+    }
+
+    getTruthFromRouteParams(): Observable<ComponentTruth> {
+        return this.activatedRoute.queryParams.pipe(
             distinctUntilChanged(_.isEqual),
-            map<any, InParams>(({isComplete, isCurrentList}) => {
+            map<any, ComponentTruth>(({isComplete, isCurrentList}) => {
                 return {
                     isComplete: isComplete || null,
-                    isCurrentList: isCurrentList || null
+                    isCurrentList: isCurrentList || null,
+                    lastAction: ActionType.InitializeWithRouteParams
                 };
             })
         );
     }
 
-    ngOnInit() {
-        this.context$ = this.inParams$.pipe(
-            mergeMap((params: InParams) =>
+    /**
+     * Reducer for this component.
+     * todo move to the service.
+     */
+    reduceContext(
+        context: ComponentContext,
+        truth: ComponentTruth
+    ): Observable<Partial<ComponentContext>> {
+
+        switch (truth.lastAction) {
+            case ActionType.InitializeWithRouteParams:
+                const getListsParams = _.pick(
+                    truth,
+                    [
+                        'isComplete',
+                        'isCurrentList'
+                    ]
+                );
+
                 // Get all lists from API
-                this.getListsService.request(null, params).pipe(
+                return this.getListsService.request(null, getListsParams).pipe(
                     pickResponseBody<ToDosList[]>(200),
-                    map<ToDosList[], CompleteContext>(todosLists => ({
+                    map<ToDosList[], ComponentContext>(todosLists => ({
                         lists: todosLists,
-                        ...params
+                        ...truth
                     })),
-                )
-            ),
-            tap(context => console.log('Context', context)),
-            share()
-        ) as any;
+                );
+            case ActionType.AddNewGroupOptimistic:
+
+                _.assign(context, {
+                    lists: [
+                        ...context.lists,
+                        {
+                            ...truth.createdGroup,
+                            optimistic: true
+                        }
+                    ] as ToDosListTeaser[]
+                });
+
+                return of(context);
+
+            case ActionType.AddNewGroup:
+
+                return this.createListService.request(_.omit(
+                    truth.createdGroup,
+                    'uid'
+                )).pipe(
+                    pickResponseBody<ToDosList>(201),
+                    map<ToDosList, ComponentContext>(todosList => {
+                        const thisItemIndex = _.findIndex(
+                            context.lists,
+                            item => item.uid === truth.createdGroup.uid
+                        );
+
+                        if (thisItemIndex === -1) {
+                            throw new Error('Cant find item with this uid');
+                        }
+
+                        context.lists[thisItemIndex] = todosList;
+
+                        return context;
+                    }),
+                    catchError(error => {
+                        console.error(error);
+
+                        const thisItem = _.find(
+                            context.lists,
+                            item => item.uid === truth.createdGroup.uid
+                        );
+
+                        if (thisItem) {
+                            thisItem.failed = true;
+                            thisItem.optimistic = false;
+                        }
+
+                        return of(context);
+                    })
+                );
+
+            default:
+                throw new Error('Unknown action type!');
+        }
     }
 
     // ***
 
     openCreateGroupPopup() {
-        this.matBottomSheet.open(EditGroupComponent);
+        // Open creation dialog
+        const subscribtion =  this.matBottomSheet.open<
+            EditGroupComponent,
+            any,
+            ToDosList
+        >(EditGroupComponent)
+            // Waiting for result
+            .afterDismissed()
+            .pipe(
+                filter(v => !!v),
+                // takeUntil(),
+                map<ToDosList, Partial<ComponentTruth>>((newList) => ({
+                    createdGroup: _.assign(
+                        newList,
+                        // Adds temporary ID
+                        { uid: this.getTempId() }
+                    )
+                }))
+            ).subscribe((truth: Partial<ComponentTruth>) => {
+                // Optimistic adding of item (before sending to server)
+                this.manualActions$.next({
+                    ...truth,
+                    lastAction: ActionType.AddNewGroupOptimistic
+                });
+                // Sending to server
+                this.manualActions$.next({
+                    ...truth,
+                    lastAction: ActionType.AddNewGroup
+                });
+
+                subscribtion.unsubscribe();
+            });
+    }
+
+    /**
+     * Returns new temporary ID for optimistic added items.
+     * @return {number}
+     */
+    private getTempId(): number {
+        return this.tempIdCounter--;
     }
 }

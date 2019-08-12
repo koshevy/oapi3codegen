@@ -27,7 +27,13 @@ a {
 
 .dropdown-toggle{
   &:after{
-    display: none;
+    display: none !important;
+  }
+}
+
+.btn-lg {
+  .mat-icon {
+    height: 21px;
   }
 }
 
@@ -62,6 +68,7 @@ a {
   }
 
   &.bs-tooltip-right {
+    left: 4px !important;
     .arrow::before {
       border-right-color: $danger;
     }
