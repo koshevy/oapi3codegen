@@ -40,7 +40,8 @@ a {
 // Forms
 
 .form-control {
-  &.ng-invalid.ng-touched {
+  &.ng-invalid.ng-touched,
+  &.ng-invalid.ng-dirty {
     border-color: $danger;
     outline-color: $danger;
     box-shadow: 0 0 0 $input-btn-focus-width rgba($form-feedback-invalid-color, .4);
@@ -77,6 +78,16 @@ a {
   &.bs-tooltip-left {
     .arrow::before {
       border-left-color: $danger;
+    }
+  }
+}
+
+.mat-simple-snackbar-action {
+  .mat-button {
+    background: rgba($dark, 0.4);
+
+    .mat-button-wrapper{
+      color: white;
     }
   }
 }

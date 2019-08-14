@@ -228,7 +228,10 @@ export const schema = {
             "maxLength": 64
           },
           "description": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "minLength": 10,
             "maxLength": 512
           },
@@ -300,7 +303,7 @@ export const schema = {
           "description": {
             "type": "string",
             "minLength": 16,
-            "maxLength": 256
+            "maxLength": 128
           },
           "items": {
             "type": "array",
@@ -362,6 +365,6 @@ export const schema = {
       }
     }
   },
-  "$id": "schema.364d00401e089b16e8a3b9"
+  "$id": "schema.9d7750cb74ffbfbff885ab"
 };
 

@@ -17,7 +17,7 @@ import {
 // Typings for this API method
 import { GetListParameters, GetListResponse } from '../typings';
 // Schemas
-import { schema as domainSchema } from './schema.364d00401e089b16e8a3b9';
+import { schema as domainSchema } from './schema.9d7750cb74ffbfbff885ab';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -77,25 +77,25 @@ export class GetListService extends ApiService<
       response: {
         '200': {
           'application/json': {
-            $ref: 'schema.364d00401e089b16e8a3b9#/components/schemas/ToDosList'
+            $ref: 'schema.9d7750cb74ffbfbff885ab#/components/schemas/ToDosList'
           }
         },
         '400': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorBadRequest'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorBadRequest'
           }
         },
         '404': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorNotFound'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorNotFound'
           }
         },
         '500': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorServer'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorServer'
           }
         }
       }

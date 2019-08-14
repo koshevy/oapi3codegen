@@ -725,7 +725,7 @@
           },
           "description": {
             "description": "Detailed description and context of the task. Allowed using of Common Markdown.",
-            "type": "string",
+            "type": ["string", "null"],
             "minLength": 10,
             "maxLength": 512
           },

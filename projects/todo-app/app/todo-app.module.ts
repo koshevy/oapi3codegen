@@ -6,8 +6,11 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ApiModule } from '@codegena/ng-api-service';
@@ -50,8 +53,11 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
         FormsModule,
         ReactiveFormsModule,
         NgbModule,
+        DragDropModule,
         MatBottomSheetModule,
-        MatIconModule
+        MatIconModule,
+        MatSnackBarModule,
+        OverlayModule
     ],
     providers: [
         CreateListService,

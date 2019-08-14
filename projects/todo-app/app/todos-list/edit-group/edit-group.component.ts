@@ -19,17 +19,24 @@ import {
     startWith
 } from 'rxjs/operators';
 
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    Inject,
+    OnDestroy,
+    OnInit,
+    Optional
+} from '@angular/core';
+import { FormControl, FormGroup, Validators, ValidatorFn } from '@angular/forms';
+import { MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 
 import { ToDosListBlank, ToDosItemBlank } from '../../api/typings';
 import { schema } from '../../api/services';
 import { JsonValidationService } from '../../lib/json-validation.service';
 import {
-    clearComponentData,
-    loadComponentData,
-    saveComponentData,
+    clearPersistentData,
+    loadPersistentData,
+    savePersistentData,
     todosItemsFromText
 } from '../../lib/helpers';
 
@@ -67,6 +74,15 @@ interface ComponentContext extends ComponentTruth {
     completeToDosListBlank?: ToDosListBlank | null;
 
     savingEnabled: boolean;
+}
+
+/**
+ * External custom config can be passed from parent component.
+ */
+export interface EditGroupConfig {
+    customValidators?: {
+        [field: string]: ValidatorFn[]
+    };
 }
 
 // ***
@@ -135,7 +151,9 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     protected subscriptions: Subscription[] = [];
 
     constructor(
-        protected matBottomSheetRef: MatBottomSheetRef
+        protected matBottomSheetRef: MatBottomSheetRef,
+        @Optional() @Inject(MAT_BOTTOM_SHEET_DATA)
+            protected customOptions: EditGroupConfig
     ) {
         const validatorFactory = new JsonValidationService();
         const createValidator = validatorFactory.createValidator.bind(
@@ -145,8 +163,10 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         /**
          * Loaded form data. Has to be saved here — {@link listenEffects}.
          */
-        const initFormData = loadComponentData(this, 'formData')
+        const initFormData = loadPersistentData(this, 'formData')
             || this.defaultFormData;
+
+        const { customValidators } = customOptions || {customValidators: {}};
 
         validatorFactory.setScheme(
             this.getFormJsonSchemaWithMessages()
@@ -155,12 +175,23 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         this.formGroup = new FormGroup({
             description: new FormControl(
                 initFormData.description,
-                createValidator('description')
+                Validators.compose([
+                    createValidator('description'),
+                    ...(customValidators['description'] || [])
+                ])
             ),
-            tasksText: new FormControl(initFormData.tasksText),
+            tasksText: new FormControl(
+                initFormData.tasksText,
+                [
+                    ...(customValidators['description'] || [])
+                ]
+            ),
             title: new FormControl(
                 initFormData.title,
-                createValidator('title')
+                [
+                    createValidator('title'),
+                    ...(customValidators['title'] || [])
+                ]
             )
         });
     }
@@ -268,7 +299,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         autoSaveSubscr = this.context$.pipe(debounceTime(1500)).subscribe(
             (context: ComponentContext) => {
                 if (context.isFormDataValid) {
-                    saveComponentData(
+                    savePersistentData(
                         this,
                         'formData',
                         context.formData
@@ -283,7 +314,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                 // Close and return result
                 case ActionTypes.UserSaveForm:
                     if (context.savingEnabled) {
-                        // clearComponentData(this, 'formData');
+                        // clearPersistentData(this, 'formData');
                         this.matBottomSheetRef.dismiss(
                             context.completeToDosListBlank
                         );

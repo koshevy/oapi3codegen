@@ -12,14 +12,19 @@
 
   </p>
 
-  <ul *ngIf="context.lists; else noItems" class="list-group">
-    <li *ngFor="let list of context.lists"
+  <ul *ngIf="context.lists; else noItems" class="list-group" cdkDropList (cdkDropListDropped)="listDropped($event)">
+    <li *ngFor="let list of context.lists; let index = i"
         class="list-group-item"
         [class.optimistic]="list.optimistic"
         [class.failed]="list.failed"
+        [cdkDragDisabled]="list.optimistic || list.failed"
+        cdkDrag
     >
       <h3 ngbDropdown>
-        {{list.title}} <span class="badge badge-pill badge-info">4 / 11</span>
+        {{list.title}}
+        <span class="badge badge-pill badge-info">
+          {{ list.countOfDone }} / {{ list.totalCount }}
+        </span>
         &nbsp;
         <a href="javascript:;" class="text-muted text-decoration-none" ngbDropdownToggle>
           <mat-icon [inline]="true">more_horiz</mat-icon>
@@ -44,6 +49,10 @@
             </button>
           </ng-container>
           <ng-template #optimisticItemMenu>
+            <button ngbDropdownItem *ngIf="list.failed">
+              <mat-icon>replay</mat-icon>
+              Try again
+            </button>
             <button ngbDropdownItem>
               <mat-icon>not_interested</mat-icon>
               Cancel creation

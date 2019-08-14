@@ -1,23 +1,27 @@
 import * as _ from 'lodash';
-import { GlobalPartial } from 'lodash/common/common';
 import {
     merge,
     of,
+    throwError,
     BehaviorSubject,
+    MonoTypeOperatorFunction,
     Observable,
     Subject
 } from 'rxjs';
 import {
     catchError,
     distinctUntilChanged,
+    delay,
     filter,
     map,
     mergeMap,
     mergeScan,
+    onErrorResumeNext,
     publishReplay,
     share,
     shareReplay,
     scan,
+    startWith,
     takeUntil,
     tap
 } from 'rxjs/operators';
@@ -27,75 +31,52 @@ import {
   OnInit,
   ChangeDetectionStrategy
 } from '@angular/core';
-
 import { ActivatedRoute } from '@angular/router';
-import { tapResponse, pickResponseBody } from '@codegena/ng-api-service';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { Overlay } from '@angular/cdk/overlay';
+
+import { tapResponse, pickResponseBody } from '@codegena/ng-api-service';
 
 import { ToDosList } from '../api/typings';
 import { GetListsService, CreateListService } from '../api/services';
+import { createUniqValidator } from '../lib/helpers';
 
-import { EditGroupComponent } from './edit-group/edit-group.component';
-
-// ***
-
-type Partial<T> = GlobalPartial<T>;
-
-const enum ActionType {
-    InitializeWithRouteParams = '[Initialize with route params]',
-    AddNewGroupOptimistic = '[Add new group optimistic]',
-    AddNewGroup = '[Add new group]'
-}
-
-/**
- * Teaser of ToDos list in common list of this component.
- * Shows both of already created and new optimistically added,
- * but not created yet in fact.
- */
-interface ToDosListTeaser extends ToDosList {
-    /**
-     * Marks this item added to lists optimistically.
-     */
-    optimistic?: boolean;
-
-    /**
-     * Marks this item was failed during adding
-     */
-    failed?: boolean;
-}
-
-interface ComponentTruth {
-    isComplete: boolean | null;
-    isCurrentList: number | null;
-    createdGroup?: ToDosList;
-    lastAction: ActionType;
-}
-
-interface ComponentContext extends ComponentTruth {
-    lists: ToDosListTeaser[];
-}
+import { EditGroupComponent, EditGroupConfig } from './edit-group/edit-group.component';
+import {
+    TodosListStore,
+    Partial,
+    ActionType,
+    ToDosListTeaser,
+    ComponentTruth,
+    ComponentContext
+} from './todos-list.store';
 
 // ***
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  selector: 'lib-todos-list',
-  styleUrls: ['./todos-list.component.scss'],
-  templateUrl: './todos-list.component.html'
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [TodosListStore],
+    selector: 'lib-todos-list',
+    styleUrls: ['./todos-list.component.scss'],
+    templateUrl: './todos-list.component.html'
 })
 export class TodosListComponent implements OnInit {
 
     truth$: Observable<ComponentTruth>;
-    context$: Observable<ToDosListTeaser[]>;
+    context$: Observable<ComponentContext>;
     manualActions$: Subject<Partial<ComponentTruth>> = new Subject();
+    syncContext: ComponentContext;
 
     private tempIdCounter = -1;
 
     constructor(
-        public activatedRoute: ActivatedRoute,
-        protected getListsService: GetListsService,
-        protected createListService: CreateListService,
-        protected matBottomSheet: MatBottomSheet
+        protected activatedRoute: ActivatedRoute,
+        protected store: TodosListStore,
+        protected matBottomSheet: MatBottomSheet,
+        protected matSnackBar: MatSnackBar,
+        protected overlay: Overlay
     ) {
         /**
          * Merge sources of truth
@@ -108,18 +89,16 @@ export class TodosListComponent implements OnInit {
         ).pipe(
             // And transform to complete truth
             scan<Partial<ComponentTruth>, ComponentTruth>(
-                (acc: ComponentTruth, cur: Partial<ComponentTruth>) => {
-                    return _.assign(acc, cur);
-                }
-            )
+                (acc, cur) => ({ ...acc, ...cur })
+            ),
+            share()
         );
     }
 
     ngOnInit() {
-        this.context$ = this.truth$.pipe(
-            mergeScan(this.reduceContext.bind(this), {}),
-            shareReplay(1)
-        ) as any;
+        this.context$ = this.store.createContextFlow(this.truth$);
+
+        this.listenEffects();
     }
 
     getTruthFromRouteParams(): Observable<ComponentTruth> {
@@ -135,99 +114,81 @@ export class TodosListComponent implements OnInit {
         );
     }
 
-    /**
-     * Reducer for this component.
-     * todo move to the service.
-     */
-    reduceContext(
-        context: ComponentContext,
-        truth: ComponentTruth
-    ): Observable<Partial<ComponentContext>> {
+    listenEffects() {
+        this.context$.subscribe(
+            (context) => {
+                // Syncing context
+                this.syncContext = context;
 
-        switch (truth.lastAction) {
-            case ActionType.InitializeWithRouteParams:
-                const getListsParams = _.pick(
-                    truth,
-                    [
-                        'isComplete',
-                        'isCurrentList'
-                    ]
-                );
+                switch (context.lastAction) {
+                    case ActionType.AddNewGroupOptimistic:
+                        this.matSnackBar.open('List added to book', null, {
+                            duration: 1500,
+                            horizontalPosition: 'center',
+                            panelClass: ['alert', 'alert-info']
+                        });
+                        break;
 
-                // Get all lists from API
-                return this.getListsService.request(null, getListsParams).pipe(
-                    pickResponseBody<ToDosList[]>(200),
-                    map<ToDosList[], ComponentContext>(todosLists => ({
-                        lists: todosLists,
-                        ...truth
-                    })),
-                );
-            case ActionType.AddNewGroupOptimistic:
-
-                _.assign(context, {
-                    lists: [
-                        ...context.lists,
-                        {
-                            ...truth.createdGroup,
-                            optimistic: true
-                        }
-                    ] as ToDosListTeaser[]
-                });
-
-                return of(context);
-
-            case ActionType.AddNewGroup:
-
-                return this.createListService.request(_.omit(
-                    truth.createdGroup,
-                    'uid'
-                )).pipe(
-                    pickResponseBody<ToDosList>(201),
-                    map<ToDosList, ComponentContext>(todosList => {
-                        const thisItemIndex = _.findIndex(
+                    case ActionType.AddNewGroup:
+                        const teaserOfCreatedGroup = _.find(
                             context.lists,
-                            item => item.uid === truth.createdGroup.uid
+                            ({uid}) => uid === context.createdGroup.uid
                         );
 
-                        if (thisItemIndex === -1) {
-                            throw new Error('Cant find item with this uid');
+                        if (!teaserOfCreatedGroup) {
+                            throw new Error('Application logic error!');
                         }
 
-                        context.lists[thisItemIndex] = todosList;
-
-                        return context;
-                    }),
-                    catchError(error => {
-                        console.error(error);
-
-                        const thisItem = _.find(
-                            context.lists,
-                            item => item.uid === truth.createdGroup.uid
-                        );
-
-                        if (thisItem) {
-                            thisItem.failed = true;
-                            thisItem.optimistic = false;
+                        if (teaserOfCreatedGroup.failed) {
+                            this.matSnackBar.open('Creation failed!', 'Try again', {
+                                duration: 3000,
+                                horizontalPosition: 'center',
+                                panelClass: ['alert', 'alert-danger']
+                            }).onAction().subscribe(() => {
+                                // Repeat sending to server
+                                this.manualActions$.next({
+                                    ..._.pick(context, ['createdGroup']),
+                                    lastAction: ActionType.AddNewGroup
+                                });
+                            });
+                        } else {
+                            this.matSnackBar.open('Changing successful saved!', null, {
+                                duration: 1500,
+                                horizontalPosition: 'center',
+                                panelClass: ['alert', 'alert-success']
+                            });
                         }
 
-                        return of(context);
-                    })
-                );
-
-            default:
-                throw new Error('Unknown action type!');
-        }
+                        break;
+                }
+            }
+        );
     }
 
-    // ***
+    // *** Events
 
     openCreateGroupPopup() {
+
+        // Additional validator for Group Creation Form:
+        // check for unique of list
+        const popupConfig: EditGroupConfig = {
+            customValidators: {
+                title: [createUniqValidator(
+                    this.syncContext.lists,
+                    'title'
+                )]
+            }
+        };
+
         // Open creation dialog
         const subscribtion =  this.matBottomSheet.open<
             EditGroupComponent,
-            any,
+            EditGroupConfig,
             ToDosList
-        >(EditGroupComponent)
+        >(EditGroupComponent, {
+            data: popupConfig,
+            scrollStrategy: this.overlay.scrollStrategies.reposition()
+        })
             // Waiting for result
             .afterDismissed()
             .pipe(
@@ -256,9 +217,20 @@ export class TodosListComponent implements OnInit {
             });
     }
 
+    listDropped(event: CdkDragDrop<ToDosListTeaser[]>): void {
+        this.manualActions$.next({
+            lastAction: ActionType.ChangeListPosition,
+            positionChanging: {
+                from: event.previousIndex,
+                to: event.currentIndex
+            }
+        });
+    }
+
+    // *** Private methods
+
     /**
      * Returns new temporary ID for optimistic added items.
-     * @return {number}
      */
     private getTempId(): number {
         return this.tempIdCounter--;

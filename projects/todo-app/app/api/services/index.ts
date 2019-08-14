@@ -9,4 +9,4 @@ export * from './create-list-item.api.service';
 export * from './update-list-item.api.service';
 export * from './rewrite-list-item.api.service';
 
-export { schema } from './schema.364d00401e089b16e8a3b9';
+export { schema } from './schema.9d7750cb74ffbfbff885ab';

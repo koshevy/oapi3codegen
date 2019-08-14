@@ -8,6 +8,7 @@
     "@angular/common": ">= 5.2.11",
     "@angular/core": ">= 5.2.11",
     "@angular/material": "8.1.2",
+    "@angular/cdk": "8.1.2",
     "@angular/router": ">= 5.2.11",
     "@angular/platform-browser": ">= 5.2.11",
     "@angular/http": ">= 5.2.11",

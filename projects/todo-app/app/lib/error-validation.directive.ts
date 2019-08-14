@@ -124,6 +124,8 @@ export class ErrorValidationDirective extends NgbTooltip implements AfterViewIni
         if (this.subscription) {
             this.subscription.unsubscribe();
         }
+
+        super.ngOnDestroy();
     }
 
     @HostListener('mouseover') onHover() {
@@ -173,11 +175,13 @@ export class ErrorValidationDirective extends NgbTooltip implements AfterViewIni
             if ((control.value && control.untouched) || this.flashed) {
                 control.markAsTouched();
                 this.changeDetector.markForCheck();
+                this.changeDetector.detectChanges();
             }
         } else {
             this.disableTooltip = true;
             this.ngbTooltip = null;
             this.changeDetector.markForCheck();
+            this.changeDetector.detectChanges();
         }
     }
 

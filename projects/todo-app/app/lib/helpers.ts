@@ -6,6 +6,7 @@
 // *** imports
 import * as _ from 'lodash';
 import { ToDosItemBlank } from '../../app/api/typings';
+import { FormControl } from '@angular/forms';
 
 /**
  * Regex that retrieves `[x]` from strings such as:
@@ -53,9 +54,9 @@ export function todosItemsFromText(tasksText: string): ToDosItemBlank[] {
 }
 
 /**
- * Save to local storage data, associated with specified component
+ * Save persistent data, associated with specified component
  */
-export function saveComponentData(
+export function savePersistentData(
     component: object,
     key: string,
     data: any
@@ -74,9 +75,9 @@ export function saveComponentData(
 }
 
 /**
- * Load from local storage data, associated with specified component
+ * Load persistent data, associated with specified component
  */
-export function loadComponentData(
+export function loadPersistentData(
     component: object,
     key: string
 ): any {
@@ -94,9 +95,42 @@ export function loadComponentData(
     }
 }
 
-export function clearComponentData(
+/**
+ * Clear persistent data, associated with specified component
+ */
+export function clearPersistentData(
     component: object,
     key: string
 ) {
-    saveComponentData(component, key, null);
+    savePersistentData(component, key, null);
+}
+
+/**
+ * Factory for Reactive Form validator, such checks
+ * that value is unique among collection items
+ */
+export function createUniqValidator(
+    collection: Array<{[key: string]: string | any}>,
+    field: string
+) {
+    const preparedArray = _.map(
+        collection || [],
+        (collectionItem: {[key: string]: string}) =>
+            (collectionItem[field] || '').trim().toLowerCase()
+    );
+
+    return (control: FormControl) => {
+        const controlValue = (control.value || '').trim().toLowerCase();
+
+        if (!control.value) { return null; }
+
+        const foundIndex = _.findIndex(
+            preparedArray,
+            value => value === controlValue
+        );
+
+        return (foundIndex === -1) ? null : {
+            unique: `Already exists group "${control.value}"`
+        };
+    };
 }

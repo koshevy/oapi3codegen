@@ -18,7 +18,7 @@ export interface ToDosItemBlank {
   /**
    * Detailed description and context of the task. Allowed using of Common Markdown.
    */
-  description?: string;
+  description?: any;
   /**
    * Status of task: is done or not
    */

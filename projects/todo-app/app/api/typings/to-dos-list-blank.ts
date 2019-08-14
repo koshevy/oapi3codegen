@@ -11,7 +11,7 @@ export interface ToDosListBlank {
    */
   title: string;
   /**
-   * Detailed description of a list. Allowed using of Common Markdown.
+   * Detailed description of a list in one/two sequences.
    */
   description?: string;
   items: Array<ToDosItemBlank>;

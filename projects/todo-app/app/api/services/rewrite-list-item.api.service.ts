@@ -21,7 +21,7 @@ import {
   RewriteListItemRequest
 } from '../typings';
 // Schemas
-import { schema as domainSchema } from './schema.364d00401e089b16e8a3b9';
+import { schema as domainSchema } from './schema.9d7750cb74ffbfbff885ab';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -84,37 +84,37 @@ export class RewriteListItemService extends ApiService<
       request: {
         'application/json': {
           $ref:
-            'schema.364d00401e089b16e8a3b9#/components/schemas/ToDosItemBlank'
+            'schema.9d7750cb74ffbfbff885ab#/components/schemas/ToDosItemBlank'
         }
       },
       response: {
         '200': {
           'application/json': {
-            $ref: 'schema.364d00401e089b16e8a3b9#/components/schemas/ToDosItem'
+            $ref: 'schema.9d7750cb74ffbfbff885ab#/components/schemas/ToDosItem'
           }
         },
         '400': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorBadRequest'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorBadRequest'
           }
         },
         '404': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorNotFound'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorNotFound'
           }
         },
         '409': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorConflict'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorConflict'
           }
         },
         '500': {
           'application/json': {
             $ref:
-              'schema.364d00401e089b16e8a3b9#/components/schemas/HttpErrorServer'
+              'schema.9d7750cb74ffbfbff885ab#/components/schemas/HttpErrorServer'
           }
         }
       }
