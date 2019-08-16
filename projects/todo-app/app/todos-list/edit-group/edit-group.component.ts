@@ -57,24 +57,26 @@ const enum FormType {
     Save = 'save'
 }
 
+interface FormState {
+    description: string;
+    title: string;
+    tasksText: string;
+}
+
 interface ComponentTruth {
     formType: FormType;
 
     /**
      * Raw form data as a source
      */
-    formState: {
-        description: string;
-        title: string;
-        tasksText: string;
-    };
+    formState: FormState;
 
     /**
      * Group that uses as initial value and
      * should be changed after save. If set this form
      * is for save, not for create
      */
-    initialToDosListBlank?: ToDosListBlank;
+    initialFormState: FormState;
     isFormDataValid: boolean;
     lastAction: ActionTypes;
 }
@@ -254,7 +256,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
             Partial<ComponentTruth>
         ];
 
-        // Listening sources of thruth
+        // Listening sources of truth
         this.truth$ = merge(
             // Init data
             of({
@@ -262,7 +264,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                 formType: !!this.customOptions.initialToDosListBlank
                     ? FormType.Save
                     : FormType.Create,
-                initialToDosListBlank: this.customOptions.initialToDosListBlank,
+                initialFormState: this.formGroup.value,
                 isFormDataValid: this.formGroup.status === 'VALID',
                 lastAction: ActionTypes.Initialization,
 
@@ -304,13 +306,14 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                     const { tasksText } = truth.formState;
 
                     completeToDosListBlank = {
-                        ...truth.initialToDosListBlank || {},
                         description: truth.formState.description,
                         items: todosItemsFromText(tasksText),
                         title: truth.formState.title
                     };
 
-                    savingEnabled = true;
+                    savingEnabled = (truth.formType === FormType.Create)
+                        ? true
+                        : !_.isEqual(truth.formState, truth.initialFormState);
                 } else {
                     completeToDosListBlank = null;
                     savingEnabled = false;
@@ -353,9 +356,10 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                 case ActionTypes.UserSaveForm:
                     if (context.savingEnabled) {
                         // clearPersistentData(this, 'formState');
-                        this.matBottomSheetRef.dismiss(
-                            context.completeToDosListBlank
-                        );
+                        this.matBottomSheetRef.dismiss({
+                            ...this.customOptions.initialToDosListBlank || {},
+                            ...context.completeToDosListBlank
+                        });
                     }
 
                     saveFormSubscr.unsubscribe();
