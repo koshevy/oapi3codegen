@@ -34,6 +34,17 @@
     background-size: 1rem 1rem;
     cursor: no-drop;
   }
+
+  &.removing{
+    > * {
+      opacity: 0.15;
+    }
+
+    @include gradient-striped(rgba($dark, .04));
+    background-size: 1rem 1rem;
+    cursor: no-drop;
+    animation: progress-bar-stripes $progress-bar-animation-timing;
+  }
 }
 
 .cdk-drag-preview {

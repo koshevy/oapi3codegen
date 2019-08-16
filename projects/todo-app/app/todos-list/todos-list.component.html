@@ -5,7 +5,7 @@
 
   <p>
 
-    <button type="button" class="btn btn-info btn-lg btn-block" (click)="openCreateGroupPopup()">
+    <button type="button" class="btn btn-info btn-lg btn-block" (click)="createGroup()">
       <mat-icon>add_circle</mat-icon>
       Add group
     </button>
@@ -17,7 +17,8 @@
         class="list-group-item"
         [class.optimistic]="list.optimistic"
         [class.failed]="list.failed"
-        [cdkDragDisabled]="list.optimistic || list.failed"
+        [class.removing]="list.removing"
+        [cdkDragDisabled]="list.optimistic || list.failed || list.removing"
         cdkDrag
     >
       <h3 ngbDropdown>
@@ -26,7 +27,10 @@
           {{ list.countOfDone }} / {{ list.totalCount }}
         </span>
         &nbsp;
-        <a href="javascript:;" class="text-muted text-decoration-none" ngbDropdownToggle>
+        <a *ngIf="!list.removing"
+           href="javascript:;"
+           class="text-muted text-decoration-none"
+           ngbDropdownToggle>
           <mat-icon [inline]="true">more_horiz</mat-icon>
         </a>
         <div ngbDropdownMenu aria-labelledby="Actions menu">
@@ -39,23 +43,23 @@
               <mat-icon>check_box_outline_blank</mat-icon>
               Mark all as undone
             </button>
-            <button ngbDropdownItem>
+            <button ngbDropdownItem (click)="editGroup(list)">
               <mat-icon>edit</mat-icon>
               Edit
             </button>
-            <button ngbDropdownItem>
+            <button ngbDropdownItem (click)="removeList(list)">
               <mat-icon>delete_outline</mat-icon>
               Delete
             </button>
           </ng-container>
           <ng-template #optimisticItemMenu>
-            <button ngbDropdownItem *ngIf="list.failed">
+            <button ngbDropdownItem *ngIf="list.failed" (click)="tryAgain(list)">
               <mat-icon>replay</mat-icon>
               Try again
             </button>
-            <button ngbDropdownItem>
+            <button ngbDropdownItem (click)="removeIncompleteList(list)">
               <mat-icon>not_interested</mat-icon>
-              Cancel creation
+              Cancel operation
             </button>
           </ng-template>
         </div>
@@ -82,7 +86,7 @@
         <span class="text-muted">•</span>
         &nbsp;
         <a href="#" class="text-dark text-decoration-none">
-          <mat-icon>not_interested</mat-icon>
+          <mat-icon>check_box_outline_blank</mat-icon>
           Reset all
         </a>
         &nbsp;

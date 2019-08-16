@@ -7,7 +7,7 @@
            type="text"
            class="form-control"
            id="groupTitle"
-           placeholder="E.g., Work affairs"
+           placeholder="E.g., Sport schedule"
            tooltipClass="validation-error">
   </div>
   <div class="form-group">
@@ -18,7 +18,7 @@
            type="text"
            class="form-control"
            id="editGroupDescription"
-           placeholder="E.g., Work tasks and meetings"
+           placeholder="E.g., Fitness, games, martial arts schedule and goals"
            tooltipClass="validation-error">
   </div>
   <div class="form-group">
@@ -28,7 +28,9 @@
       Write your tasks on each row
     </small>
   </div>
-  <button type="button" class="btn btn-info" [disabled]="!context.savingEnabled" (click)="onSave();">Create</button>
+  <button type="button" class="btn btn-info" [disabled]="!context.savingEnabled" (click)="onSave();">
+    {{ context.formType === 'create' ? 'Create' : 'Save' }}
+  </button>
   &nbsp;
   <button type="button" class="btn btn-light" (click)="onCancel();">Cancel</button>
 </form>

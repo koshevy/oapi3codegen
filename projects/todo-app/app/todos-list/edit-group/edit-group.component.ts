@@ -37,6 +37,7 @@ import {
     clearPersistentData,
     loadPersistentData,
     savePersistentData,
+    textFromTodosItems,
     todosItemsFromText
 } from '../../lib/helpers';
 
@@ -51,16 +52,29 @@ const enum ActionTypes {
     UserSaveForm = '[User Save Form]'
 }
 
+const enum FormType {
+    Create = 'create',
+    Save = 'save'
+}
+
 interface ComponentTruth {
+    formType: FormType;
+
     /**
      * Raw form data as a source
      */
-    formData: {
+    formState: {
         description: string;
         title: string;
         tasksText: string;
     };
 
+    /**
+     * Group that uses as initial value and
+     * should be changed after save. If set this form
+     * is for save, not for create
+     */
+    initialToDosListBlank?: ToDosListBlank;
     isFormDataValid: boolean;
     lastAction: ActionTypes;
 }
@@ -69,7 +83,7 @@ interface ComponentContext extends ComponentTruth {
 
     /**
      * Complete {@link ToDosListBlank} data based on
-     * {@link ComponentContext.formData}
+     * {@link ComponentContext.formState}
      */
     completeToDosListBlank?: ToDosListBlank | null;
 
@@ -80,9 +94,16 @@ interface ComponentContext extends ComponentTruth {
  * External custom config can be passed from parent component.
  */
 export interface EditGroupConfig {
-    customValidators?: {
+    customValidators: {
         [field: string]: ValidatorFn[]
     };
+
+    /**
+     * Group that uses as initial value and
+     * should be changed after save. If set this form
+     * is for save, not for create
+     */
+    initialToDosListBlank?: ToDosListBlank;
 }
 
 // ***
@@ -98,8 +119,8 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     public defaultFormData = {
         description: null,
         tasksText: [
-            '[x] Close reviews of Andromeda and Big Dipper',
-            'Do planing of sprint Cassiopeia'
+            '[x] Subscribe on fitness',
+            'Go to swimming pool'
         ].join('\n'),
         title: null
     };
@@ -153,7 +174,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     constructor(
         protected matBottomSheetRef: MatBottomSheetRef,
         @Optional() @Inject(MAT_BOTTOM_SHEET_DATA)
-            protected customOptions: EditGroupConfig
+            protected customOptions: EditGroupConfig = {customValidators: {}}
     ) {
         const validatorFactory = new JsonValidationService();
         const createValidator = validatorFactory.createValidator.bind(
@@ -163,10 +184,23 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         /**
          * Loaded form data. Has to be saved here — {@link listenEffects}.
          */
-        const initFormData = loadPersistentData(this, 'formData')
-            || this.defaultFormData;
+        let initFormData;
 
-        const { customValidators } = customOptions || {customValidators: {}};
+        if (customOptions.initialToDosListBlank) {
+            const group = customOptions.initialToDosListBlank;
+
+            initFormData = {
+                ..._.pick(group, ['title', 'description']),
+                tasksText: textFromTodosItems(
+                    group.items
+                )
+            };
+        } else {
+            initFormData = loadPersistentData(this, 'formState')
+                || this.defaultFormData;
+        }
+
+        const { customValidators } = customOptions;
 
         validatorFactory.setScheme(
             this.getFormJsonSchemaWithMessages()
@@ -183,7 +217,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
             tasksText: new FormControl(
                 initFormData.tasksText,
                 [
-                    ...(customValidators['description'] || [])
+                    ...(customValidators['tasksText'] || [])
                 ]
             ),
             title: new FormControl(
@@ -213,7 +247,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     initTruthFlow(): void {
         /**
          * Local source of truth — is a two parts of it:
-         * FormData and validity status.
+         * formState and validity status.
          */
         type ComponentContextTruthSrc = [
             Partial<ComponentTruth>,
@@ -224,14 +258,19 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         this.truth$ = merge(
             // Init data
             of({
-                formData: this.formGroup.value,
+                formState: this.formGroup.value,
+                formType: !!this.customOptions.initialToDosListBlank
+                    ? FormType.Save
+                    : FormType.Create,
+                initialToDosListBlank: this.customOptions.initialToDosListBlank,
                 isFormDataValid: this.formGroup.status === 'VALID',
-                lastAction: ActionTypes.Initialization
+                lastAction: ActionTypes.Initialization,
+
             }),
             // User input
             this.formGroup.valueChanges.pipe(
-                map(formData => ({
-                    formData,
+                map(formState => ({
+                    formState,
                     lastAction: ActionTypes.UserChangeForm
                 }))
             ),
@@ -249,10 +288,8 @@ export class EditGroupComponent implements OnInit, OnDestroy {
             this.actions$
         ).pipe(
             // And transform to complete truth
-            scan<Partial<ComponentTruth>, ComponentTruth>(
-                (acc: ComponentTruth, cur: Partial<ComponentTruth>) => {
-                    return _.assign(acc, cur);
-                }
+            scan<Partial<ComponentTruth>, ComponentTruth>((acc, cur) =>
+                ({...acc, ...cur})
             )
         );
     }
@@ -264,12 +301,13 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                 let savingEnabled: boolean;
 
                 if (truth.isFormDataValid) {
-                    const { tasksText } = truth.formData;
+                    const { tasksText } = truth.formState;
 
                     completeToDosListBlank = {
-                        description: truth.formData.description,
+                        ...truth.initialToDosListBlank || {},
+                        description: truth.formState.description,
                         items: todosItemsFromText(tasksText),
-                        title: truth.formData.title
+                        title: truth.formState.title
                     };
 
                     savingEnabled = true;
@@ -298,11 +336,11 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         // Autosave drafts
         autoSaveSubscr = this.context$.pipe(debounceTime(1500)).subscribe(
             (context: ComponentContext) => {
-                if (context.isFormDataValid) {
+                if (context.isFormDataValid && (context.formType === FormType.Create)) {
                     savePersistentData(
                         this,
-                        'formData',
-                        context.formData
+                        'formState',
+                        context.formState
                     );
                 }
             }
@@ -314,7 +352,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                 // Close and return result
                 case ActionTypes.UserSaveForm:
                     if (context.savingEnabled) {
-                        // clearPersistentData(this, 'formData');
+                        // clearPersistentData(this, 'formState');
                         this.matBottomSheetRef.dismiss(
                             context.completeToDosListBlank
                         );
@@ -360,5 +398,21 @@ export class EditGroupComponent implements OnInit, OnDestroy {
 
     onCancel() {
         this.matBottomSheetRef.dismiss(null);
+    }
+
+    // *** Private methods
+
+    private getInitFormData(): {[key: string]: any} {
+        if (this.customOptions.initialToDosListBlank) {
+            const group = this.customOptions.initialToDosListBlank;
+
+            return {
+                ..._.pick(group, ['title', 'description']),
+                tasksText: textFromTodosItems(group.items)
+            };
+        } else {
+            return loadPersistentData(this, 'formState')
+                || this.defaultFormData;
+        }
     }
 }

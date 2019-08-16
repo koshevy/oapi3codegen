@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import { GlobalPartial } from 'lodash/common/common';
 
 import { Observable, of } from 'rxjs';
 import { catchError, delay, map, mergeScan, shareReplay, tap } from 'rxjs/operators';
@@ -10,50 +9,30 @@ import { tapResponse, pickResponseBody } from '@codegena/ng-api-service';
 import { ToDosList } from '../api/typings';
 import { GetListsService, CreateListService } from '../api/services';
 
+import {
+    Partial,
+    ActionType,
+    ToDosListTeaser,
+    ComponentTruth,
+    ComponentContext
+} from './lib/context';
+
+import {
+    updateTodosListInList,
+    createTodoListTeaser,
+    createTodoListTeasers,
+    markListAsFailedInList
+} from './lib/helpers';
+
 // ***
-
-export type Partial<T> = GlobalPartial<T>;
-
-export const enum ActionType {
-    InitializeWithRouteParams = '[Initialize with route params]',
-    AddNewGroupOptimistic = '[Add new group optimistic]',
-    AddNewGroup = '[Add new group]',
-    ChangeListPosition = '[Change list position]'
-}
 
 /**
- * Teaser of ToDos list in common list of this component.
- * Shows both of already created and new optimistically added,
- * but not created yet in fact.
+ * Store-service for {@link TodosListComponent}.
+ * Create and maintain data flow and reducing.
+ *
+ * Reducing is based in pure function, excepts data from API.
+ * Allows only API-data prviders in DI.
  */
-export interface ToDosListTeaser extends ToDosList {
-    countOfDone: number;
-    totalCount: number;
-    /**
-     * Marks this item added to lists optimistically.
-     */
-    optimistic?: boolean;
-
-    /**
-     * Marks this item was failed during adding
-     */
-    failed?: boolean;
-}
-
-export interface ComponentTruth {
-    isComplete: boolean | null;
-    isCurrentList: number | null;
-    createdGroup?: ToDosList;
-    positionChanging?: { from: number; to: number };
-    lastAction: ActionType;
-}
-
-export interface ComponentContext extends ComponentTruth {
-    lists: ToDosListTeaser[];
-}
-
-// ***
-
 @Injectable()
 export class TodosListStore {
 
@@ -61,7 +40,7 @@ export class TodosListStore {
      * Gives access to {@link reduceContext} as a pure function,
      * bound to this for external class.
      */
-    public get reduceContextFn(): (
+    get reduceContextFn(): (
         context: ComponentContext,
         truth: ComponentTruth
     ) => Observable<Partial<ComponentContext>> {
@@ -73,7 +52,11 @@ export class TodosListStore {
         protected createListService: CreateListService
     ) {}
 
-    createContextFlow(
+    /**
+     * Creates and returns new flow with integrated reducer,
+     * described in {@link reduceContextFn}, started at `truth$`.
+     */
+    getNewContextFlow(
         truth$: Observable<ComponentTruth>
     ): Observable<ComponentContext> {
         return truth$.pipe(
@@ -87,16 +70,13 @@ export class TodosListStore {
 
     // *** Private methods
 
-    /**
-     * Reducer for this component.
-     * todo move to the service.
-     */
     private reduceContext(
         context: ComponentContext,
         truth: ComponentTruth
     ): Observable<Partial<ComponentContext>> {
 
         switch (truth.lastAction) {
+
             case ActionType.InitializeWithRouteParams:
                 const getListsParams = _.pick(
                     truth,
@@ -110,94 +90,102 @@ export class TodosListStore {
                 return this.getListsService.request(null, getListsParams).pipe(
                     pickResponseBody<ToDosList[]>(200),
                     map<ToDosList[], ComponentContext>(todosLists => ({
-                        lists: _.map<ToDosList[], ToDosListTeaser>(
-                            todosLists,
-                            (list: ToDosList) => ({
-                                ...list,
-                                // fixme have copypasta
-                                countOfDone: _.filter(
-                                    list.items || [],
-                                    ({isDone}) => isDone
-                                ).length,
-                                totalCount: (list.items || []).length
-                            })
-                        ),
+                        lists: createTodoListTeasers(todosLists),
                         ...truth
                     })),
                 );
 
             case ActionType.AddNewGroupOptimistic:
+            case ActionType.EditListOptimistic:
+
                 return of({
                     ...context,
                     ...truth,
-                    lists: [
-                        ...context.lists,
-                        {
-                            ...truth.createdGroup,
-                            // fixme have copypasta
-                            countOfDone: _.filter(
-                                truth.createdGroup.items || [],
-                                ({isDone}) => isDone
-                            ).length,
-                            optimistic: true,
-                            totalCount: (truth.createdGroup.items || []).length
-                        }
-                    ] as ToDosListTeaser[]
+                    lists: updateTodosListInList(
+                        context.lists,
+                        truth.createdGroup
+                    )
                 });
 
             case ActionType.AddNewGroup:
+
                 return this.createListService.request(_.omit(
                     truth.createdGroup,
                     'uid'
                 )).pipe(
                     pickResponseBody<ToDosList>(201),
-                    map<ToDosList, ComponentContext>(todosList => {
-                        const thisItemIndex = _.findIndex(
+                    map<ToDosList, ComponentContext>(todosList => ({
+                        ...context,
+                        ...truth,
+                        lists: updateTodosListInList(
                             context.lists,
-                            item => item.uid === truth.createdGroup.uid
-                        );
-
-                        if (thisItemIndex === -1) {
-                            throw new Error('Cant find item with this uid');
-                        }
-
-                        // fixme prepare counts
-                        context.lists[thisItemIndex] = todosList as any;
-
-                        return {
-                            ...context,
-                            ...truth
-                        };
-                    }),
+                            truth.createdGroup
+                        )
+                    })),
                     catchError(error => {
-                        const thisItem = _.find(
-                            context.lists,
-                            item => item.uid === truth.createdGroup.uid
-                        );
-
-                        if (thisItem) {
-                            thisItem.failed = true;
-                            thisItem.optimistic = false;
-                        }
-
                         return of({
                             ...context,
-                            ...truth
-                        }).pipe(delay(2000));
+                            ...truth,
+                            lists: markListAsFailedInList(
+                                context.lists,
+                                truth.createdGroup
+                            )
+                        }).pipe(delay(1000));
                     })
                 );
 
-            case ActionType.ChangeListPosition:
+            case ActionType.ChangeListPositionOptimistic:
                 moveItemInArray(
                     context.lists,
                     truth.positionChanging.from,
                     truth.positionChanging.to
                 );
 
-                return of({
-                    ...context,
-                    ...truth
-                });
+                return of({...context, ...truth});
+
+            case ActionType.ChangeListPosition:
+                // todo describe API for ChangeList and use
+                break;
+
+            case ActionType.RemoveItemOptimistic:
+                const foundListIndex = _.findIndex(
+                    context.lists,
+                    list => list.uid === truth.removedGroup.uid
+                );
+
+                context.lists[foundListIndex] = {
+                    ...context.lists[foundListIndex],
+                    failed: false,
+                    optimistic: false,
+                    removing: true
+                };
+
+                break;
+
+            case ActionType.CancelOperation:
+                // Was not created
+                if (truth.removedGroup.uid < 0) {
+                    return of({
+                        ...context,
+                        ...truth,
+                        lists: _.reject(
+                            context.lists,
+                            (item: ToDosListTeaser) =>
+                                item.uid === truth.removedGroup.uid
+                        )
+                    });
+                } else {
+                    // Created, by tried to change
+                    return of({
+                        ...context,
+                        ...truth,
+                        lists: updateTodosListInList(
+                            context.lists,
+                            truth.createdGroup,
+                            false
+                        )
+                    });
+                }
 
             default:
                 throw new Error('Unknown action type!');

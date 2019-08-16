@@ -53,6 +53,13 @@ export function todosItemsFromText(tasksText: string): ToDosItemBlank[] {
     return items;
 }
 
+export function textFromTodosItems(items: ToDosItemBlank[]): string {
+    return _.map<ToDosItemBlank[], string>(
+        items || [],
+        (item: ToDosItemBlank) => `${item.isDone ? '[x] ' : ''}${item.title}`
+    ).join('\n');
+}
+
 /**
  * Save persistent data, associated with specified component
  */

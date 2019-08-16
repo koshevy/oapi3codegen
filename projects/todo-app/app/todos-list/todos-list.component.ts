@@ -45,13 +45,13 @@ import { createUniqValidator } from '../lib/helpers';
 
 import { EditGroupComponent, EditGroupConfig } from './edit-group/edit-group.component';
 import {
-    TodosListStore,
     Partial,
     ActionType,
     ToDosListTeaser,
     ComponentTruth,
     ComponentContext
-} from './todos-list.store';
+} from './lib/context';
+import { TodosListStore } from './todos-list.store';
 
 // ***
 
@@ -64,9 +64,24 @@ import {
 })
 export class TodosListComponent implements OnInit {
 
-    truth$: Observable<ComponentTruth>;
+    /**
+     * Full context flow of component. Do changes of view
+     * every emission.
+     */
     context$: Observable<ComponentContext>;
+
+    /**
+     * Flow that collect all changes of values that could influence
+     * to component state. Once one of that changes, this flow prepare
+     * it in a common "Truth", and emits this complete "Truth".
+     */
+    truth$: Observable<ComponentTruth>;
+
+    /**
+     * Part of "truth": channel with manual-triggered actions and theirs data
+     */
     manualActions$: Subject<Partial<ComponentTruth>> = new Subject();
+
     syncContext: ComponentContext;
 
     private tempIdCounter = -1;
@@ -96,7 +111,7 @@ export class TodosListComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.context$ = this.store.createContextFlow(this.truth$);
+        this.context$ = this.store.getNewContextFlow(this.truth$);
 
         this.listenEffects();
     }
@@ -145,11 +160,8 @@ export class TodosListComponent implements OnInit {
                                 horizontalPosition: 'center',
                                 panelClass: ['alert', 'alert-danger']
                             }).onAction().subscribe(() => {
-                                // Repeat sending to server
-                                this.manualActions$.next({
-                                    ..._.pick(context, ['createdGroup']),
-                                    lastAction: ActionType.AddNewGroup
-                                });
+                                // Repeats attempt
+                                this.tryAgain(context.createdGroup);
                             });
                         } else {
                             this.matSnackBar.open('Changing successful saved!', null, {
@@ -167,7 +179,7 @@ export class TodosListComponent implements OnInit {
 
     // *** Events
 
-    openCreateGroupPopup() {
+    createGroup() {
 
         // Additional validator for Group Creation Form:
         // check for unique of list
@@ -181,27 +193,8 @@ export class TodosListComponent implements OnInit {
         };
 
         // Open creation dialog
-        const subscribtion =  this.matBottomSheet.open<
-            EditGroupComponent,
-            EditGroupConfig,
-            ToDosList
-        >(EditGroupComponent, {
-            data: popupConfig,
-            scrollStrategy: this.overlay.scrollStrategies.reposition()
-        })
-            // Waiting for result
-            .afterDismissed()
-            .pipe(
-                filter(v => !!v),
-                // takeUntil(),
-                map<ToDosList, Partial<ComponentTruth>>((newList) => ({
-                    createdGroup: _.assign(
-                        newList,
-                        // Adds temporary ID
-                        { uid: this.getTempId() }
-                    )
-                }))
-            ).subscribe((truth: Partial<ComponentTruth>) => {
+        const subscribtion = this.openEditGroupPopup(popupConfig)
+            .subscribe((truth: Partial<ComponentTruth>) => {
                 // Optimistic adding of item (before sending to server)
                 this.manualActions$.next({
                     ...truth,
@@ -217,9 +210,30 @@ export class TodosListComponent implements OnInit {
             });
     }
 
-    listDropped(event: CdkDragDrop<ToDosListTeaser[]>): void {
+    editGroup(list: ToDosList) {
+        // Additional validator for Group Creation Form:
+        // check for unique of list
+        const popupConfig: EditGroupConfig = {
+            customValidators: {},
+            initialToDosListBlank: list
+        };
+
+        // Open creation dialog
+        const subscribtion = this.openEditGroupPopup(popupConfig)
+            .subscribe((truth: Partial<ComponentTruth>) => {
+                this.manualActions$.next({
+                    ...truth,
+                    lastAction: ActionType.EditListOptimistic,
+                });
+                // todo do action EditList
+
+                subscribtion.unsubscribe();
+            });
+    }
+
+    listDropped(event: CdkDragDrop<ToDosListTeaser[]>) {
         this.manualActions$.next({
-            lastAction: ActionType.ChangeListPosition,
+            lastAction: ActionType.ChangeListPositionOptimistic,
             positionChanging: {
                 from: event.previousIndex,
                 to: event.currentIndex
@@ -227,7 +241,57 @@ export class TodosListComponent implements OnInit {
         });
     }
 
+    tryAgain(list: ToDosList) {
+        this.manualActions$.next({
+            createdGroup: list,
+            lastAction: ActionType.AddNewGroupOptimistic
+        });
+        // fixme turn back (temporary disabled)
+        // this.manualActions$.next({
+        //     createdGroup: list,
+        //     lastAction: ActionType.AddNewGroup
+        // });
+    }
+
+    removeList(list: ToDosList) {
+        this.manualActions$.next({
+            lastAction: ActionType.RemoveItemOptimistic,
+            removedGroup: list
+        });
+    }
+
+    removeIncompleteList(list: ToDosList) {
+        this.manualActions$.next({
+            lastAction: ActionType.CancelOperation,
+            removedGroup: list
+        });
+    }
+
     // *** Private methods
+
+    private openEditGroupPopup(popupConfig: EditGroupConfig)
+        : Observable<Partial<ComponentTruth>> {
+
+        return this.matBottomSheet.open<
+            EditGroupComponent,
+            EditGroupConfig,
+            ToDosList
+        >(EditGroupComponent, {
+            data: popupConfig,
+            scrollStrategy: this.overlay.scrollStrategies.reposition()
+        })  .afterDismissed() // Waiting for result
+            .pipe(
+                filter(v => !!v),
+                // takeUntil(),
+                map<ToDosList, Partial<ComponentTruth>>((newList) => ({
+                    createdGroup: _.assign(
+                        newList,
+                        // Adds temporary ID if not set
+                        { uid: newList.uid || this.getTempId() }
+                    )
+                }))
+            );
+    }
 
     /**
      * Returns new temporary ID for optimistic added items.
