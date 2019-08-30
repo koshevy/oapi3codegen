@@ -34,12 +34,12 @@ export function todosItemsFromText(tasksText: string): ToDosItemBlank[] {
         (srcLine) => {
             const item = {
                 description: null,
+                groupUid: 0,
                 isDone: false,
-                listUid: 0,
                 title: srcLine
             };
 
-            const matches = taskTextReg.exec(item.title)
+            const matches = taskTextReg.exec(item.title);
 
             if (matches) {
                 item.title = matches[2];

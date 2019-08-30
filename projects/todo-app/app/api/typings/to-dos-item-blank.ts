@@ -3,14 +3,14 @@ import { AttachmentMetaDocument } from './attachment-meta-document';
 import { AttachmentMetaImage } from './attachment-meta-image';
 
 /**
- * ## Base part of data of item in todo's list
- * Data about list item needed for creation of it
+ * ## Base part of data of item in todo's group
+ * Data about group item needed for creation of it
  */
 export interface ToDosItemBlank {
   /**
-   * An unique id of list that item belongs to
+   * An unique id of group that item belongs to
    */
-  listUid: number;
+  groupUid: number;
   /**
    * Short brief of task to be done
    */

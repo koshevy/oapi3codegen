@@ -7,8 +7,13 @@
 }
 
 a {
-  &.text-dark:hover {
+  &.text-dark:hover:not([disabled="true"]) {
     color: $info !important;
+  }
+
+  &[disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed !important;
   }
 }
 

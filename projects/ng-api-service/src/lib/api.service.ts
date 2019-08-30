@@ -377,23 +377,26 @@ export abstract class ApiService<R, B, P = null> implements RequestSender<R, B> 
                         const contentType = (event as HttpResponse<R>).headers.get('content-type')
                             || defaultContentType;
 
-                        // валидация ответа
-                        (this._validate(
-                            body,
-                            ValidationType.ResponseValidation,
-                            subscriber,
-                            statusChanges,
-                            statusCode,
-                            contentType
-                        ) !== false)
+                        try {
+                            // валидация ответа
+                            (this._validate(
+                                body,
+                                ValidationType.ResponseValidation,
+                                subscriber,
+                                statusChanges,
+                                statusCode,
+                                contentType
+                            ) !== false)
 
-                        // send data to subscriber and complete
-                        && subscriber.next(event as HttpResponse<R>);
+                            // send data to subscriber and complete
+                            && subscriber.next(event as HttpResponse<R>);
+                            subscriber.complete();
 
-                        subscriber.complete();
-
-                        if (subscription && !subscription.closed) {
-                            subscription.unsubscribe();
+                            if (subscription && !subscription.closed) {
+                                subscription.unsubscribe();
+                            }
+                        } catch (errorAtValidation) {
+                            subscriber.error(errorAtValidation);
                         }
 
                         break;

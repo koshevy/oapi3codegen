@@ -3,9 +3,10 @@
  * be used in tests of generated services.
  */
 
+import * as _lodash from 'lodash';
 import { HttpResponse } from '@angular/common/http';
 import * as services from '../prepare-dist';
-import * as _lodash from 'lodash';
+
 const _ = _lodash;
 
 import {

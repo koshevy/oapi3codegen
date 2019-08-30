@@ -6,11 +6,11 @@
     "description": "This is a complete API description of application for managing TODO-reminders. There are all functions of typical TODO notes manager. This description is a part of `@codegena` project."
   },
   "paths": {
-    "/list": {
+    "/group": {
       "get": {
-        "summary": "Get all TODO's lists",
-        "operationId": "getLists",
-        "description": "Returns all TODO's list with their items or without. By default skips items, suggesting you want to get top level meta-data. It could be filtered by `isComplete` status.",
+        "summary": "Get all TODO's groups",
+        "operationId": "getGroups",
+        "description": "Returns all TODO's group with their items or without. By default skips items, suggesting you want to get top level meta-data. It could be filtered by `isComplete` status.",
         "parameters": [
           {
             "$ref": "#/components/parameters/isComplete"
@@ -21,13 +21,13 @@
         ],
         "responses": {
           "200": {
-            "description": "TODO's lists",
+            "description": "TODO's groups",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ToDosList"
+                    "$ref": "#/components/schemas/ToDosGroup"
                   }
                 }
               }
@@ -42,23 +42,23 @@
         }
       },
       "post": {
-        "operationId": "createList",
-        "summary": "Create a new TODO's list",
-        "description": "Creates new list with exists items, or without",
+        "operationId": "createGroup",
+        "summary": "Create a new TODO's group",
+        "description": "Creates new group with exists items, or without",
         "requestBody": {
           "description": "Required request body",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosListBlank"
+                "$ref": "#/components/schemas/ToDosGroupBlank"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "$ref": "#/components/responses/todoListSaved"
+            "$ref": "#/components/responses/todoGroupSaved"
           },
           "400": {
             "$ref": "#/components/responses/errorBadRequest"
@@ -69,23 +69,23 @@
         }
       }
     },
-    "/list/{listId}": {
+    "/group/{groupId}": {
       "get": {
-        "operationId": "getList",
-        "summary": "Get TODO's list by id",
-        "description": "Returns specified list by `listId`",
+        "operationId": "getGroup",
+        "summary": "Get TODO's group by id",
+        "description": "Returns specified group by `groupId`",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           }
         ],
         "responses": {
           "200": {
-            "description": "TODO's list",
+            "description": "TODO's group",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToDosList"
+                  "$ref": "#/components/schemas/ToDosGroup"
                 }
               }
             }
@@ -94,7 +94,7 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListNotFound"
+            "$ref": "#/components/responses/errorGroupNotFound"
           },
           "500": {
             "$ref": "#/components/responses/errorServer"
@@ -102,12 +102,12 @@
         }
       },
       "put": {
-        "operationId": "rewriteList",
-        "summary": "Rewrite specified TODO's list",
-        "description": "Rewrites an entire todo's list",
+        "operationId": "rewriteGroup",
+        "summary": "Rewrite specified TODO's group",
+        "description": "Rewrites an entire todo's group",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           },
           {
             "$ref": "#/components/parameters/forceSave"
@@ -119,7 +119,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosListBlank"
+                "$ref": "#/components/schemas/ToDosGroupBlank"
               }
             }
           }
@@ -135,7 +135,7 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListNotFound"
+            "$ref": "#/components/responses/errorGroupNotFound"
           },
           "409": {
             "$ref": "#/components/responses/errorConflict"
@@ -146,12 +146,12 @@
         }
       },
       "patch": {
-        "operationId": "updateList",
-        "summary": "Update specified TODO's list",
-        "description": "Partially update (patch) of list",
+        "operationId": "updateGroup",
+        "summary": "Update specified TODO's group",
+        "description": "Partially update (patch) of group",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           },
           {
             "$ref": "#/components/parameters/forceSave"
@@ -163,18 +163,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosList"
+                "$ref": "#/components/schemas/ToDosGroup"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Todo list saved",
+            "description": "Todo group saved",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToDosList"
+                  "$ref": "#/components/schemas/ToDosGroup"
                 }
               }
             }
@@ -183,7 +183,33 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListNotFound"
+            "$ref": "#/components/responses/errorGroupNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/errorConflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/errorServer"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGroup",
+        "summary": "Delete specified TODO's group",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/groupId"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Todo group deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/errorBadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/errorGroupNotFound"
           },
           "409": {
             "$ref": "#/components/responses/errorConflict"
@@ -194,15 +220,15 @@
         }
       }
     },
-    "/list/{listId}/item": {
-      "summary": "List item",
+    "/group/{groupId}/item": {
+      "summary": "Group item",
       "get": {
-        "operationId": "getListItems",
-        "summary": "Get items of specified TODO's list",
-        "description": "Returns array with items of specified TODO's list",
+        "operationId": "getGroupItems",
+        "summary": "Get items of specified TODO's group",
+        "description": "Returns array with items of specified TODO's group",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           },
           {
             "$ref": "#/components/parameters/isComplete"
@@ -210,7 +236,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Items of specified TODO's list",
+            "description": "Items of specified TODO's group",
             "content": {
               "application/json": {
                 "schema": {
@@ -226,7 +252,7 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListNotFound"
+            "$ref": "#/components/responses/errorGroupNotFound"
           },
           "500": {
             "$ref": "#/components/responses/errorServer"
@@ -234,18 +260,18 @@
         }
       },
       "post": {
-        "operationId": "createListItem",
-        "summary": "Create new list item",
+        "operationId": "createGroupItem",
+        "summary": "Create new group item",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           },
           {
             "$ref": "#/components/parameters/forceSave"
           }
         ],
         "requestBody": {
-          "description": "List item",
+          "description": "Group item",
           "required": true,
           "content": {
             "application/json": {
@@ -270,7 +296,7 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListNotFound"
+            "$ref": "#/components/responses/errorGroupNotFound"
           },
           "409": {
             "$ref": "#/components/responses/errorConflict"
@@ -281,13 +307,13 @@
         }
       }
     },
-    "/list/{listId}/item/{itemId}": {
+    "/group/{groupId}/item/{itemId}": {
       "put": {
-        "operationId": "rewriteListItem",
-        "summary": "Rewrite list item",
+        "operationId": "rewriteGroupItem",
+        "summary": "Rewrite group item",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           },
           {
             "$ref": "#/components/parameters/itemId"
@@ -297,7 +323,7 @@
           }
         ],
         "requestBody": {
-          "description": "List item",
+          "description": "Group item",
           "required": true,
           "content": {
             "application/json": {
@@ -315,7 +341,7 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListItemNotFound"
+            "$ref": "#/components/responses/errorGroupItemNotFound"
           },
           "409": {
             "$ref": "#/components/responses/errorConflict"
@@ -326,11 +352,11 @@
         }
       },
       "patch": {
-        "operationId": "updateListItem",
-        "summary": "Update list item",
+        "operationId": "updateGroupItem",
+        "summary": "Update group item",
         "parameters": [
           {
-            "$ref": "#/components/parameters/listId"
+            "$ref": "#/components/parameters/groupId"
           },
           {
             "$ref": "#/components/parameters/itemId"
@@ -338,7 +364,7 @@
           {
             "name": "forceSave",
             "in": "query",
-            "description": "Force save list despite conflicts",
+            "description": "Force save group despite conflicts",
             "required": false,
             "schema": {
               "type": ["boolean", "null"],
@@ -347,7 +373,7 @@
           }
         ],
         "requestBody": {
-          "description": "List item",
+          "description": "Group item",
           "required": true,
           "content": {
             "application/json": {
@@ -365,7 +391,7 @@
             "$ref": "#/components/responses/errorBadRequest"
           },
           "404": {
-            "$ref": "#/components/responses/errorListNotFound"
+            "$ref": "#/components/responses/errorGroupNotFound"
           },
           "409": {
             "$ref": "#/components/responses/errorConflict"
@@ -382,7 +408,7 @@
       "forceSave": {
         "name": "forceSave",
         "in": "query",
-        "description": "Force save list despite conflicts",
+        "description": "Force save group despite conflicts",
         "required": false,
         "schema": {
           "type": ["boolean", "null"],
@@ -392,7 +418,7 @@
       "itemId": {
         "name": "itemId",
         "in": "path",
-        "description": "Uid of TODO list item",
+        "description": "Uid of TODO group item",
         "required": true,
         "schema": {
           "type": "number"
@@ -401,17 +427,17 @@
       "isComplete": {
         "name": "isComplete",
         "in": "query",
-        "description": "Filter lists by `complete` status",
+        "description": "Filter groups by `complete` status",
         "required": false,
         "schema": {
           "type": ["boolean", "null"],
           "default": null
         }
       },
-      "listId": {
-        "name": "listId",
+      "groupId": {
+        "name": "groupId",
         "in": "path",
-        "description": "Uid of TODO list",
+        "description": "Uid of TODO group",
         "required": true,
         "schema": {
           "type": "number"
@@ -420,7 +446,7 @@
       "withItems": {
         "name": "withItems",
         "in": "query",
-        "description": "Set it `true` if you want to get all list items with list. Always returns empty `items` array when it's `false`.",
+        "description": "Set it `true` if you want to get all group items with group. Always returns empty `items` array when it's `false`.",
         "required": false,
         "schema": {
           "type": ["boolean", "null"],
@@ -449,8 +475,8 @@
           }
         }
       },
-      "errorListItemNotFound": {
-        "description": "List item not found",
+      "errorGroupItemNotFound": {
+        "description": "Group item not found",
         "content": {
           "application/json": {
             "schema": {
@@ -459,8 +485,8 @@
           }
         }
       },
-      "errorListNotFound": {
-        "description": "List not found",
+      "errorGroupNotFound": {
+        "description": "Group not found",
         "content": {
           "application/json": {
             "schema": {
@@ -489,12 +515,12 @@
           }
         }
       },
-      "todoListSaved": {
-        "description": "Todo list saved",
+      "todoGroupSaved": {
+        "description": "Todo group saved",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ToDosList"
+              "$ref": "#/components/schemas/ToDosGroup"
             }
           }
         }
@@ -708,11 +734,11 @@
         }
       },
       "ToDosItemBlank": {
-        "title": "Base part of data of item in todo's list",
-        "description": "Data about list item needed for creation of it",
+        "title": "Base part of data of item in todo's group",
+        "description": "Data about group item needed for creation of it",
         "properties": {
-          "listUid": {
-            "description": "An unique id of list that item belongs to",
+          "groupUid": {
+            "description": "An unique id of group that item belongs to",
             "type": "number",
             "min": 1,
             "max": 2147483647
@@ -745,13 +771,13 @@
         },
         "required": [
           "isDone",
-          "listUid",
+          "groupUid",
           "title"
         ]
       },
       "ToDosItem": {
-        "title": "Item in todo's list",
-        "description": "Describe data structure of an item in list of tasks",
+        "title": "Item in todo's group",
+        "description": "Describe data structure of an item in group of tasks",
         "allOf": [
           {
             "$ref": "#/components/schemas/ToDosItemBlank"
@@ -779,7 +805,7 @@
                 "readOnly": true
               },
               "position": {
-                "description": "Position of a task in list. Allows to track changing of state of a concrete item, including changing od position.",
+                "description": "Position of a task in group. Allows to track changing of state of a concrete item, including changing od position.",
                 "type": "number",
                 "min": 0,
                 "max": 4096
@@ -794,19 +820,19 @@
           }
         ]
       },
-      "ToDosListBlank": {
-        "title": "Base part of data of list",
-        "description": "Data needed for list creation",
+      "ToDosGroupBlank": {
+        "title": "Base part of data of group",
+        "description": "Data needed for group creation",
         "type": "object",
         "properties": {
           "title": {
-            "description": "Title of a list",
+            "description": "Title of a group",
             "type": "string",
             "minLength": 5,
             "maxLength": 32
           },
           "description": {
-            "description": "Detailed description of a list in one/two sequences.",
+            "description": "Detailed description of a group in one/two sequences.",
             "type": "string",
             "minLength": 16,
             "maxLength": 128
@@ -818,7 +844,7 @@
             }
           },
           "isComplete": {
-            "description": "Whether all tasks in list are complete",
+            "description": "Whether all tasks in group are complete",
             "type": "boolean"
           }
         },
@@ -827,8 +853,8 @@
           "title"
         ]
       },
-      "ToDosListExtendedData": {
-        "title": "Extended data of list",
+      "ToDosGroupExtendedData": {
+        "title": "Extended data of group",
         "description": "Extended data has to be obtained after first save",
         "type": "object",
         "properties": {
@@ -847,12 +873,6 @@
             "description": "Date/time (ISO) when task was changed last time",
             "type": "string",
             "format": "date-time"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ToDosItem"
-            }
           }
         },
         "required": [
@@ -861,13 +881,13 @@
           "uid"
         ]
       },
-      "ToDosList": {
+      "ToDosGroup": {
         "allOf": [
           {
-            "$ref": "#/components/schemas/ToDosListBlank"
+            "$ref": "#/components/schemas/ToDosGroupBlank"
           },
           {
-            "$ref": "#/components/schemas/ToDosListExtendedData"
+            "$ref": "#/components/schemas/ToDosGroupExtendedData"
           }
         ]
       },

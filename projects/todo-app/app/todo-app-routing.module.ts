@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { TodosListComponent } from './todos-list/todos-list.component';
+import { TodosGroupComponent } from './todos-groups/todos-group.component';
 
 const routes: Routes = [
     {
-        component: TodosListComponent,
+        component: TodosGroupComponent,
         path: '',
         pathMatch: 'full'
     }

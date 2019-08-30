@@ -10,18 +10,34 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ApiModule } from '@codegena/ng-api-service';
+
+import {
+    ApiModule,
+    API_ERROR_HANDLER
+} from '@codegena/ng-api-service';
 
 import { TodoAppRoutingModule } from './todo-app-routing.module';
 import { TodoAppComponent } from './todo-app.component';
-import { TodosListComponent } from './todos-list/todos-list.component';
+import { TodosGroupComponent } from './todos-groups/todos-group.component';
+import { NoInternetComponent } from './todos-groups/no-internet/no-internet.component';
 
-import { GetListsService, CreateListService } from './api/services';
-import { EditGroupComponent } from './todos-list/edit-group/edit-group.component';
+import {
+    DeleteGroupService,
+    GetGroupsService,
+    CreateGroupService,
+    UpdateGroupService
+} from './api/services';
+import { EditGroupComponent } from './todos-groups/edit-group/edit-group.component';
 import { JsonValidationService } from './lib/json-validation.service';
+import { ToasterService } from './lib/toaster.service';
+import { ApiErrorHandlerService } from './lib/api-error-handler.service';
+import { ConfirmationComponent } from './confirmation/confirmation.component';
+import { ConfirmationService } from './confirmation/confirmation.service';
 
 // Directives
 
@@ -36,12 +52,20 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
     declarations: [
         EditGroupComponent,
         ErrorValidationDirective,
+        NoInternetComponent,
         NullableAccessorDirective,
         TodoAppComponent,
-        TodosListComponent,
+        TodosGroupComponent,
+        ConfirmationComponent,
     ],
-    entryComponents: [EditGroupComponent],
-    exports: [TodoAppComponent],
+    entryComponents: [
+        EditGroupComponent,
+        ConfirmationComponent
+    ],
+    exports: [
+        TodoAppComponent,
+        ConfirmationComponent
+    ],
     imports: [
         ApiModule,
         RouterModule.forRoot([]),
@@ -56,14 +80,24 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
         DragDropModule,
         MatBottomSheetModule,
         MatIconModule,
+        MatListModule,
+        MatProgressSpinnerModule,
         MatSnackBarModule,
         OverlayModule
     ],
     providers: [
-        CreateListService,
-        GetListsService,
+        ConfirmationService,
+        CreateGroupService,
+        DeleteGroupService,
+        GetGroupsService,
         JsonValidationService,
-        ERROR_DIRECTIVE_FLASH_PROVIDER
+        UpdateGroupService,
+        ToasterService,
+        ERROR_DIRECTIVE_FLASH_PROVIDER,
+        {
+            provide: API_ERROR_HANDLER,
+            useClass: ApiErrorHandlerService
+        }
     ]
 })
 export class TodoAppModule { }

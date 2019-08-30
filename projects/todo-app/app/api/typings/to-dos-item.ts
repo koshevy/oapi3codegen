@@ -4,8 +4,8 @@ import { AttachmentMetaImage } from './attachment-meta-image';
 import { ToDosItemBlank } from './to-dos-item-blank';
 
 /**
- * ## Item in todo's list
- * Describe data structure of an item in list of tasks
+ * ## Item in todo's group
+ * Describe data structure of an item in group of tasks
  */
 export interface ToDosItem extends ToDosItemBlank {
   /**
@@ -21,14 +21,14 @@ export interface ToDosItem extends ToDosItemBlank {
    */
   readonly dateChanged: string;
   /**
-   * Position of a task in list. Allows to track changing of state of a concrete
+   * Position of a task in group. Allows to track changing of state of a concrete
    * item, including changing od position.
    */
   position: number;
   /**
-   * An unique id of list that item belongs to
+   * An unique id of group that item belongs to
    */
-  listUid: number;
+  groupUid: number;
   /**
    * Short brief of task to be done
    */
