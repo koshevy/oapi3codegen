@@ -1,5 +1,5 @@
-import { ConnectableObservable, Observable, Subject, Subscription } from 'rxjs';
-import { filter, finalize, map, publish } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { filter, finalize, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 
 export interface ToastMessageButton<T> {
@@ -22,7 +22,7 @@ export interface ToastCloseEvent<T> {
 @Injectable()
 export class ToasterService {
 
-    toasts: Array<ToastMessage<any>> = [];
+    toasts$: BehaviorSubject<Array<ToastMessage<any>>> = new BehaviorSubject([]);
     protected closings$: Subject<ToastCloseEvent<any>> = new Subject();
 
     constructor() {}
@@ -35,7 +35,10 @@ export class ToasterService {
      * @return
      */
     show<T = any>(toast: ToastMessage<T>): Observable<T> {
-        this.toasts.push(toast);
+        const toasts = this.toasts$.value;
+
+        toasts.push(toast);
+        this.toasts$.next(toasts)
 
         return this.closings$
             .pipe(
@@ -58,6 +61,7 @@ export class ToasterService {
     }
 
     private removeToast(toast: ToastMessage<any>) {
-        this.toasts = this.toasts.filter(_toast => _toast !== toast);
+        const toasts = this.toasts$.value;
+        this.toasts$.next(toasts.filter(_toast => _toast !== toast));
     }
 }

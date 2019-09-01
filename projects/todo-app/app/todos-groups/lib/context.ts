@@ -14,10 +14,10 @@ export const enum ActionType {
     EditGroup = '[Edit group]',
     EditGroupOptimistic = '[Edit group (optimistic)]',
     InitializeWithRouteParams = '[Initialize with route params]',
-    MarkAllAsDone = '[Mark group items as done]',
-    MarkAllAsDoneOptimistic = '[Mark group items as done (optimistic)]',
-    MarkAllAsUndone = '[Mark group items as undone]',
-    MarkAllAsUndoneOptimistic = '[Mark group items as undone (optimistic)]',
+    MarkAllAsDone = '[Mark all items as done]',
+    MarkAllAsDoneOptimistic = '[Mark all items as done (optimistic)]',
+    MarkAllAsUndone = '[Mark all items as undone]',
+    MarkAllAsUndoneOptimistic = '[Mark all items as undone (optimistic)]',
     MarkGroupAsDone = '[Mark group items as undone]',
     MarkGroupAsDoneOptimistic = '[Mark group items as done (optimistic)]',
     MarkGroupAsUndone = '[Mark group items as undone]',
@@ -50,21 +50,45 @@ export interface ToDosGroupTeaser extends ToDosGroup {
     removing?: boolean;
 }
 
+/**
+ *
+ */
 export interface ComponentTruth {
     isComplete: boolean | null;
     isCurrentGroup: number | null;
     createdGroup?: ToDosGroup;
+
+    /**
+     * Temporary `uid` that `createdGroup` had before
+     * it appropriated after success creation.
+     * Helps replace temporary optimistic group by group
+     * with new `uid`, obtained from server.
+     */
+    createdGroupPrevUid?: number;
+
     editedGroup?: ToDosGroup;
-    removedGroup?: ToDosGroup;
-    positionChanging?: { from: number; to: number };
+
+    /**
+     * List of groups of tasks.
+     * Initializes in middleware and uses as an argument
+     * for some type of actions.
+     */
+    groups?: ToDosGroupTeaser[];
+
     lastAction: ActionType;
+    positionChanging?: { from: number; to: number };
+
+    /**
+     * Parameter of removing action.
+     * Gets to be `ToDosGroup` at dispatching, and
+     * gets to transform after middleware processing.
+     */
+    removedGroup?: ToDosGroup | ToDosGroupTeaser;
 }
 
 export interface ComponentContext extends ComponentTruth {
     areAllComplete?: boolean;
     areAllIncomplete?: boolean;
-
-    groups?: ToDosGroupTeaser[];
 
     /**
      * Bottom panel should be disabled when some processes are going.

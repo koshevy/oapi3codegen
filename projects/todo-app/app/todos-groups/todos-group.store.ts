@@ -2,7 +2,6 @@ import * as _ from 'lodash';
 
 import {
     MonoTypeOperatorFunction,
-    OperatorFunction,
     Observable,
     forkJoin,
     of,
@@ -10,20 +9,20 @@ import {
 } from 'rxjs';
 import {
     catchError,
-    delay,
     filter,
     map,
+    mergeMap,
     mergeScan,
-    shareReplay,
-    takeUntil,
-    tap
+    scan,
+    share,
+    takeUntil
 } from 'rxjs/operators';
 
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 
-import { tapResponse, pickResponseBody } from '@codegena/ng-api-service';
+import { pickResponseBody } from '@codegena/ng-api-service';
 import {
     DeleteGroupResponse,
     ToDosGroup,
@@ -49,6 +48,7 @@ import {
     createTodoGroupTeasers,
     markAllAsDone,
     markGroupAsDone,
+    markGroupTeaserAs,
     removeGroupFromList,
     updateGroupsListItem
 } from './lib/helpers';
@@ -80,7 +80,12 @@ export class TodosGroupStore {
         truth$: Observable<ComponentTruth>
     ): Observable<ComponentContext> {
         return truth$.pipe(
-            mergeScan<Partial<ComponentContext>, ComponentContext>(
+            // Middleware
+            mergeMap<Partial<ComponentContext>, Observable<ComponentTruth>>(
+                this.middleWare.bind(this, truth$)
+            ),
+            // Reducer
+            scan<Partial<ComponentContext>, ComponentContext>(
                 this.reduceContext.bind(this, truth$),
                 {} as any as ComponentContext
             ),
@@ -88,20 +93,28 @@ export class TodosGroupStore {
             map<ComponentContext, ComponentContext>(
                 this.contextExtender.bind(this)
             ),
-            shareReplay(1)
+            share()
         );
     }
 
     // *** Private methods
 
-    private reduceContext(
+    /**
+     * Concurrency asynchronous middleware.
+     * Handles action types, do async actions, and send result to reducer.
+     *
+     * After middleware, reducer obtains ready data
+     * to apply for actual in moment context.
+     *
+     * @param truth$
+     * @param truth
+     * @return
+     */
+    private middleWare(
         truth$: Observable<ComponentTruth>,
-        context: ComponentContext,
         truth: ComponentTruth
-    ): Observable<Partial<ComponentContext>> {
-
+    ): Observable<ComponentTruth> {
         switch (truth.lastAction) {
-
             case ActionType.AddNewGroup:
 
                 return this.createGroupService.request(_.omit(
@@ -116,77 +129,23 @@ export class TodosGroupStore {
                     ),
                     pickResponseBody<ToDosGroup>(201, null, true),
                     map<ToDosGroup, ComponentContext>(group => ({
-                        ...context,
                         ...truth,
-                        createdGroup: group,    // rewrite by returned item with new id
-                        groups: updateGroupsListItem(
-                            context.groups,
+                        createdGroup: markGroupTeaserAs(
                             group,
-                            'clear',
-                            truth.createdGroup.uid
-                        )
+                            'clear'
+                        ),
+                        createdGroupPrevUid: truth.createdGroup.uid
                     })),
-                    catchError(error => {
-                        return of({
-                            ...context,
-                            ...truth,
-                            groups: updateGroupsListItem(
-                                context.groups,
-                                truth.createdGroup,
-                                'failed'
-                            )
-                        });
-                    })
+                    // fixme fix error handling
+                    catchError(error => of({
+                        ...truth,
+                        createdGroup: markGroupTeaserAs(
+                            truth.createdGroup,
+                            'failed'
+                        ),
+                        createdGroupPrevUid: null
+                    }))
                 );
-
-            case ActionType.AddNewGroupOptimistic:
-
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: updateGroupsListItem(
-                        context.groups,
-                        truth.createdGroup,
-                        'optimistic'
-                    )
-                });
-
-            case ActionType.CancelCreation:
-                // Cancel was not created
-                // todo do refactor with RemoveItem action
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: removeGroupFromList(
-                        context.groups,
-                        truth.removedGroup.uid
-                    )
-                });
-
-            case ActionType.CancelUpdating:
-                // Cancel created, by tried to change
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: updateGroupsListItem(
-                        context.groups,
-                        truth.removedGroup,
-                        'failed'
-                    )
-                });
-
-            case ActionType.ChangeGroupPosition:
-                // todo describe API for ChangeGroup and use
-                break;
-
-            case ActionType.ChangeGroupPositionOptimistic:
-                moveItemInArray(
-                    context.groups,
-                    truth.positionChanging.from,
-                    truth.positionChanging.to
-                );
-
-                return of({...context, ...truth});
 
             case ActionType.EditGroup:
 
@@ -204,40 +163,19 @@ export class TodosGroupStore {
                     ),
                     pickResponseBody<UpdateGroupResponse<200>>(200, null, true),
                     map<ToDosGroup, ComponentContext>(group => ({
-                        ...context,
                         ...truth,
-                        editedGroup: group,
-                        groups: updateGroupsListItem(
-                            context.groups,
-                            group,
-                            'clear',
-                            truth.editedGroup.uid
-                        )
+                        editedGroup: markGroupTeaserAs(group, 'clear')
                     })),
                     catchError(error => {
                         return of({
-                            ...context,
                             ...truth,
-                            groups: updateGroupsListItem(
-                                context.groups,
+                            editedGroup: markGroupTeaserAs(
                                 truth.editedGroup,
                                 'failed'
                             )
                         });
                     })
                 );
-
-            case ActionType.EditGroupOptimistic:
-
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: updateGroupsListItem(
-                        context.groups,
-                        truth.editedGroup,
-                        'optimistic'
-                    )
-                });
 
             case ActionType.InitializeWithRouteParams:
                 const getGroupsParams = _.pick(
@@ -256,19 +194,19 @@ export class TodosGroupStore {
                         groups: createTodoGroupTeasers(todosGroups),
                         noInternetError: false
                     })),
-                    this.catchConnectionLost(context)
+                    this.catchConnectionLost(truth)
                 );
 
             case ActionType.MarkAllAsDone:
             case ActionType.MarkAllAsUndone:
 
                 return forkJoin(_.map<ToDosGroupTeaser[], Observable<ToDosGroupTeaser>>(
-                    context.groups,
+                    truth.groups,
                     (group: ToDosGroupTeaser) =>
                         this.updateGroupService.request(
                             markGroupAsDone(
                                 group,
-                                (truth.lastAction === ActionType.MarkAllAsDoneOptimistic)
+                                (truth.lastAction === ActionType.MarkAllAsDone)
                                     ? 'done'
                                     : 'undone',
                                 true
@@ -289,86 +227,21 @@ export class TodosGroupStore {
                         )
                 )).pipe(map(groups =>
                     ({
-                        ...context,
                         ...truth,
                         groups
                     })
                 ));
 
-                break;
-
-            case ActionType.MarkAllAsDoneOptimistic:
-            case ActionType.MarkAllAsUndoneOptimistic:
-
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: markAllAsDone(
-                        context.groups,
-                        (truth.lastAction === ActionType.MarkAllAsDoneOptimistic)
-                            ? 'done'
-                            : 'undone',
-                        true
-                    )
-                });
-
-                break;
-
             case ActionType.MarkGroupAsDone:
-
-                return this.updateGroupService.request(
-                    markGroupAsDone(truth.editedGroup),
-                    {
-                        groupId: truth.editedGroup.uid
-                    }
-                ).pipe(
-                    // Take until it get canceled
-                    this.waitForActionOfGroup(
-                        truth$,
-                        ActionType.CancelUpdating,
-                        truth.editedGroup.uid
-                    ),
-                    pickResponseBody<UpdateGroupResponse<200>>(200, null, true),
-                    map<ToDosGroup, ComponentContext>(group => ({
-                        ...context,
-                        ...truth,
-                        editedGroup: group,
-                        groups: updateGroupsListItem(
-                            context.groups,
-                            group,
-                            'clear',
-                            truth.editedGroup.uid
-                        )
-                    })),
-                    catchError(error => {
-                        return of({
-                            ...context,
-                            ...truth,
-                            groups: updateGroupsListItem(
-                                context.groups,
-                                truth.editedGroup,
-                                'failed'
-                            )
-                        });
-                    })
-                );
-
-            case ActionType.MarkGroupAsDoneOptimistic:
-
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: updateGroupsListItem(
-                        context.groups,
-                        truth.editedGroup,
-                        'doneOptimistic'
-                    )
-                });
-
             case ActionType.MarkGroupAsUndone:
 
                 return this.updateGroupService.request(
-                    markGroupAsDone(truth.editedGroup, 'undone'),
+                    markGroupAsDone(
+                        truth.editedGroup,
+                        (truth.lastAction === ActionType.MarkGroupAsDone)
+                            ? 'done'
+                            : 'undone'
+                    ),
                     {
                         groupId: truth.editedGroup.uid
                     }
@@ -381,40 +254,22 @@ export class TodosGroupStore {
                     ),
                     pickResponseBody<UpdateGroupResponse<200>>(200, null, true),
                     map<ToDosGroup, ComponentContext>(group => ({
-                        ...context,
                         ...truth,
-                        editedGroup: group,
-                        groups: updateGroupsListItem(
-                            context.groups,
+                        editedGroup: markGroupTeaserAs(
                             group,
-                            'clear',
-                            truth.editedGroup.uid
+                            'clear'
                         )
                     })),
                     catchError(error => {
                         return of({
-                            ...context,
                             ...truth,
-                            groups: updateGroupsListItem(
-                                context.groups,
+                            editedGroup: markGroupTeaserAs(
                                 truth.editedGroup,
                                 'failed'
                             )
                         });
                     })
                 );
-
-            case ActionType.MarkGroupAsUndoneOptimistic:
-
-                return of({
-                    ...context,
-                    ...truth,
-                    groups: updateGroupsListItem(
-                        context.groups,
-                        truth.editedGroup,
-                        'undoneOptimistic'
-                    )
-                });
 
             case ActionType.RemoveItem:
 
@@ -425,26 +280,186 @@ export class TodosGroupStore {
                     }
                 ).pipe(
                     pickResponseBody<DeleteGroupResponse<202>>(202),
-                    map((result) => {
-                        // todo refactor and do usable helper function
-                        return {
-                            ...context,
+                    map<null, ComponentContext>(() => ({
+                        ...truth,
+                        removedGroup: truth.removedGroup
+                    })),
+                    catchError(error => {
+                        return of({
                             ...truth,
-                            groups: removeGroupFromList(
-                                context.groups,
-                                truth.removedGroup.uid
+                            removedGroup: markGroupTeaserAs(
+                                truth.removedGroup,
+                                'failed'
                             )
-                        };
-                    }),
-                    catchError(() => of({
-                        ...context,
-                        ...truth
-                    }))
+                        });
+                    })
                 );
+
+            default:
+                return of(truth);
+        }
+    }
+
+    private reduceContext(
+        truth$: Observable<ComponentTruth>,
+        context: ComponentContext,
+        truth: ComponentTruth
+    ): ComponentContext {
+
+        switch (truth.lastAction) {
+
+            case ActionType.AddNewGroup:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.createdGroup,
+                        null,
+                        truth.createdGroupPrevUid
+                    )
+                };
+
+            case ActionType.AddNewGroupOptimistic:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.createdGroup,
+                        'optimistic'
+                    )
+                };
+
+            case ActionType.CancelCreation:
+                // Cancel was not created
+                return {
+                    ...context,
+                    ...truth,
+                    groups: removeGroupFromList(
+                        context.groups,
+                        truth.removedGroup.uid
+                    )
+                };
+
+            case ActionType.CancelUpdating:
+                // Cancel created, by tried to change
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.removedGroup,
+                        'failed'
+                    )
+                };
+
+            case ActionType.ChangeGroupPosition:
+                // todo describe API for ChangeGroup and use
+                break;
+
+            case ActionType.ChangeGroupPositionOptimistic:
+                moveItemInArray(
+                    truth.groups,
+                    truth.positionChanging.from,
+                    truth.positionChanging.to
+                );
+
+                return {...context, ...truth};
+
+            case ActionType.EditGroup:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.editedGroup
+                    )
+                };
+
+            case ActionType.EditGroupOptimistic:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.editedGroup,
+                        'optimistic'
+                    )
+                };
+
+            case ActionType.InitializeWithRouteParams:
+                return {
+                    ...context,
+                    ...truth
+                };
+
+            case ActionType.MarkAllAsDone:
+            case ActionType.MarkAllAsUndone:
+
+                return {
+                    ...context,
+                    ...truth
+                };
+
+            case ActionType.MarkAllAsDoneOptimistic:
+            case ActionType.MarkAllAsUndoneOptimistic:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: markAllAsDone(
+                        context.groups,
+                        (truth.lastAction === ActionType.MarkAllAsDoneOptimistic)
+                            ? 'done'
+                            : 'undone',
+                        true
+                    )
+                };
+
+            case ActionType.MarkGroupAsDone:
+            case ActionType.MarkGroupAsUndone:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.editedGroup
+                    )
+                };
+
+            case ActionType.MarkGroupAsDoneOptimistic:
+            case ActionType.MarkGroupAsUndoneOptimistic:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: updateGroupsListItem(
+                        context.groups,
+                        truth.editedGroup
+                    )
+                };
+
+            case ActionType.RemoveItem:
+
+                return {
+                    ...context,
+                    ...truth,
+                    groups: (truth.removedGroup as ToDosGroupTeaser).failed
+                        // deleting was failed
+                        ? updateGroupsListItem(context.groups, truth.removedGroup)
+                        // successfully deleted
+                        : removeGroupFromList(context.groups, truth.removedGroup.uid)
+                };
 
             case ActionType.RemoveItemOptimistic:
 
-                return of({
+                return {
                     ...context,
                     ...truth,
                     groups: updateGroupsListItem(
@@ -452,9 +467,7 @@ export class TodosGroupStore {
                         truth.removedGroup,
                         'removing'
                     )
-                });
-
-                break;
+                };
 
             default: throw new Error('Unknown action type!');
         }
@@ -499,16 +512,17 @@ export class TodosGroupStore {
         );
     }
 
-    private catchConnectionLost(context: ComponentContext) {
-        return catchError((error: HttpErrorResponse) => {
-            if (error.status === 0) {
-                return of({
-                    ...context,
-                    noInternetError: true
-                });
-            } else {
-                return throwError(error);
-            }
-        });
+    private catchConnectionLost(truth: ComponentTruth) {
+        return catchError<ComponentTruth, Observable<ComponentTruth>>(
+            (error: HttpErrorResponse) => {
+                if (error.status === 0) {
+                    return of({
+                        ...truth,
+                        noInternetError: true
+                    });
+                } else {
+                    return throwError(error);
+                }
+            });
     }
 }

@@ -1,7 +1,7 @@
-<div class="ngb-toasts">
+<div class="ngb-toasts" *ngIf="toaster?.toasts$ | async as toasts">
   <ngb-toast
       class="bg-warning"
-      *ngFor="let toast of toaster.toasts"
+      *ngFor="let toast of toasts"
       [header]="toast.title"
       [autohide]="false"
       (hide)="toaster.close(toast, null)"

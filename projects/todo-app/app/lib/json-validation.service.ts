@@ -64,6 +64,8 @@ export class JsonValidationService {
 
     protected groupDataFlowPipe: Observable<null | {[path: string]: ValidationErrors}>;
 
+    protected addKeywordInMessage: boolean = false;
+
     /**
      * По-умолчанию работа приостановлена, чтобы при инициализации
      * групп не было прогонов вхолостую.
@@ -71,7 +73,7 @@ export class JsonValidationService {
      */
     protected isSuspended = true;
 
-    constructor(protected addKeywordInMessage: boolean = false) { }
+    constructor() { }
 
     /**
      * Назначение JSON-Schema для этого сервиса

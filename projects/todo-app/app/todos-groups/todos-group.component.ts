@@ -1,29 +1,16 @@
 import * as _ from 'lodash';
 import {
     merge,
-    of,
-    throwError,
-    BehaviorSubject,
-    MonoTypeOperatorFunction,
     Observable,
     Subject
 } from 'rxjs';
 import {
-    catchError,
     distinctUntilChanged,
-    delay,
     filter,
     map,
-    mergeMap,
-    mergeScan,
-    onErrorResumeNext,
-    publishReplay,
     share,
-    shareReplay,
     scan,
-    startWith,
-    takeUntil,
-    tap
+    timeout
 } from 'rxjs/operators';
 
 import {
@@ -37,10 +24,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Overlay } from '@angular/cdk/overlay';
 
-import { tapResponse, pickResponseBody } from '@codegena/ng-api-service';
-
 import { ToDosGroup } from '../api/typings';
-import { GetGroupsService, CreateGroupService } from '../api/services';
 import { createUniqValidator } from '../lib/helpers';
 
 import { EditGroupComponent, EditGroupConfig } from './edit-group/edit-group.component';
@@ -237,6 +221,7 @@ export class TodosGroupComponent implements OnInit {
 
     groupDropped(event: CdkDragDrop<ToDosGroupTeaser[]>) {
         this.manualActions$.next({
+            groups: this.syncContext.groups,
             lastAction: ActionType.ChangeGroupPositionOptimistic,
             positionChanging: {
                 from: event.previousIndex,
@@ -251,9 +236,11 @@ export class TodosGroupComponent implements OnInit {
         }
 
         this.manualActions$.next({
+            groups: this.syncContext.groups,
             lastAction: ActionType.MarkAllAsDoneOptimistic
         });
         this.manualActions$.next({
+            groups: this.syncContext.groups,
             lastAction: ActionType.MarkAllAsDone
         });
     }
@@ -264,9 +251,11 @@ export class TodosGroupComponent implements OnInit {
         }
 
         this.manualActions$.next({
+            groups: this.syncContext.groups,
             lastAction: ActionType.MarkAllAsUndoneOptimistic
         });
         this.manualActions$.next({
+            groups: this.syncContext.groups,
             lastAction: ActionType.MarkAllAsUndone
         });
     }
@@ -307,7 +296,11 @@ export class TodosGroupComponent implements OnInit {
                     value: false,
                 }
             ]
-        )   .pipe(filter(result => !!result))
+        )   .pipe(
+                filter(result => !!result),
+                // Hide dialog after 10 seconds of idle if no answer
+                timeout(10000),
+            )
             .subscribe((result: boolean) => {
                 this.manualActions$.next({
                     lastAction: ActionType.RemoveItemOptimistic,

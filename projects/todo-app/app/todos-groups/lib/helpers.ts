@@ -37,7 +37,7 @@ export function createTodoGroupTeasers(srcGroups: ToDosGroup[]): ToDosGroupTease
  * @param type
  * @param clearTeaser
  * Should it clear al properties from {@link ToDosGroupTeaser},
- * not specified for {@link ToDosGroup}?
+ * not specified for {@link ToDosGroup}
  *
  * @return
  */
@@ -45,7 +45,7 @@ export function markGroupAsDone(
     group: ToDosGroup | ToDosGroupTeaser,
     type: 'done' | 'undone' = 'done',
     clearTeaser: boolean = true
-): ToDosGroup {
+): ToDosGroup | ToDosGroupTeaser {
     group.items = _.map(
         group.items,
         (item: ToDosItem) => {
@@ -55,10 +55,9 @@ export function markGroupAsDone(
         }
     );
 
-    return _.omit(
-        group,
-        clearTeaser ? ['countOfDone', 'totalCount'] : []
-    ) as ToDosGroup;
+    return clearTeaser
+        ? _.omit(group, ['countOfDone', 'totalCount']) as ToDosGroup
+        : group as ToDosGroupTeaser;
 }
 
 /**
@@ -109,7 +108,8 @@ export function updateGroupsListItem(
     groupUid?: number
 ): ToDosGroupTeaser[] {
 
-    let groupTeaser = createTodoGroupTeaser(groupData);
+    const groupTeaser = markGroupTeaserAs(groupData, markAs);
+
     groupUid = groupUid ? groupUid : groupData.uid;
 
     // It may be an already added group or new
@@ -118,6 +118,25 @@ export function updateGroupsListItem(
         item => item.uid === groupUid
     );
 
+    // add or update
+    if (alreadyAddedIndex !== -1) {
+        groupsList[alreadyAddedIndex] = groupTeaser;
+    } else {
+        groupsList.push(groupTeaser);
+    }
+
+    // return copy of an array
+    return [...groupsList];
+}
+
+export function markGroupTeaserAs(
+    group: ToDosGroup | ToDosGroupTeaser,
+    markAs: | 'optimistic' | 'removing' | 'failed'
+            | 'clear' | 'doneOptimistic' | 'undoneOptimistic'
+            | null = null,
+): ToDosGroupTeaser {
+    let groupTeaser = createTodoGroupTeaser(group);
+
     switch (markAs) {
         case 'clear':
             groupTeaser.failed = false;
@@ -125,9 +144,11 @@ export function updateGroupsListItem(
             groupTeaser.removing = false;
             break;
         case 'doneOptimistic':
-            groupTeaser = createTodoGroupTeaser(
-                markGroupAsDone(groupTeaser, 'done')
-            );
+            groupTeaser = markGroupAsDone(
+                groupTeaser,
+                'done',
+                false
+            ) as ToDosGroupTeaser;
 
             groupTeaser.failed = false;
             groupTeaser.optimistic = true;
@@ -149,9 +170,11 @@ export function updateGroupsListItem(
             groupTeaser.removing = true;
             break;
         case 'undoneOptimistic':
-            groupTeaser = createTodoGroupTeaser(
-                markGroupAsDone(groupTeaser, 'undone')
-            );
+            groupTeaser = markGroupAsDone(
+                groupTeaser,
+                'undone',
+                false
+            ) as ToDosGroupTeaser;
 
             groupTeaser.failed = false;
             groupTeaser.optimistic = true;
@@ -161,15 +184,7 @@ export function updateGroupsListItem(
         default: throw new Error(`Unknown marking type "${markAs}" for updated item!`);
     }
 
-    // add or update
-    if (alreadyAddedIndex !== -1) {
-        groupsList[alreadyAddedIndex] = groupTeaser;
-    } else {
-        groupsList.push(groupTeaser);
-    }
-
-    // return copy of an array
-    return [...groupsList];
+    return groupTeaser;
 }
 
 export function markAllAsDone(
