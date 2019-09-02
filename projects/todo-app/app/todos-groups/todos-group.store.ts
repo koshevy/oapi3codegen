@@ -86,8 +86,8 @@ export class TodosGroupStore {
             ),
             // Reducer
             scan<Partial<ComponentContext>, ComponentContext>(
-                this.reduceContext.bind(this, truth$),
-                {} as any as ComponentContext
+                this.reduceContext,
+                {} as any
             ),
             // Maps context to expand with calculated options
             map<ComponentContext, ComponentContext>(
@@ -301,7 +301,6 @@ export class TodosGroupStore {
     }
 
     private reduceContext(
-        truth$: Observable<ComponentTruth>,
         context: ComponentContext,
         truth: ComponentTruth
     ): ComponentContext {
@@ -441,7 +440,10 @@ export class TodosGroupStore {
                     ...truth,
                     groups: updateGroupsListItem(
                         context.groups,
-                        truth.editedGroup
+                        truth.editedGroup,
+                        (truth.lastAction === ActionType.MarkGroupAsDoneOptimistic)
+                            ? 'doneOptimistic'
+                            : 'undoneOptimistic'
                     )
                 };
 
