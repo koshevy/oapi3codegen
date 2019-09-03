@@ -12,7 +12,6 @@ import {
     filter,
     map,
     mergeMap,
-    mergeScan,
     scan,
     share,
     takeUntil
@@ -114,7 +113,7 @@ export class TodosGroupStore {
         truth$: Observable<ComponentTruth>,
         truth: ComponentTruth
     ): Observable<ComponentTruth> {
-        switch (truth.lastAction) {
+        switch (truth.$$lastAction) {
             case ActionType.AddNewGroup:
 
                 return this.createGroupService.request(_.omit(
@@ -178,6 +177,7 @@ export class TodosGroupStore {
                 );
 
             case ActionType.InitializeWithRouteParams:
+
                 const getGroupsParams = _.pick(
                     truth,
                     [
@@ -194,7 +194,7 @@ export class TodosGroupStore {
                         groups: createTodoGroupTeasers(todosGroups),
                         noInternetError: false
                     })),
-                    this.catchConnectionLost(truth)
+                    this.catchConnectionLostAtInit(truth)
                 );
 
             case ActionType.MarkAllAsDone:
@@ -206,7 +206,7 @@ export class TodosGroupStore {
                         this.updateGroupService.request(
                             markGroupAsDone(
                                 group,
-                                (truth.lastAction === ActionType.MarkAllAsDone)
+                                (truth.$$lastAction === ActionType.MarkAllAsDone)
                                     ? 'done'
                                     : 'undone',
                                 true
@@ -238,7 +238,7 @@ export class TodosGroupStore {
                 return this.updateGroupService.request(
                     markGroupAsDone(
                         truth.editedGroup,
-                        (truth.lastAction === ActionType.MarkGroupAsDone)
+                        (truth.$$lastAction === ActionType.MarkGroupAsDone)
                             ? 'done'
                             : 'undone'
                     ),
@@ -305,7 +305,7 @@ export class TodosGroupStore {
         truth: ComponentTruth
     ): ComponentContext {
 
-        switch (truth.lastAction) {
+        switch (truth.$$lastAction) {
 
             case ActionType.AddNewGroup:
 
@@ -392,11 +392,6 @@ export class TodosGroupStore {
                 };
 
             case ActionType.InitializeWithRouteParams:
-                return {
-                    ...context,
-                    ...truth
-                };
-
             case ActionType.MarkAllAsDone:
             case ActionType.MarkAllAsUndone:
 
@@ -413,7 +408,7 @@ export class TodosGroupStore {
                     ...truth,
                     groups: markAllAsDone(
                         context.groups,
-                        (truth.lastAction === ActionType.MarkAllAsDoneOptimistic)
+                        (truth.$$lastAction === ActionType.MarkAllAsDoneOptimistic)
                             ? 'done'
                             : 'undone',
                         true
@@ -441,7 +436,7 @@ export class TodosGroupStore {
                     groups: updateGroupsListItem(
                         context.groups,
                         truth.editedGroup,
-                        (truth.lastAction === ActionType.MarkGroupAsDoneOptimistic)
+                        (truth.$$lastAction === ActionType.MarkGroupAsDoneOptimistic)
                             ? 'doneOptimistic'
                             : 'undoneOptimistic'
                     )
@@ -507,14 +502,14 @@ export class TodosGroupStore {
             truth$.pipe(
                 // Listens for cancel action
                 filter((localTruth) =>
-                    (localTruth.lastAction === actionType)
+                    (localTruth.$$lastAction === actionType)
                     && (localTruth.removedGroup.uid === uid)
                 )
             )
         );
     }
 
-    private catchConnectionLost(truth: ComponentTruth) {
+    private catchConnectionLostAtInit(truth: ComponentTruth) {
         return catchError<ComponentTruth, Observable<ComponentTruth>>(
             (error: HttpErrorResponse) => {
                 if (error.status === 0) {

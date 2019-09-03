@@ -2,7 +2,7 @@
 
   <ng-container *ngIf="!context.noInternetError; else noInternet">
 
-    <h1 class="display-2">Your group of tasks</h1>
+    <h1 class="display-4">Task groups</h1>
 
     <p class="lead">
       Summary {{context.summaryTaskDoneCount}}
@@ -11,7 +11,7 @@
     </p>
 
     <p>
-      <button type="button" class="btn btn-info btn-lg btn-block" (mouseup)="createGroup()">
+      <button type="button" class="btn btn-info btn-lg btn-block" (click)="createGroup()">
         <mat-icon>add_circle</mat-icon>
         Add group
       </button>
@@ -40,29 +40,29 @@
           </a>
           <div ngbDropdownMenu aria-labelledby="Actions menu">
             <ng-container *ngIf="!group.optimistic && !group.failed; else optimisticItemMenu">
-              <button ngbDropdownItem (mouseup)="markGroupAsDone(group)">
+              <button ngbDropdownItem (click)="markGroupAsDone(group)">
                 <mat-icon>done_all</mat-icon>
                 Mark all as done
               </button>
-              <button ngbDropdownItem (mouseup)="markGroupAsUndone(group)">
+              <button ngbDropdownItem (click)="markGroupAsUndone(group)">
                 <mat-icon>check_box_outline_blank</mat-icon>
                 Mark all as undone
               </button>
-              <button ngbDropdownItem (mouseup)="editGroup(group)">
+              <button ngbDropdownItem (click)="editGroup(group)">
                 <mat-icon>edit</mat-icon>
                 Edit
               </button>
-              <button ngbDropdownItem (mouseup)="removeGroup(group)">
+              <button ngbDropdownItem (click)="removeGroup(group)">
                 <mat-icon>delete_outline</mat-icon>
                 Delete
               </button>
             </ng-container>
             <ng-template #optimisticItemMenu>
-              <button ngbDropdownItem *ngIf="group.failed" (mouseup)="tryAgainUpdate(group)">
+              <button ngbDropdownItem *ngIf="group.failed" (click)="tryAgainUpdate(group)">
                 <mat-icon>replay</mat-icon>
                 Try again
               </button>
-              <button ngbDropdownItem (mouseup)="removeIncompleteGroup(group)">
+              <button ngbDropdownItem (click)="removeIncompleteGroup(group)">
                 <mat-icon>not_interested</mat-icon>
                 Cancel operation
               </button>
@@ -75,6 +75,9 @@
           </span>
           {{group.description}}
         </p>
+        <span class="grag-handle" cdkDragHandle>
+          <mat-icon>drag_indicator</mat-icon>
+        </span>
       </li>
     </ul>
 
@@ -86,7 +89,7 @@
           <a href="javascript:;"
              class="text-dark text-decoration-none"
              [attr.disabled]="context.areAllComplete"
-             (mouseup)="markAllAsDone();">
+             (click)="markAllAsDone();">
             <mat-icon>done_all</mat-icon>
             Complete all
           </a>
@@ -96,7 +99,7 @@
           <a href="javascript:;"
              class="text-dark text-decoration-none"
              [attr.disabled]="context.areAllIncomplete"
-             (mouseup)="markAllAsUndone();">
+             (click)="markAllAsUndone();">
             <mat-icon>check_box_outline_blank</mat-icon>
             Reset all
           </a>

@@ -32,7 +32,9 @@ import {
     CreateGroupService,
     UpdateGroupService
 } from './api/services';
+
 import { EditGroupComponent } from './todos-groups/edit-group/edit-group.component';
+import { TodoTasksComponent } from './todo-tasks/todo-tasks.component';
 import { JsonValidationService } from './lib/json-validation.service';
 import { ToasterService } from './lib/toaster.service';
 import { ApiErrorHandlerService } from './lib/api-error-handler.service';
@@ -57,6 +59,7 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
         TodoAppComponent,
         TodosGroupComponent,
         ConfirmationComponent,
+        TodoTasksComponent,
     ],
     entryComponents: [
         EditGroupComponent,

@@ -111,9 +111,9 @@ export class TodosGroupComponent implements OnInit {
             distinctUntilChanged(_.isEqual),
             map<any, ComponentTruth>(({isComplete, isCurrentGroup}) => {
                 return {
+                    $$lastAction: ActionType.InitializeWithRouteParams,
                     isComplete: isComplete || null,
-                    isCurrentGroup: isCurrentGroup || null,
-                    lastAction: ActionType.InitializeWithRouteParams
+                    isCurrentGroup: isCurrentGroup || null
                 };
             })
         );
@@ -124,7 +124,7 @@ export class TodosGroupComponent implements OnInit {
             // Syncing context
             this.syncContext = context;
 
-            switch (context.lastAction) {
+            switch (context.$$lastAction) {
                 case ActionType.AddNewGroupOptimistic:
                     this.matSnackBar.open('Group are saving...', null, {
                         duration: 1000,
@@ -182,13 +182,13 @@ export class TodosGroupComponent implements OnInit {
             .subscribe((group: ToDosGroup) => {
                 // Optimistic adding of item (before sending to server)
                 this.manualActions$.next({
-                    createdGroup: group,
-                    lastAction: ActionType.AddNewGroupOptimistic
+                    $$lastAction: ActionType.AddNewGroupOptimistic,
+                    createdGroup: group
                 });
                 // Sending to server
                 this.manualActions$.next({
-                    createdGroup: group,
-                    lastAction: ActionType.AddNewGroup
+                    $$lastAction: ActionType.AddNewGroup,
+                    createdGroup: group
                 });
 
                 subscribtion.unsubscribe();
@@ -207,12 +207,12 @@ export class TodosGroupComponent implements OnInit {
         const subscribtion = this.openEditGroupPopup(popupConfig)
             .subscribe((todoGroup: ToDosGroup) => {
                 this.manualActions$.next({
+                    $$lastAction: ActionType.EditGroupOptimistic,
                     editedGroup: todoGroup,
-                    lastAction: ActionType.EditGroupOptimistic,
                 });
                 this.manualActions$.next({
+                    $$lastAction: ActionType.EditGroup,
                     editedGroup: todoGroup,
-                    lastAction: ActionType.EditGroup,
                 });
 
                 subscribtion.unsubscribe();
@@ -221,8 +221,8 @@ export class TodosGroupComponent implements OnInit {
 
     groupDropped(event: CdkDragDrop<ToDosGroupTeaser[]>) {
         this.manualActions$.next({
+            $$lastAction: ActionType.ChangeGroupPositionOptimistic,
             groups: this.syncContext.groups,
-            lastAction: ActionType.ChangeGroupPositionOptimistic,
             positionChanging: {
                 from: event.previousIndex,
                 to: event.currentIndex
@@ -236,12 +236,12 @@ export class TodosGroupComponent implements OnInit {
         }
 
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkAllAsDoneOptimistic,
             groups: this.syncContext.groups,
-            lastAction: ActionType.MarkAllAsDoneOptimistic
         });
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkAllAsDone,
             groups: this.syncContext.groups,
-            lastAction: ActionType.MarkAllAsDone
         });
     }
 
@@ -251,34 +251,34 @@ export class TodosGroupComponent implements OnInit {
         }
 
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkAllAsUndoneOptimistic,
             groups: this.syncContext.groups,
-            lastAction: ActionType.MarkAllAsUndoneOptimistic
         });
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkAllAsUndone,
             groups: this.syncContext.groups,
-            lastAction: ActionType.MarkAllAsUndone
         });
     }
 
     markGroupAsDone(group: ToDosGroup) {
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkGroupAsDoneOptimistic,
             editedGroup: group,
-            lastAction: ActionType.MarkGroupAsDoneOptimistic
         });
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkGroupAsDone,
             editedGroup: group,
-            lastAction: ActionType.MarkGroupAsDone
         });
     }
 
     markGroupAsUndone(group: ToDosGroup) {
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkGroupAsUndoneOptimistic,
             editedGroup: group,
-            lastAction: ActionType.MarkGroupAsUndoneOptimistic
         });
         this.manualActions$.next({
+            $$lastAction: ActionType.MarkGroupAsUndone,
             editedGroup: group,
-            lastAction: ActionType.MarkGroupAsUndone
         });
     }
 
@@ -303,11 +303,11 @@ export class TodosGroupComponent implements OnInit {
             )
             .subscribe((result: boolean) => {
                 this.manualActions$.next({
-                    lastAction: ActionType.RemoveItemOptimistic,
+                    $$lastAction: ActionType.RemoveItemOptimistic,
                     removedGroup: group
                 });
                 this.manualActions$.next({
-                    lastAction: ActionType.RemoveItem,
+                    $$lastAction: ActionType.RemoveItem,
                     removedGroup: group
                 });
             });
@@ -319,19 +319,19 @@ export class TodosGroupComponent implements OnInit {
             : ActionType.CancelUpdating;
 
         this.manualActions$.next({
-            lastAction: actionType,
+            $$lastAction: actionType,
             removedGroup: group
         });
     }
 
     tryAgainUpdate(group: ToDosGroup) {
         this.manualActions$.next({
+            $$lastAction: ActionType.AddNewGroupOptimistic,
             createdGroup: group,
-            lastAction: ActionType.AddNewGroupOptimistic
         });
         this.manualActions$.next({
+            $$lastAction: ActionType.AddNewGroup,
             createdGroup: group,
-            lastAction: ActionType.AddNewGroup
         });
     }
 

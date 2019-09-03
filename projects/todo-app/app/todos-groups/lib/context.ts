@@ -50,10 +50,15 @@ export interface ToDosGroupTeaser extends ToDosGroup {
     removing?: boolean;
 }
 
-/**
- *
- */
 export interface ComponentTruth {
+
+    /**
+     * TYPE OF ACTION:
+     * flat property in context intended to do identification of action.
+     *
+     */
+    $$lastAction: ActionType;
+
     isComplete: boolean | null;
     isCurrentGroup: number | null;
     createdGroup?: ToDosGroup;
@@ -75,7 +80,6 @@ export interface ComponentTruth {
      */
     groups?: ToDosGroupTeaser[];
 
-    lastAction: ActionType;
     positionChanging?: { from: number; to: number };
 
     /**
@@ -86,10 +90,19 @@ export interface ComponentTruth {
     removedGroup?: ToDosGroup | ToDosGroupTeaser;
 }
 
-export interface ComponentContext extends ComponentTruth {
+/**
+ * Properties have to be calculated automatically after
+ * each action-inducted reducing.
+ */
+export interface ComponentCalculatedData {
     areAllComplete?: boolean;
     areAllIncomplete?: boolean;
+    summaryTaskCount?: number;
+    summaryTaskDoneCount?: number;
+    summaryGroupCount?: number;
+}
 
+export interface ComponentContext extends ComponentTruth, ComponentCalculatedData {
     /**
      * Bottom panel should be disabled when some processes are going.
      */
@@ -99,8 +112,4 @@ export interface ComponentContext extends ComponentTruth {
      * Mark component as not initialized, because no internet
      */
     noInternetError?: boolean;
-
-    summaryTaskCount?: number;
-    summaryTaskDoneCount?: number;
-    summaryGroupCount?: number;
 }

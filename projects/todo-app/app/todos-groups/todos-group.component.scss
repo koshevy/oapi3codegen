@@ -9,8 +9,6 @@
 }
 
 .list-group-item {
-  cursor: grab;
-
   &.optimistic {
     .badge {
       @include gradient-striped(rgba($white, .25));
@@ -47,6 +45,14 @@
   }
 }
 
+.grag-handle{
+  position: absolute;
+  right: 6px;
+  top: 50px;
+  transform: translateY(-25%);
+  cursor: grab;
+}
+
 .cdk-drag-preview {
   cursor: grabbing;
   box-sizing: border-box;
@@ -59,6 +65,10 @@
 .cdk-drag-placeholder {
   cursor: grabbing;
   opacity: 0;
+
+  .grag-handle {
+    cursor: grabbing;
+  }
 }
 
 .cdk-drag-animating {
@@ -71,7 +81,6 @@
 }
 
 .example-list.cdk-drop-list-dragging .example-box:not(.cdk-drag-placeholder) {
-  cursor: grabbing;
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
