@@ -14,13 +14,19 @@
     "rxjs": "> 5.0.0"
   },
   "scripts": {
-    "update:typings": "rm -rf ./app/api/* && node ./scripts/update-typings.js --srcPath ./specs/todo-app-spec.json --destPath ./app/api --separatedFiles true && cd ./app/api && git add *",
-    "docs:serve": "redoc-cli serve ./specs/todo-app-spec.json --watch"
+    "update:typings:backend": "rm -rf ./backend/src/schema/* && node ./scripts/update-typings.js --srcPath ./specs/todo-app-spec.json --destPath ./backend/src/schema --separatedFiles true && cd ./backend/src/schema && git add * && cd ../..",
+    "update:typings:frontend": "rm -rf ./app/api/* && node ./scripts/update-typings.js --srcPath ./specs/todo-app-spec.json --destPath ./app/api --separatedFiles true && cd ./app/api && git add * && cd ../..",
+    "update:typings": "npm run update:typings:backend && npm run update:typings:frontend",
+    "docs:serve": "redoc-cli serve ./specs/todo-app-spec.json --watch",
+    "docs:tryout": "cd ./specs && ./run-swagger-ui.sh"
   },
   "dependencies": {
     "@codegena/oapi3ts-cli": "0.0.2",
     "@ng-bootstrap/ng-bootstrap": "^5.1.0",
     "@types/lodash": "^4.14.136",
-    "bootstrap": "^4.3.1"
+    "angular-froala-wysiwyg": "^3.0.5",
+    "bootstrap": "^4.3.1",
+    "nanoid": "^2.1.6",
+    "swagger-ui": "^3.24.2"
   }
 }

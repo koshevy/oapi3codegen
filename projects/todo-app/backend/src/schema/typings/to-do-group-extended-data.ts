@@ -1,13 +1,15 @@
 /* tslint:disable */
+import { ToDoTask } from './to-do-task';
+
 /**
  * ## Extended data of group
  * Extended data has to be obtained after first save
  */
-export interface ToDosGroupExtendedData {
+export interface ToDoGroupExtendedData {
   /**
-   * An unique id of task
+   * ## UID of element
    */
-  uid: number;
+  uid: string;
   /**
    * Date/time (ISO) when task was created
    */
@@ -16,4 +18,5 @@ export interface ToDosGroupExtendedData {
    * Date/time (ISO) when task was changed last time
    */
   dateChanged: string;
+  items: Array<ToDoTask>;
 }

@@ -215,12 +215,10 @@ export const schema = {
           }
         }
       },
-      "ToDosItemBlank": {
+      "ToDoTaskBlank": {
         "properties": {
           "groupUid": {
-            "type": "number",
-            "min": 1,
-            "max": 2147483647
+            "$ref": "#/components/schemas/Uid"
           },
           "title": {
             "type": "string",
@@ -249,22 +247,19 @@ export const schema = {
         },
         "required": [
           "isDone",
-          "groupUid",
           "title"
         ]
       },
-      "ToDosItem": {
+      "ToDoTask": {
         "allOf": [
           {
-            "$ref": "#/components/schemas/ToDosItemBlank"
+            "$ref": "#/components/schemas/ToDoTaskBlank"
           },
           {
             "type": "object",
             "properties": {
               "uid": {
-                "type": "number",
-                "min": 1,
-                "max": 2147483647,
+                "$ref": "#/components/schemas/Uid",
                 "readOnly": true
               },
               "dateCreated": {
@@ -286,13 +281,14 @@ export const schema = {
             "required": [
               "dateChanged",
               "dateCreated",
+              "items",
               "position",
               "uid"
             ]
           }
         ]
       },
-      "ToDosGroupBlank": {
+      "ToDoGroupBlank": {
         "type": "object",
         "properties": {
           "title": {
@@ -308,7 +304,7 @@ export const schema = {
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ToDosItemBlank"
+              "$ref": "#/components/schemas/ToDoTaskBlank"
             }
           },
           "isComplete": {
@@ -316,17 +312,14 @@ export const schema = {
           }
         },
         "required": [
-          "items",
           "title"
         ]
       },
-      "ToDosGroupExtendedData": {
+      "ToDoGroupExtendedData": {
         "type": "object",
         "properties": {
           "uid": {
-            "type": "number",
-            "min": 1,
-            "max": 2147483647
+            "$ref": "#/components/schemas/Uid"
           },
           "dateCreated": {
             "type": "string",
@@ -335,23 +328,37 @@ export const schema = {
           "dateChanged": {
             "type": "string",
             "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToDoTask"
+            }
           }
         },
         "required": [
           "dateChanged",
           "dateCreated",
-          "uid"
+          "uid",
+          "items"
         ]
       },
-      "ToDosGroup": {
+      "ToDoGroup": {
         "allOf": [
           {
-            "$ref": "#/components/schemas/ToDosGroupBlank"
+            "$ref": "#/components/schemas/ToDoGroupBlank"
           },
           {
-            "$ref": "#/components/schemas/ToDosGroupExtendedData"
+            "$ref": "#/components/schemas/ToDoGroupExtendedData"
           }
         ]
+      },
+      "Uid": {
+        "type": "string",
+        "minLength": "16",
+        "maxLength": "22",
+        "pattern": "^[\\w\\-]+$",
+        "readOnly": true
       },
       "Url": {
         "type": "string",
@@ -359,6 +366,6 @@ export const schema = {
       }
     }
   },
-  "$id": "schema.3ebc53a18cb5a06777c416"
+  "$id": "schema.bab11a745173add3a0f9df"
 };
 

@@ -5,6 +5,12 @@
     "title": "TODO App Demo",
     "description": "This is a complete API description of application for managing TODO-reminders. There are all functions of typical TODO notes manager. This description is a part of `@codegena` project."
   },
+  "servers": [
+    {
+      "description": "Local simple",
+      "url": "http://localhost:3000"
+    }
+  ],
   "paths": {
     "/group": {
       "get": {
@@ -27,7 +33,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ToDosGroup"
+                    "$ref": "#/components/schemas/ToDoGroup"
                   }
                 }
               }
@@ -51,7 +57,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosGroupBlank"
+                "$ref": "#/components/schemas/ToDoGroupBlank"
               }
             }
           }
@@ -85,7 +91,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToDosGroup"
+                  "$ref": "#/components/schemas/ToDoGroup"
                 }
               }
             }
@@ -119,14 +125,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosGroupBlank"
+                "$ref": "#/components/schemas/ToDoGroupBlank"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/todoItemSaved"
+            "$ref": "#/components/responses/todoGroupSaved"
           },
           "204": {
             "description": "No changes. Should no have a response!"
@@ -163,7 +169,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosGroup"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ToDoGroupBlank"
+                  },
+                  {
+                    "required": []
+                  }
+                ]
               }
             }
           }
@@ -174,7 +187,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToDosGroup"
+                  "$ref": "#/components/schemas/ToDoGroup"
                 }
               }
             }
@@ -242,7 +255,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ToDosItem"
+                    "$ref": "#/components/schemas/ToDoTask"
                   }
                 }
               }
@@ -276,7 +289,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosItemBlank"
+                "$ref": "#/components/schemas/ToDoTaskBlank"
               }
             }
           }
@@ -287,7 +300,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToDosItem"
+                  "$ref": "#/components/schemas/ToDoTask"
                 }
               }
             }
@@ -328,14 +341,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosItemBlank"
+                "$ref": "#/components/schemas/ToDoTaskBlank"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/todoItemSaved"
+            "$ref": "#/components/responses/todoTaskSaved"
           },
           "400": {
             "$ref": "#/components/responses/errorBadRequest"
@@ -378,14 +391,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToDosItemBlank"
+                "$ref": "#/components/schemas/ToDoTaskBlank"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/todoItemSaved"
+            "$ref": "#/components/responses/todoTaskSaved"
           },
           "400": {
             "$ref": "#/components/responses/errorBadRequest"
@@ -421,7 +434,7 @@
         "description": "Uid of TODO group item",
         "required": true,
         "schema": {
-          "type": "number"
+          "$ref": "#/components/schemas/Uid"
         }
       },
       "isComplete": {
@@ -440,7 +453,7 @@
         "description": "Uid of TODO group",
         "required": true,
         "schema": {
-          "type": "number"
+          "$ref": "#/components/schemas/Uid"
         }
       },
       "withItems": {
@@ -505,12 +518,12 @@
           }
         }
       },
-      "todoItemSaved": {
+      "todoTaskSaved": {
         "description": "Todos item saved",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ToDosItem"
+              "$ref": "#/components/schemas/ToDoTask"
             }
           }
         }
@@ -520,7 +533,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ToDosGroup"
+              "$ref": "#/components/schemas/ToDoGroup"
             }
           }
         }
@@ -733,15 +746,13 @@
           }
         }
       },
-      "ToDosItemBlank": {
+      "ToDoTaskBlank": {
         "title": "Base part of data of item in todo's group",
         "description": "Data about group item needed for creation of it",
         "properties": {
           "groupUid": {
             "description": "An unique id of group that item belongs to",
-            "type": "number",
-            "min": 1,
-            "max": 2147483647
+            "$ref": "#/components/schemas/Uid"
           },
           "title": {
             "description": "Short brief of task to be done",
@@ -758,7 +769,8 @@
           "isDone": {
             "description": "Status of task: is done or not",
             "type": "boolean",
-            "default": "false"
+            "default": "false",
+            "example": false
           },
           "attachments": {
             "type": "array",
@@ -766,61 +778,68 @@
             "items": {
               "$ref": "#/components/schemas/AttachmentMeta"
             },
-            "maxItems": 16
+            "maxItems": 16,
+            "example": []
           }
         },
         "required": [
           "isDone",
-          "groupUid",
           "title"
-        ]
+        ],
+        "example": {
+          "isDone": false,
+          "title": "Book soccer field",
+          "description": "The complainant agreed and recruited more members to play soccer."
+        }
       },
-      "ToDosItem": {
+      "ToDoTask": {
         "title": "Item in todo's group",
         "description": "Describe data structure of an item in group of tasks",
         "allOf": [
           {
-            "$ref": "#/components/schemas/ToDosItemBlank"
+            "$ref": "#/components/schemas/ToDoTaskBlank"
           },
           {
             "type": "object",
             "properties": {
               "uid": {
                 "description": "An unique id of task",
-                "type": "number",
-                "min": 1,
-                "max": 2147483647,
+                "$ref": "#/components/schemas/Uid",
                 "readOnly": true
               },
               "dateCreated": {
                 "description": "Date/time (ISO) when task was created",
                 "type": "string",
                 "format": "date-time",
-                "readOnly": true
+                "readOnly": true,
+                "example": "2019-11-17T11:20:51.555Z"
               },
               "dateChanged": {
                 "description": "Date/time (ISO) when task was changed last time",
                 "type": "string",
                 "format": "date-time",
-                "readOnly": true
+                "readOnly": true,
+                "example": "2019-11-17T11:20:51.555Z"
               },
               "position": {
                 "description": "Position of a task in group. Allows to track changing of state of a concrete item, including changing od position.",
                 "type": "number",
                 "min": 0,
-                "max": 4096
+                "max": 4096,
+                "example": 0
               }
             },
             "required": [
               "dateChanged",
               "dateCreated",
+              "items",
               "position",
               "uid"
             ]
           }
         ]
       },
-      "ToDosGroupBlank": {
+      "ToDoGroupBlank": {
         "title": "Base part of data of group",
         "description": "Data needed for group creation",
         "type": "object",
@@ -829,18 +848,20 @@
             "description": "Title of a group",
             "type": "string",
             "minLength": 5,
-            "maxLength": 32
+            "maxLength": 32,
+            "example": "Other activities"
           },
           "description": {
             "description": "Detailed description of a group in one/two sequences.",
             "type": "string",
             "minLength": 16,
-            "maxLength": 128
+            "maxLength": 128,
+            "example": "Other tasks and issues with low priority"
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ToDosItemBlank"
+              "$ref": "#/components/schemas/ToDoTaskBlank"
             }
           },
           "isComplete": {
@@ -849,52 +870,67 @@
           }
         },
         "required": [
-          "items",
           "title"
         ]
       },
-      "ToDosGroupExtendedData": {
+      "ToDoGroupExtendedData": {
         "title": "Extended data of group",
         "description": "Extended data has to be obtained after first save",
         "type": "object",
         "properties": {
           "uid": {
             "description": "An unique id of task",
-            "type": "number",
-            "min": 1,
-            "max": 2147483647
+            "$ref": "#/components/schemas/Uid"
           },
           "dateCreated": {
             "description": "Date/time (ISO) when task was created",
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2019-11-17T11:20:51.555Z"
           },
           "dateChanged": {
             "description": "Date/time (ISO) when task was changed last time",
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2019-11-17T11:20:51.555Z"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToDoTask"
+            }
           }
         },
         "required": [
           "dateChanged",
           "dateCreated",
-          "uid"
+          "uid",
+          "items"
         ]
       },
-      "ToDosGroup": {
+      "ToDoGroup": {
         "allOf": [
           {
-            "$ref": "#/components/schemas/ToDosGroupBlank"
+            "$ref": "#/components/schemas/ToDoGroupBlank"
           },
           {
-            "$ref": "#/components/schemas/ToDosGroupExtendedData"
+            "$ref": "#/components/schemas/ToDoGroupExtendedData"
           }
         ]
+      },
+      "Uid": {
+        "title": "UID of element",
+        "type": "string",
+        "minLength": "16",
+        "maxLength": "22",
+        "pattern": "^[\\w\\-]+$",
+        "example": "hB6BjVfbe5pBrJiT0kFzu"
       },
       "Url": {
         "description": "Link to any external resource",
         "type": "string",
-        "pattern": "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
+        "pattern": "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?",
+        "example": "http://example.com"
       }
     }
   }

@@ -1,0 +1,2 @@
+npm -g install static-server
+static-server --index ./todo-app-spec.json --cors "*" -z & docker pull swaggerapi/swagger-ui & docker run -p 81:8080 -e URLS="[ { url: \"http://localhost:9080\", name: \"TODO App\" } ]" swaggerapi/swagger-ui

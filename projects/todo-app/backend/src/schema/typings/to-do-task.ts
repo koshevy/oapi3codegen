@@ -1,17 +1,18 @@
 /* tslint:disable */
 import { AttachmentMetaDocument } from './attachment-meta-document';
 import { AttachmentMetaImage } from './attachment-meta-image';
-import { ToDosItemBlank } from './to-dos-item-blank';
+import { ToDoTaskBlank } from './to-do-task-blank';
 
 /**
  * ## Item in todo's group
  * Describe data structure of an item in group of tasks
  */
-export interface ToDosItem extends ToDosItemBlank {
+export interface ToDoTask extends ToDoTaskBlank {
   /**
+   * ## UID of element
    * An unique id of task
    */
-  readonly uid: number;
+  readonly uid: string;
   /**
    * Date/time (ISO) when task was created
    */
@@ -26,9 +27,9 @@ export interface ToDosItem extends ToDosItemBlank {
    */
   position: number;
   /**
-   * An unique id of group that item belongs to
+   * ## UID of element
    */
-  groupUid: number;
+  groupUid?: string;
   /**
    * Short brief of task to be done
    */
