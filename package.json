@@ -64,5 +64,13 @@
     "tslib": "^1.9.0",
     "tslint": "^5.12.1",
     "typescript": "3.4.5"
-  }
+  },
+  "private": true,
+  "workspaces": [
+    "projects/ng-api-service",
+    "projects/oapi3ts",
+    "projects/oapi3ts-cli",
+    "projects/todo-app",
+    "projects/todo-app/backend"
+  ]
 }
