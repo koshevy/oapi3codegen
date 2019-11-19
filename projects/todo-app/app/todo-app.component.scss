@@ -1,6 +1,7 @@
 @import '~bootstrap/scss/bootstrap';
 @import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
 @import '~@angular/material/theming';
+@import '~froala-editor/css/froala_editor.pkgd.css';
 
 :host {
   display: block;
@@ -28,12 +29,6 @@ a {
 
 .text-muted {
   opacity: 0.5 !important;
-}
-
-.dropdown-toggle{
-  &:after{
-    display: none !important;
-  }
 }
 
 .btn-lg {
@@ -94,5 +89,35 @@ a {
     .mat-button-wrapper{
       color: white;
     }
+  }
+}
+
+.list-unstyled {
+  li {
+    padding: .5rem 0;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.navbar.navbar-expand-lg {
+  @include alert-variant(theme-color-level('info', $alert-bg-level), theme-color-level('info', $alert-border-level), theme-color-level('info', $alert-color-level))
+}
+
+@-webkit-keyframes hue {
+  0% {
+    filter: hue-rotate(0deg);
+    opacity: 0;
+  }
+  60% {
+    filter: hue-rotate(-360deg);
+    opacity: 0.9;
+  }
+  100% {
+    filter: hue-rotate(0deg);
+    opacity: 0;
   }
 }

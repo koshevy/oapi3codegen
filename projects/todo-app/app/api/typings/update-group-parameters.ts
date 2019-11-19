@@ -4,9 +4,10 @@
  */
 export interface UpdateGroupParameters {
   /**
-   * Uid of TODO group
+   * ## UID of element
+   * An unique id of task
    */
-  groupId: number;
+  groupId: string;
   /**
    * Force save group despite conflicts
    */

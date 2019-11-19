@@ -1,7 +1,7 @@
 /* tslint:disable */
 import { HttpErrorBadRequest } from './http-error-bad-request';
 import { HttpErrorServer } from './http-error-server';
-import { ToDosGroup } from './to-dos-group';
+import { ToDoGroup } from './to-do-group';
 
 export type GetGroupsResponse<
   TCode extends 200 | 400 | 500 = 200 | 400 | 500,
@@ -11,7 +11,7 @@ export type GetGroupsResponse<
     /**
      * TODO's groups
      */
-    ? Array<ToDosGroup>
+    ? Array<ToDoGroup>
     : any
   : TCode extends 400
   ? TContentType extends 'application/json'

@@ -1,4 +1,4 @@
-import { ToDosGroup } from '../../api/typings';
+import { ToDoGroup } from '../../api/typings';
 import { GlobalPartial } from 'lodash/common/common';
 
 export type Partial<T> = GlobalPartial<T>;
@@ -11,6 +11,8 @@ export const enum ActionType {
     CancelUpdating = '[Cancel updating]',
     ChangeGroupPosition = '[Change group position]',
     ChangeGroupPositionOptimistic = '[Change group position (optimistic)]',
+    DeleteItem = '[Delete item]',
+    DeleteItemOptimistic = '[Delete item (optimistic)]',
     EditGroup = '[Edit group]',
     EditGroupOptimistic = '[Edit group (optimistic)]',
     InitializeWithRouteParams = '[Initialize with route params]',
@@ -21,17 +23,15 @@ export const enum ActionType {
     MarkGroupAsDone = '[Mark group items as undone]',
     MarkGroupAsDoneOptimistic = '[Mark group items as done (optimistic)]',
     MarkGroupAsUndone = '[Mark group items as undone]',
-    MarkGroupAsUndoneOptimistic = '[Mark group items as undone (optimistic)]',
-    RemoveItem = '[Remove item]',
-    RemoveItemOptimistic = '[Remove item (optimistic)]'
+    MarkGroupAsUndoneOptimistic = '[Mark group items as undone (optimistic)]'
 }
 
 /**
- * Teaser of ToDos group in common group of this component.
+ * Teaser of ToDo group in common group of this component.
  * Shows both of already created and new optimistically added,
  * but not created yet in fact.
  */
-export interface ToDosGroupTeaser extends ToDosGroup {
+export interface ToDoGroupTeaser extends ToDoGroup {
     countOfDone: number;
     totalCount: number;
     /**
@@ -55,13 +55,22 @@ export interface ComponentTruth {
     /**
      * TYPE OF ACTION:
      * flat property in context intended to do identification of action.
-     *
      */
     $$lastAction: ActionType;
 
     isComplete: boolean | null;
+
+    /**
+     * todo I don't now what is it. it better to remove
+     */
     isCurrentGroup: number | null;
-    createdGroup?: ToDosGroup;
+
+    /**
+     * Should dialog be opened?
+     */
+    isCreateGroupModalOpen?: boolean;
+
+    createdGroup?: ToDoGroup;
 
     /**
      * Temporary `uid` that `createdGroup` had before
@@ -71,23 +80,23 @@ export interface ComponentTruth {
      */
     createdGroupPrevUid?: number;
 
-    editedGroup?: ToDosGroup;
+    editedGroup?: ToDoGroup;
 
     /**
      * List of groups of tasks.
      * Initializes in middleware and uses as an argument
      * for some type of actions.
      */
-    groups?: ToDosGroupTeaser[];
+    groups?: ToDoGroupTeaser[];
 
     positionChanging?: { from: number; to: number };
 
     /**
      * Parameter of removing action.
-     * Gets to be `ToDosGroup` at dispatching, and
+     * Gets to be `ToDoGroup` at dispatching, and
      * gets to transform after middleware processing.
      */
-    removedGroup?: ToDosGroup | ToDosGroupTeaser;
+    removedGroup?: ToDoGroup | ToDoGroupTeaser;
 }
 
 /**

@@ -10,4 +10,4 @@ export * from './create-group-item.api.service';
 export * from './update-group-item.api.service';
 export * from './rewrite-group-item.api.service';
 
-export { schema } from './schema.3ebc53a18cb5a06777c416';
+export { schema } from './schema.bab11a745173add3a0f9df';

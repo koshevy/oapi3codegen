@@ -1,16 +1,21 @@
 import * as _ from 'lodash';
 import {
+    combineLatest,
     merge,
+    timer,
     Observable,
     Subject
 } from 'rxjs';
 import {
     distinctUntilChanged,
     filter,
+    finalize,
     map,
     share,
     scan,
-    timeout
+    timeout,
+    takeUntil,
+    tap
 } from 'rxjs/operators';
 
 import {
@@ -18,20 +23,21 @@ import {
   OnInit,
   ChangeDetectionStrategy
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ResolveData } from '@angular/router';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Overlay } from '@angular/cdk/overlay';
 
-import { ToDosGroup } from '../api/typings';
+import { ToDoGroup } from '../api/typings';
 import { createUniqValidator } from '../lib/helpers';
 
 import { EditGroupComponent, EditGroupConfig } from './edit-group/edit-group.component';
 import {
     Partial,
     ActionType,
-    ToDosGroupTeaser,
+    ToDoGroupTeaser,
     ComponentTruth,
     ComponentContext
 } from './lib/context';
@@ -45,15 +51,9 @@ import { ConfirmationService } from '../confirmation/confirmation.service';
     providers: [TodosGroupStore],
     selector: 'lib-todos-group',
     styleUrls: ['./todos-group.component.scss'],
-    templateUrl: './todos-group.component.html'
+    templateUrl: './todos-group.component.html',
 })
 export class TodosGroupComponent implements OnInit {
-
-    /**
-     * Full context flow of component. Do changes of view
-     * every emission.
-     */
-    context$: Observable<ComponentContext>;
 
     /**
      * Flow that collect all changes of values that could influence
@@ -61,6 +61,12 @@ export class TodosGroupComponent implements OnInit {
      * it in a common "Truth", and emits this complete "Truth".
      */
     truth$: Observable<ComponentTruth>;
+
+    /**
+     * Full context flow of component. Do changes of view
+     * every emission.
+     */
+    context$: Observable<ComponentContext>;
 
     /**
      * Part of "truth": channel with manual-triggered actions and theirs data
@@ -102,64 +108,79 @@ export class TodosGroupComponent implements OnInit {
 
     ngOnInit() {
         this.context$ = this.store.getNewContextFlow(this.truth$);
-
-        this.listenEffects();
+        // bind context changes to effect listening
+        this.context$.subscribe(this.applyContext.bind(this));
     }
 
     getTruthFromRouteParams(): Observable<ComponentTruth> {
-        return this.activatedRoute.queryParams.pipe(
+        return combineLatest([
+            this.activatedRoute.data,
+            this.activatedRoute.queryParams
+        ]).pipe(
+            map<[any, any], any>(([data, queryParams]) =>
+                ({...data, ...queryParams})
+            ),
             distinctUntilChanged(_.isEqual),
-            map<any, ComponentTruth>(({isComplete, isCurrentGroup}) => {
+            map<any, ComponentTruth>(({isComplete, isCurrentGroup, isCreateGroupModalOpen}) => {
                 return {
                     $$lastAction: ActionType.InitializeWithRouteParams,
                     isComplete: isComplete || null,
-                    isCurrentGroup: isCurrentGroup || null
+                    isCreateGroupModalOpen,
+                    isCurrentGroup: isCurrentGroup || null,
                 };
             })
         );
     }
 
-    listenEffects() {
-        this.context$.subscribe((context: ComponentContext) => {
-            // Syncing context
-            this.syncContext = context;
+    applyContext(context: ComponentContext): void {
 
-            switch (context.$$lastAction) {
-                case ActionType.AddNewGroupOptimistic:
-                    this.matSnackBar.open('Group are saving...', null, {
-                        duration: 1000,
-                        panelClass: ['alert', 'alert-info']
+        // Before syncing context
+        const shouldCreateModalBeShown = context.isCreateGroupModalOpen
+            && !_.get(this.syncContext, 'isCreateGroupModalOpen');
+
+        // Syncing context
+        this.syncContext = context;
+
+        switch (context.$$lastAction) {
+            case ActionType.AddNewGroupOptimistic:
+                this.matSnackBar.open('Group are saving...', null, {
+                    duration: 1000,
+                    panelClass: ['alert', 'alert-info']
+                });
+                break;
+
+            case ActionType.AddNewGroup:
+                const teaserOfCreatedGroup = _.find(
+                    context.groups,
+                    ({uid}) => uid === context.createdGroup.uid
+                );
+
+                if (!teaserOfCreatedGroup) {
+                    throw new Error('Application logic error!');
+                }
+
+                if (teaserOfCreatedGroup.failed) {
+                    this.matSnackBar.open('Creation failed!', 'Remove', {
+                        duration: 3000,
+                        panelClass: ['alert', 'alert-danger']
+                    }).onAction().subscribe(() => {
+                        // Repeats attempt
+                        this.removeIncompleteGroup(context.createdGroup);
                     });
-                    break;
+                } else {
+                    this.matSnackBar.open('Changing successful saved!', null, {
+                        duration: 1500,
+                        panelClass: ['alert', 'alert-success']
+                    });
+                }
 
-                case ActionType.AddNewGroup:
-                    const teaserOfCreatedGroup = _.find(
-                        context.groups,
-                        ({uid}) => uid === context.createdGroup.uid
-                    );
+                break;
 
-                    if (!teaserOfCreatedGroup) {
-                        throw new Error('Application logic error!');
-                    }
+            default:
 
-                    if (teaserOfCreatedGroup.failed) {
-                        this.matSnackBar.open('Creation failed!', 'Remove', {
-                            duration: 3000,
-                            panelClass: ['alert', 'alert-danger']
-                        }).onAction().subscribe(() => {
-                            // Repeats attempt
-                            this.removeIncompleteGroup(context.createdGroup);
-                        });
-                    } else {
-                        this.matSnackBar.open('Changing successful saved!', null, {
-                            duration: 1500,
-                            panelClass: ['alert', 'alert-success']
-                        });
-                    }
-
-                    break;
-            }
-        });
+                // Show modal if needed
+                if (shouldCreateModalBeShown) { this.createGroup(); }
+        }
     }
 
     // *** Events
@@ -179,7 +200,7 @@ export class TodosGroupComponent implements OnInit {
 
         // Open creation dialog
         const subscribtion = this.openEditGroupPopup(popupConfig)
-            .subscribe((group: ToDosGroup) => {
+            .subscribe((group: ToDoGroup) => {
                 // Optimistic adding of item (before sending to server)
                 this.manualActions$.next({
                     $$lastAction: ActionType.AddNewGroupOptimistic,
@@ -195,17 +216,25 @@ export class TodosGroupComponent implements OnInit {
             });
     }
 
-    editGroup(group: ToDosGroup) {
+    editGroup(group: ToDoGroup) {
         // Additional validator for Group Creation Form:
         // check for unique of group
         const popupConfig: EditGroupConfig = {
             customValidators: {},
-            initialToDosGroupBlank: group
+            initialToDoGroupBlank: group
         };
 
         // Open creation dialog
-        const subscribtion = this.openEditGroupPopup(popupConfig)
-            .subscribe((todoGroup: ToDosGroup) => {
+        const subscription = this.openEditGroupPopup(popupConfig)
+            .pipe(
+                takeUntil(
+                    // shown while `isCreateGroupModalOpen`
+                    this.truth$.pipe(filter(
+                        context => !!context.isCreateGroupModalOpen
+                    ))
+                )
+            )
+            .subscribe((todoGroup: ToDoGroup) => {
                 this.manualActions$.next({
                     $$lastAction: ActionType.EditGroupOptimistic,
                     editedGroup: todoGroup,
@@ -215,11 +244,11 @@ export class TodosGroupComponent implements OnInit {
                     editedGroup: todoGroup,
                 });
 
-                subscribtion.unsubscribe();
+                subscription.unsubscribe();
             });
     }
 
-    groupDropped(event: CdkDragDrop<ToDosGroupTeaser[]>) {
+    groupDropped(event: CdkDragDrop<ToDoGroupTeaser[]>) {
         this.manualActions$.next({
             $$lastAction: ActionType.ChangeGroupPositionOptimistic,
             groups: this.syncContext.groups,
@@ -260,7 +289,7 @@ export class TodosGroupComponent implements OnInit {
         });
     }
 
-    markGroupAsDone(group: ToDosGroup) {
+    markGroupAsDone(group: ToDoGroup) {
         this.manualActions$.next({
             $$lastAction: ActionType.MarkGroupAsDoneOptimistic,
             editedGroup: group,
@@ -271,7 +300,7 @@ export class TodosGroupComponent implements OnInit {
         });
     }
 
-    markGroupAsUndone(group: ToDosGroup) {
+    markGroupAsUndone(group: ToDoGroup) {
         this.manualActions$.next({
             $$lastAction: ActionType.MarkGroupAsUndoneOptimistic,
             editedGroup: group,
@@ -282,7 +311,7 @@ export class TodosGroupComponent implements OnInit {
         });
     }
 
-    removeGroup(group: ToDosGroup) {
+    removeGroup(group: ToDoGroup) {
         this.confirmationService.confirm(
             [
                 {
@@ -303,17 +332,17 @@ export class TodosGroupComponent implements OnInit {
             )
             .subscribe((result: boolean) => {
                 this.manualActions$.next({
-                    $$lastAction: ActionType.RemoveItemOptimistic,
+                    $$lastAction: ActionType.DeleteItemOptimistic,
                     removedGroup: group
                 });
                 this.manualActions$.next({
-                    $$lastAction: ActionType.RemoveItem,
+                    $$lastAction: ActionType.DeleteItem,
                     removedGroup: group
                 });
             });
     }
 
-    removeIncompleteGroup(group: ToDosGroup) {
+    removeIncompleteGroup(group: ToDoGroup) {
         const actionType = group.uid < 0
             ? ActionType.CancelCreation
             : ActionType.CancelUpdating;
@@ -324,7 +353,7 @@ export class TodosGroupComponent implements OnInit {
         });
     }
 
-    tryAgainUpdate(group: ToDosGroup) {
+    tryAgainUpdate(group: ToDoGroup) {
         this.manualActions$.next({
             $$lastAction: ActionType.AddNewGroupOptimistic,
             createdGroup: group,
@@ -338,20 +367,24 @@ export class TodosGroupComponent implements OnInit {
     // *** Private methods
 
     private openEditGroupPopup(popupConfig: EditGroupConfig)
-        : Observable<ToDosGroup> {
+        : Observable<ToDoGroup> {
 
-        return this.matBottomSheet.open<
+        const bottomRef = this.matBottomSheet.open<
             EditGroupComponent,
             EditGroupConfig,
-            ToDosGroup
+            ToDoGroup
         >(EditGroupComponent, {
             data: popupConfig,
             scrollStrategy: this.overlay.scrollStrategies.reposition()
-        })  .afterDismissed() // Waiting for result
+        });
+
+        return bottomRef
+            .afterDismissed() // Waiting for result
             .pipe(
+                finalize(() => bottomRef.dismiss()),
                 filter(v => !!v),
                 // takeUntil(),
-                map((newGroup: ToDosGroup) => ({
+                map((newGroup: ToDoGroup) => ({
                     ...newGroup,
                         // Adds temporary ID if not set
                     uid: newGroup.uid || this.getTempId()

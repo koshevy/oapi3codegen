@@ -13,6 +13,12 @@ const routes: Routes = [
         component: TodosGroupComponent,
         path: 'groups',
         pathMatch: 'full'
+    },
+    {
+        component: TodosGroupComponent,
+        data: { isCreateGroupModalOpen: true },
+        path: 'groups/create',
+        pathMatch: 'full'
     }
 ];
 

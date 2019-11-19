@@ -1,16 +1,16 @@
 import * as _ from 'lodash';
 
-import { ToDosGroup, ToDosItem } from '../../api/typings';
-import { ToDosGroupTeaser } from './context';
+import { ToDoGroup, ToDoTask } from '../../api/typings';
+import { ToDoGroupTeaser } from './context';
 
 /**
- * Create {@link ToDosGroupTeaser} from {@link ToDosGroup}
+ * Create {@link ToDoGroupTeaser} from {@link ToDoGroup}
  * (adds counters data).
  *
- * @param {ToDosGroup} srcGroup
- * @return {ToDosGroupTeaser}
+ * @param {ToDoGroup} srcGroup
+ * @return {ToDoGroupTeaser}
  */
-export function createTodoGroupTeaser(srcGroup: ToDosGroup): ToDosGroupTeaser {
+export function createTodoGroupTeaser(srcGroup: ToDoGroup): ToDoGroupTeaser {
     return {
         ...srcGroup,
         countOfDone: _.filter(
@@ -22,12 +22,12 @@ export function createTodoGroupTeaser(srcGroup: ToDosGroup): ToDosGroupTeaser {
 }
 
 /**
- * Make an array of {@link ToDosGroupTeaser} from array of {@link ToDosGroup}
+ * Make an array of {@link ToDoGroupTeaser} from array of {@link ToDoGroup}
  *
- * @param {ToDosGroup[]} srcGroups
- * @return {ToDosGroupTeaser[]}
+ * @param {ToDoGroup[]} srcGroups
+ * @return {ToDoGroupTeaser[]}
  */
-export function createTodoGroupTeasers(srcGroups: ToDosGroup[]): ToDosGroupTeaser[] {
+export function createTodoGroupTeasers(srcGroups: ToDoGroup[]): ToDoGroupTeaser[] {
     return _.map(srcGroups, createTodoGroupTeaser);
 }
 
@@ -36,19 +36,19 @@ export function createTodoGroupTeasers(srcGroups: ToDosGroup[]): ToDosGroupTease
  * @param group
  * @param type
  * @param clearTeaser
- * Should it clear al properties from {@link ToDosGroupTeaser},
- * not specified for {@link ToDosGroup}
+ * Should it clear al properties from {@link ToDoGroupTeaser},
+ * not specified for {@link ToDoGroup}
  *
  * @return
  */
 export function markGroupAsDone(
-    group: ToDosGroup | ToDosGroupTeaser,
+    group: ToDoGroup | ToDoGroupTeaser,
     type: 'done' | 'undone' = 'done',
     clearTeaser: boolean = true
-): ToDosGroup | ToDosGroupTeaser {
+): ToDoGroup | ToDoGroupTeaser {
     group.items = _.map(
         group.items,
-        (item: ToDosItem) => {
+        (item: ToDoTask) => {
             item.isDone = (type === 'done');
 
             return item;
@@ -56,8 +56,8 @@ export function markGroupAsDone(
     );
 
     return clearTeaser
-        ? _.omit(group, ['countOfDone', 'totalCount']) as ToDosGroup
-        : group as ToDosGroupTeaser;
+        ? _.omit(group, ['countOfDone', 'totalCount']) as ToDoGroup
+        : group as ToDoGroupTeaser;
 }
 
 /**
@@ -70,10 +70,10 @@ export function markGroupAsDone(
  * - null — calculate all
  */
 export function countItemsInGroups(
-    groups: ToDosGroupTeaser[],
+    groups: ToDoGroupTeaser[],
     isDone: boolean | null = null
 ): number {
-    return _.reduce(groups || [], (sum, group: ToDosGroupTeaser) => {
+    return _.reduce(groups || [], (sum, group: ToDoGroupTeaser) => {
         switch (isDone) {
             case true:  return sum + group.countOfDone;
             case false: return sum + group.totalCount - group.countOfDone;
@@ -86,9 +86,9 @@ export function countItemsInGroups(
  * Unified function for adding/changing group in list of groups.
  *
  * @param groupsList
- * Array of {@link ToDosGroupTeaser}, that has to be changed
+ * Array of {@link ToDoGroupTeaser}, that has to be changed
  * @param groupData
- * {@link ToDosGroupTeaser}-object: will be added to `groupsList`, if there is
+ * {@link ToDoGroupTeaser}-object: will be added to `groupsList`, if there is
  * no objects with `uid` of it's object (or `uid` set in `groupUid` parameter).
  * And change already added items.
  * @param markAs
@@ -100,13 +100,13 @@ export function countItemsInGroups(
  * Return copy of array with changed or created item
  */
 export function updateGroupsListItem(
-    groupsList: ToDosGroupTeaser[],
-    groupData: ToDosGroup,
+    groupsList: ToDoGroupTeaser[],
+    groupData: ToDoGroup,
     markAs: | 'optimistic' | 'removing' | 'failed'
             | 'clear' | 'doneOptimistic' | 'undoneOptimistic'
             | null = null,
     groupUid?: number
-): ToDosGroupTeaser[] {
+): ToDoGroupTeaser[] {
 
     const groupTeaser = markGroupTeaserAs(groupData, markAs);
 
@@ -130,11 +130,11 @@ export function updateGroupsListItem(
 }
 
 export function markGroupTeaserAs(
-    group: ToDosGroup | ToDosGroupTeaser,
+    group: ToDoGroup | ToDoGroupTeaser,
     markAs: | 'optimistic' | 'removing' | 'failed'
             | 'clear' | 'doneOptimistic' | 'undoneOptimistic'
             | null = null,
-): ToDosGroupTeaser {
+): ToDoGroupTeaser {
     let groupTeaser = createTodoGroupTeaser(group);
 
     switch (markAs) {
@@ -148,7 +148,7 @@ export function markGroupTeaserAs(
                 groupTeaser,
                 'done',
                 false
-            ) as ToDosGroupTeaser;
+            ) as ToDoGroupTeaser;
 
             groupTeaser.failed = false;
             groupTeaser.optimistic = true;
@@ -174,7 +174,7 @@ export function markGroupTeaserAs(
                 groupTeaser,
                 'undone',
                 false
-            ) as ToDosGroupTeaser;
+            ) as ToDoGroupTeaser;
 
             groupTeaser.failed = false;
             groupTeaser.optimistic = true;
@@ -188,11 +188,11 @@ export function markGroupTeaserAs(
 }
 
 export function markAllAsDone(
-    groups: ToDosGroupTeaser[],
+    groups: ToDoGroupTeaser[],
     type: 'done' | 'undone' = 'done',
     optimistic: boolean = false
-): ToDosGroupTeaser[] {
-    return _.map(groups, (group: ToDosGroupTeaser) =>
+): ToDoGroupTeaser[] {
+    return _.map(groups, (group: ToDoGroupTeaser) =>
         _.assign(
             createTodoGroupTeaser(markGroupAsDone(group, type)),
             {
@@ -205,11 +205,11 @@ export function markAllAsDone(
 }
 
 export function removeGroupFromList(
-    groupsList: ToDosGroupTeaser[],
+    groupsList: ToDoGroupTeaser[],
     uid: number
-): ToDosGroupTeaser[] {
+): ToDoGroupTeaser[] {
     return _.filter(
         groupsList,
-        (item: ToDosGroupTeaser) => item.uid !== uid
+        (item: ToDoGroupTeaser) => item.uid !== uid
     );
 }

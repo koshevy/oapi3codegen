@@ -17,7 +17,7 @@ import {
 // Typings for this API method
 import { GetGroupsParameters, GetGroupsResponse } from '../typings';
 // Schemas
-import { schema as domainSchema } from './schema.3ebc53a18cb5a06777c416';
+import { schema as domainSchema } from './schema.bab11a745173add3a0f9df';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -52,7 +52,7 @@ export class GetGroupsService extends ApiService<
    * API servers.
    */
   protected get servers(): string[] {
-    return ['http://localhost'];
+    return ['http://localhost:3000'];
   }
 
   /**
@@ -83,20 +83,20 @@ export class GetGroupsService extends ApiService<
             type: 'array',
             items: {
               $ref:
-                'schema.3ebc53a18cb5a06777c416#/components/schemas/ToDosGroup'
+                'schema.bab11a745173add3a0f9df#/components/schemas/ToDoGroup'
             }
           }
         },
         '400': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorBadRequest'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorBadRequest'
           }
         },
         '500': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorServer'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorServer'
           }
         }
       }

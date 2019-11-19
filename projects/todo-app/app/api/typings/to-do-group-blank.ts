@@ -1,11 +1,11 @@
 /* tslint:disable */
-import { ToDosItemBlank } from './to-dos-item-blank';
+import { ToDoTaskBlank } from './to-do-task-blank';
 
 /**
  * ## Base part of data of group
  * Data needed for group creation
  */
-export interface ToDosGroupBlank {
+export interface ToDoGroupBlank {
   /**
    * Title of a group
    */
@@ -14,7 +14,7 @@ export interface ToDosGroupBlank {
    * Detailed description of a group in one/two sequences.
    */
   description?: string;
-  items: Array<ToDosItemBlank>;
+  items?: Array<ToDoTaskBlank>;
   /**
    * Whether all tasks in group are complete
    */

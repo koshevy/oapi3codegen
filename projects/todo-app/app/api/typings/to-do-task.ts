@@ -1,16 +1,35 @@
 /* tslint:disable */
 import { AttachmentMetaDocument } from './attachment-meta-document';
 import { AttachmentMetaImage } from './attachment-meta-image';
+import { ToDoTaskBlank } from './to-do-task-blank';
 
 /**
- * ## Base part of data of item in todo's group
- * Data about group item needed for creation of it
+ * ## Item in todo's group
+ * Describe data structure of an item in group of tasks
  */
-export interface ToDosItemBlank {
+export interface ToDoTask extends ToDoTaskBlank {
   /**
-   * An unique id of group that item belongs to
+   * ## UID of element
+   * An unique id of task
    */
-  groupUid: number;
+  readonly uid: string;
+  /**
+   * Date/time (ISO) when task was created
+   */
+  readonly dateCreated: string;
+  /**
+   * Date/time (ISO) when task was changed last time
+   */
+  readonly dateChanged: string;
+  /**
+   * Position of a task in group. Allows to track changing of state of a concrete
+   * item, including changing od position.
+   */
+  position: number;
+  /**
+   * ## UID of element
+   */
+  groupUid?: string;
   /**
    * Short brief of task to be done
    */

@@ -17,7 +17,7 @@ import {
 // Typings for this API method
 import { DeleteGroupParameters, DeleteGroupResponse } from '../typings';
 // Schemas
-import { schema as domainSchema } from './schema.3ebc53a18cb5a06777c416';
+import { schema as domainSchema } from './schema.bab11a745173add3a0f9df';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -52,7 +52,7 @@ export class DeleteGroupService extends ApiService<
    * API servers.
    */
   protected get servers(): string[] {
-    return ['http://localhost'];
+    return ['http://localhost:3000'];
   }
 
   /**
@@ -69,7 +69,11 @@ export class DeleteGroupService extends ApiService<
   protected get schema(): ApiSchema {
     return {
       params: {
-        properties: { groupId: { type: 'number' } },
+        properties: {
+          groupId: {
+            $ref: 'schema.bab11a745173add3a0f9df#/components/schemas/Uid'
+          }
+        },
         required: ['groupId'],
         type: 'object'
       },
@@ -79,25 +83,25 @@ export class DeleteGroupService extends ApiService<
         '400': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorBadRequest'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorBadRequest'
           }
         },
         '404': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorNotFound'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorNotFound'
           }
         },
         '409': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorConflict'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorConflict'
           }
         },
         '500': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorServer'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorServer'
           }
         }
       }

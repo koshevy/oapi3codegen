@@ -8,10 +8,12 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { ObserversModule } from '@angular/cdk/observers';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -29,6 +31,7 @@ import { NoInternetComponent } from './todos-groups/no-internet/no-internet.comp
 import {
     DeleteGroupService,
     GetGroupsService,
+    GetGroupItemsService,
     CreateGroupService,
     UpdateGroupService
 } from './api/services';
@@ -40,6 +43,7 @@ import { ToasterService } from './lib/toaster.service';
 import { ApiErrorHandlerService } from './lib/api-error-handler.service';
 import { ConfirmationComponent } from './confirmation/confirmation.component';
 import { ConfirmationService } from './confirmation/confirmation.service';
+import { FroalaEditorModule, FroalaViewModule } from 'angular-froala-wysiwyg';
 
 // Directives
 
@@ -48,6 +52,7 @@ import {
     ERROR_DIRECTIVE_FLASH_PROVIDER
 } from './lib/error-validation.directive';
 import { NullableAccessorDirective } from './lib/nullable-accessor';
+import { TaskListComponent } from './todo-tasks/task-list/task-list.component';
 
 @NgModule({
     bootstrap: [TodoAppComponent],
@@ -60,14 +65,17 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
         TodosGroupComponent,
         ConfirmationComponent,
         TodoTasksComponent,
+        TaskListComponent,
     ],
     entryComponents: [
         EditGroupComponent,
-        ConfirmationComponent
+        ConfirmationComponent,
+        TaskListComponent,
     ],
     exports: [
         TodoAppComponent,
-        ConfirmationComponent
+        ConfirmationComponent,
+        TaskListComponent,
     ],
     imports: [
         ApiModule,
@@ -85,14 +93,19 @@ import { NullableAccessorDirective } from './lib/nullable-accessor';
         MatIconModule,
         MatListModule,
         MatProgressSpinnerModule,
+        MatProgressBarModule,
         MatSnackBarModule,
-        OverlayModule
+        OverlayModule,
+        ObserversModule,
+        FroalaEditorModule.forRoot(),
+        FroalaViewModule.forRoot()
     ],
     providers: [
         ConfirmationService,
         CreateGroupService,
         DeleteGroupService,
         GetGroupsService,
+        GetGroupItemsService,
         JsonValidationService,
         UpdateGroupService,
         ToasterService,

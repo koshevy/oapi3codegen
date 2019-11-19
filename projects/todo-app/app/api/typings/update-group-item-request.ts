@@ -1,5 +1,5 @@
 /* tslint:disable */
-import { ToDosItemBlank } from './to-dos-item-blank';
+import { ToDoTaskBlank } from './to-do-task-blank';
 
 export type UpdateGroupItemRequest<
   TCode extends 'application/json' = 'application/json'
@@ -8,5 +8,5 @@ export type UpdateGroupItemRequest<
  * ## Base part of data of item in todo's group
  * Data about group item needed for creation of it
  */
-  ? ToDosItemBlank
+  ? ToDoTaskBlank
   : any;

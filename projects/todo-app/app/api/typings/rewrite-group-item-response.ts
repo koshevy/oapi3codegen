@@ -3,7 +3,7 @@ import { HttpErrorBadRequest } from './http-error-bad-request';
 import { HttpErrorConflict } from './http-error-conflict';
 import { HttpErrorNotFound } from './http-error-not-found';
 import { HttpErrorServer } from './http-error-server';
-import { ToDosItem } from './to-dos-item';
+import { ToDoTask } from './to-do-task';
 
 export type RewriteGroupItemResponse<
   TCode extends 200 | 400 | 404 | 409 | 500 = 200 | 400 | 404 | 409 | 500,
@@ -14,7 +14,7 @@ export type RewriteGroupItemResponse<
      * ## Item in todo's group
      * Describe data structure of an item in group of tasks
      */
-    ? ToDosItem
+    ? ToDoTask
     : any
   : TCode extends 400
   ? TContentType extends 'application/json'

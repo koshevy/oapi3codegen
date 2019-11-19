@@ -1,5 +1,5 @@
 /* tslint:disable */
-import { ToDosGroupBlank } from './to-dos-group-blank';
+import { ToDoGroupBlank } from './to-do-group-blank';
 
 export type CreateGroupRequest<
   TCode extends 'application/json' = 'application/json'
@@ -8,5 +8,5 @@ export type CreateGroupRequest<
  * ## Base part of data of group
  * Data needed for group creation
  */
-  ? ToDosGroupBlank
+  ? ToDoGroupBlank
   : any;

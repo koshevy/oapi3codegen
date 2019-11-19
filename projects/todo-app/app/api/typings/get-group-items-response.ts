@@ -2,7 +2,7 @@
 import { HttpErrorBadRequest } from './http-error-bad-request';
 import { HttpErrorNotFound } from './http-error-not-found';
 import { HttpErrorServer } from './http-error-server';
-import { ToDosItem } from './to-dos-item';
+import { ToDoTask } from './to-do-task';
 
 export type GetGroupItemsResponse<
   TCode extends 200 | 400 | 404 | 500 = 200 | 400 | 404 | 500,
@@ -12,7 +12,7 @@ export type GetGroupItemsResponse<
     /**
      * Items of specified TODO's group
      */
-    ? Array<ToDosItem>
+    ? Array<ToDoTask>
     : any
   : TCode extends 400
   ? TContentType extends 'application/json'

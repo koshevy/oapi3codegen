@@ -1,23 +1,21 @@
 <ng-container *ngIf="context$ | async as context; else loading" class="list-group">
-
   <ng-container *ngIf="!context.noInternetError; else noInternet">
-
-    <h1 class="display-4">Task groups</h1>
-
-    <p class="lead">
+    <h2>Task groups</h2>
+    <p>
       Summary {{context.summaryTaskDoneCount}}
       of {{context.summaryTaskCount}}
       tasks done in {{context.summaryGroupCount}} groups
     </p>
-
     <p>
-      <button type="button" class="btn btn-info btn-lg btn-block" (click)="createGroup()">
+      <button type="button" class="btn btn-light btn-lg btn-block" (click)="createGroup()">
         <mat-icon>add_circle</mat-icon>
         Add group
       </button>
     </p>
-
-    <ul *ngIf="context?.groups?.length > 0; else noItems" class="list-group" cdkDropList (cdkDropListDropped)="groupDropped($event)">
+    <ul *ngIf="context?.groups?.length > 0; else noItems"
+        class="list-group"
+        cdkDropList
+        (cdkDropListDropped)="groupDropped($event)">
       <li *ngFor="let group of context.groups; let index = i"
           class="list-group-item"
           [class.optimistic]="group.optimistic"
@@ -26,7 +24,7 @@
           [cdkDragDisabled]="group.optimistic || group.failed || group.removing"
           cdkDrag
       >
-        <h3 ngbDropdown>
+        <h4 ngbDropdown>
           {{group.title}}
           <span class="badge badge-pill badge-info">
             {{ group.countOfDone }} / {{ group.totalCount }}
@@ -34,7 +32,7 @@
 
           <a *ngIf="!group.removing"
              href="javascript:;"
-             class="text-muted text-decoration-none"
+             class="text-muted text-decoration-none pl-2"
              ngbDropdownToggle>
             <mat-icon [inline]="true">more_horiz</mat-icon>
           </a>
@@ -68,22 +66,21 @@
               </button>
             </ng-template>
           </div>
-        </h3>
+        </h4>
         <p>
           <span class="text-muted">
             <mat-icon>done_all</mat-icon>
           </span>
           {{group.description}}
         </p>
-        <span class="grag-handle" cdkDragHandle>
-          <mat-icon>drag_indicator</mat-icon>
+        <span class="drag-handle text-muted" cdkDragHandle>
+          <mat-icon>menu</mat-icon>
         </span>
       </li>
     </ul>
-
     <br>
-
-    <div class="card bottom-panel" [class.loading]="context.isBottomPanelDisabled">
+    <div class="card bottom-panel"
+         [class.loading]="context.isBottomPanelDisabled">
       <div class="card-header">
         <small>
           <a href="javascript:;"
@@ -115,22 +112,28 @@
         </small>
       </div>
     </div>
-
     <ng-template #noItems>
       You have no groups of task yet!
       <br/>
     </ng-template>
-
   </ng-container>
-
 </ng-container>
 
 <ng-template #loading>
-  <div class="loading-wrapper">
-    <div>
-      <mat-spinner [diameter]="300"></mat-spinner>
-    </div>
-  </div>
+  <svg class="page-placeholder"
+       version="1.1"
+       viewBox="-0.5 -0.5 694 310"
+       xmlns="http://www.w3.org/2000/svg">
+    <g>
+      <rect height="17" pointer-events="none" rx="2" ry="2" stroke="none" width="171" x="0" y="0"></rect>
+      <rect height="10" pointer-events="none" rx="2" ry="2" stroke="none" width="231" x="0" y="25"></rect>
+      <rect height="26" pointer-events="none" rx="2" ry="2" stroke="none" width="693" x="0" y="45"></rect>
+      <rect height="58" pointer-events="none" rx="2" ry="2" stroke="none" width="693" x="0" y="81"></rect>
+      <rect height="58" pointer-events="none" rx="2" ry="2" stroke="none" width="693" x="0" y="143"></rect>
+      <rect height="58" pointer-events="none" rx="2" ry="2" stroke="none" width="693" x="0" y="205"></rect>
+      <rect height="30" pointer-events="none" rx="4.5" ry="4.5" stroke="none" width="692" x="0" y="280"></rect>
+    </g>
+  </svg>
 </ng-template>
 
 <ng-template #noInternet>

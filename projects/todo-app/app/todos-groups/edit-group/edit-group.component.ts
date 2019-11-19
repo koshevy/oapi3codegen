@@ -30,15 +30,15 @@ import {
 import { FormControl, FormGroup, Validators, ValidatorFn } from '@angular/forms';
 import { MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 
-import { ToDosGroupBlank, ToDosItemBlank } from '../../api/typings';
+import { ToDoGroupBlank, ToDoTaskBlank } from '../../api/typings';
 import { schema } from '../../api/services';
 import { JsonValidationService } from '../../lib/json-validation.service';
 import {
     clearPersistentData,
     loadPersistentData,
     savePersistentData,
-    textFromTodosItems,
-    todosItemsFromText
+    textFromToDoTasks,
+    ToDoTasksFromText
 } from '../../lib/helpers';
 
 // ***
@@ -52,7 +52,7 @@ const enum ActionTypes {
     UserSaveForm = '[User Save Form]'
 }
 
-const enum FormType {
+const enum EditGroupMode {
     Create = 'create',
     Save = 'save'
 }
@@ -64,7 +64,9 @@ interface FormState {
 }
 
 interface ComponentTruth {
-    formType: FormType;
+    $$lastAction: ActionTypes;
+
+    editGroupMode: EditGroupMode;
 
     /**
      * Raw form data as a source
@@ -78,16 +80,15 @@ interface ComponentTruth {
      */
     initialFormState: FormState;
     isFormDataValid: boolean;
-    lastAction: ActionTypes;
 }
 
 interface ComponentContext extends ComponentTruth {
 
     /**
-     * Complete {@link ToDosGroupBlank} data based on
+     * Complete {@link ToDoGroupBlank} data based on
      * {@link ComponentContext.formState}
      */
-    completeToDosGroupBlank?: ToDosGroupBlank | null;
+    completeToDoGroupBlank?: ToDoGroupBlank | null;
 
     savingEnabled: boolean;
 }
@@ -105,7 +106,7 @@ export interface EditGroupConfig {
      * should be changed after save. If set this form
      * is for save, not for create
      */
-    initialToDosGroupBlank?: ToDosGroupBlank;
+    initialToDoGroupBlank?: ToDoGroupBlank;
 }
 
 // ***
@@ -128,7 +129,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Messages to be merged with `#/components.schemas.ToDosGroupBlank`
+     * Messages to be merged with `#/components.schemas.ToDoGroupBlank`
      * in a {@link schema} in {@link getFormJsonSchemaWithMessages}.
      *
      * Format of this messages supported in {@link https://www.npmjs.com/package/ajv}
@@ -188,12 +189,12 @@ export class EditGroupComponent implements OnInit, OnDestroy {
          */
         let initFormData;
 
-        if (customOptions.initialToDosGroupBlank) {
-            const group = customOptions.initialToDosGroupBlank;
+        if (customOptions.initialToDoGroupBlank) {
+            const group = customOptions.initialToDoGroupBlank;
 
             initFormData = {
                 ..._.pick(group, ['title', 'description']),
-                tasksText: textFromTodosItems(
+                tasksText: textFromToDoTasks(
                     group.items
                 )
             };
@@ -260,20 +261,20 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         this.truth$ = merge(
             // Init data
             of({
+                $$lastAction: ActionTypes.Initialization,
+                editGroupMode: !!this.customOptions.initialToDoGroupBlank
+                    ? EditGroupMode.Save
+                    : EditGroupMode.Create,
                 formState: this.formGroup.value,
-                formType: !!this.customOptions.initialToDosGroupBlank
-                    ? FormType.Save
-                    : FormType.Create,
                 initialFormState: this.formGroup.value,
-                isFormDataValid: this.formGroup.status === 'VALID',
-                lastAction: ActionTypes.Initialization,
+                isFormDataValid: this.formGroup.status === 'VALID'
 
             }),
             // User input
             this.formGroup.valueChanges.pipe(
                 map(formState => ({
-                    formState,
-                    lastAction: ActionTypes.UserChangeForm
+                    $$lastAction: ActionTypes.UserChangeForm,
+                    formState
                 }))
             ),
             // Form Validation
@@ -281,8 +282,8 @@ export class EditGroupComponent implements OnInit, OnDestroy {
                 distinctUntilChanged(),
                 map((status: 'VALID' | any) =>
                     ({
-                        isFormDataValid: status === 'VALID',
-                        lastAction: ActionTypes.ValidationStatusChange
+                        $$lastAction: ActionTypes.ValidationStatusChange,
+                        isFormDataValid: status === 'VALID'
                     })
                 )
             ),
@@ -299,30 +300,30 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     initContextFlow(): void {
         this.context$ = this.truth$.pipe(
             map((truth: ComponentTruth) => {
-                let completeToDosGroupBlank: ToDosGroupBlank | null;
+                let completeToDoGroupBlank: ToDoGroupBlank | null;
                 let savingEnabled: boolean;
 
                 if (truth.isFormDataValid) {
                     const { tasksText } = truth.formState;
 
-                    completeToDosGroupBlank = {
+                    completeToDoGroupBlank = {
                         description: truth.formState.description,
-                        items: todosItemsFromText(tasksText),
+                        items: ToDoTasksFromText(tasksText),
                         title: truth.formState.title
                     };
 
                     // For edit-mode, let save only changed data
-                    savingEnabled = (truth.formType === FormType.Create)
+                    savingEnabled = (truth.editGroupMode === EditGroupMode.Create)
                         ? true
                         : !_.isEqual(truth.formState, truth.initialFormState);
                 } else {
-                    completeToDosGroupBlank = null;
+                    completeToDoGroupBlank = null;
                     savingEnabled = false;
                 }
 
                 return {
                     ...truth,
-                    completeToDosGroupBlank,
+                    completeToDoGroupBlank,
                     savingEnabled
                 };
             }),
@@ -340,7 +341,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
         // Autosave drafts
         autoSaveSubscr = this.context$.pipe(debounceTime(1500)).subscribe(
             (context: ComponentContext) => {
-                if (context.isFormDataValid && (context.formType === FormType.Create)) {
+                if (context.isFormDataValid && (context.editGroupMode === EditGroupMode.Create)) {
                     savePersistentData(
                         this,
                         'formState',
@@ -352,14 +353,14 @@ export class EditGroupComponent implements OnInit, OnDestroy {
 
         // Interactions
         saveFormSubscr = this.context$.subscribe((context: ComponentContext) => {
-            switch (context.lastAction) {
+            switch (context.$$lastAction) {
                 // Close and return result
                 case ActionTypes.UserSaveForm:
                     if (context.savingEnabled) {
                         // clearPersistentData(this, 'formState');
                         this.matBottomSheetRef.dismiss({
-                            ...this.customOptions.initialToDosGroupBlank || {},
-                            ...context.completeToDosGroupBlank
+                            ...this.customOptions.initialToDoGroupBlank || {},
+                            ...context.completeToDoGroupBlank
                         });
                     }
 
@@ -377,12 +378,12 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     /**
      * Make complete schema for validation data of {@link formGroup}.
      *
-     * Gets needed sub-schema from {@link schema} (`#/components.schemas.ToDosGroupBlank`),
+     * Gets needed sub-schema from {@link schema} (`#/components.schemas.ToDoGroupBlank`),
      * and merge with {@link errorMessages}.
      */
     getFormJsonSchemaWithMessages(): object {
         const schemaWithoutMessages = {
-            ...schema.components.schemas.ToDosGroupBlank,
+            ...schema.components.schemas.ToDoGroupBlank,
             components: schema.components,
         };
 
@@ -397,7 +398,7 @@ export class EditGroupComponent implements OnInit, OnDestroy {
 
     onSave() {
         this.actions$.next({
-            lastAction: ActionTypes.UserSaveForm
+            $$lastAction: ActionTypes.UserSaveForm
         });
     }
 
@@ -408,12 +409,12 @@ export class EditGroupComponent implements OnInit, OnDestroy {
     // *** Private methods
 
     private getInitFormData(): {[key: string]: any} {
-        if (this.customOptions.initialToDosGroupBlank) {
-            const group = this.customOptions.initialToDosGroupBlank;
+        if (this.customOptions.initialToDoGroupBlank) {
+            const group = this.customOptions.initialToDoGroupBlank;
 
             return {
                 ..._.pick(group, ['title', 'description']),
-                tasksText: textFromTodosItems(group.items)
+                tasksText: textFromToDoTasks(group.items)
             };
         } else {
             return loadPersistentData(this, 'formState')

@@ -24,7 +24,7 @@ import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { pickResponseBody } from '@codegena/ng-api-service';
 import {
     DeleteGroupResponse,
-    ToDosGroup,
+    ToDoGroup,
     UpdateGroupResponse
 } from '../api/typings';
 import {
@@ -38,7 +38,7 @@ import {
     Partial,
     ActionType,
     ComponentTruth,
-    ComponentContext, ToDosGroupTeaser
+    ComponentContext, ToDoGroupTeaser
 } from './lib/context';
 
 import {
@@ -105,12 +105,12 @@ export class TodosGroupStore {
      * After middleware, reducer obtains ready data
      * to apply for actual in moment context.
      *
-     * @param truth$
+     * @param nextTruth$
      * @param truth
      * @return
      */
     private middleWare(
-        truth$: Observable<ComponentTruth>,
+        nextTruth$: Observable<ComponentTruth>,
         truth: ComponentTruth
     ): Observable<ComponentTruth> {
         switch (truth.$$lastAction) {
@@ -122,12 +122,12 @@ export class TodosGroupStore {
                 )).pipe(
                     // Take until it get canceled
                     this.waitForActionOfGroup(
-                        truth$,
+                        nextTruth$,
                         ActionType.CancelCreation,
                         truth.createdGroup.uid
                     ),
-                    pickResponseBody<ToDosGroup>(201, null, true),
-                    map<ToDosGroup, ComponentContext>(group => ({
+                    pickResponseBody<ToDoGroup>(201, null, true),
+                    map<ToDoGroup, ComponentContext>(group => ({
                         ...truth,
                         createdGroup: markGroupTeaserAs(
                             group,
@@ -156,12 +156,12 @@ export class TodosGroupStore {
                 ).pipe(
                     // Take until it get canceled
                     this.waitForActionOfGroup(
-                        truth$,
+                        nextTruth$,
                         ActionType.CancelUpdating,
                         truth.editedGroup.uid
                     ),
                     pickResponseBody<UpdateGroupResponse<200>>(200, null, true),
-                    map<ToDosGroup, ComponentContext>(group => ({
+                    map<ToDoGroup, ComponentContext>(group => ({
                         ...truth,
                         editedGroup: markGroupTeaserAs(group, 'clear')
                     })),
@@ -182,14 +182,15 @@ export class TodosGroupStore {
                     truth,
                     [
                         'isComplete',
-                        'isCurrentGroup'
+                        'isCreateGroupModalOpen',
+                        'isCurrentGroup',
                     ]
                 );
 
                 // Get all groups from API
                 return this.getGroupsService.request(null, getGroupsParams).pipe(
-                    pickResponseBody<ToDosGroup[]>(200),
-                    map<ToDosGroup[], ComponentContext>(todosGroups => ({
+                    pickResponseBody<ToDoGroup[]>(200),
+                    map<ToDoGroup[], ComponentContext>(todosGroups => ({
                         ...truth,
                         groups: createTodoGroupTeasers(todosGroups),
                         noInternetError: false
@@ -200,9 +201,9 @@ export class TodosGroupStore {
             case ActionType.MarkAllAsDone:
             case ActionType.MarkAllAsUndone:
 
-                return forkJoin(_.map<ToDosGroupTeaser[], Observable<ToDosGroupTeaser>>(
+                return forkJoin(_.map<ToDoGroupTeaser[], Observable<ToDoGroupTeaser>>(
                     truth.groups,
-                    (group: ToDosGroupTeaser) =>
+                    (group: ToDoGroupTeaser) =>
                         this.updateGroupService.request(
                             markGroupAsDone(
                                 group,
@@ -217,12 +218,12 @@ export class TodosGroupStore {
                         ).pipe(
                             // Take until it get canceled
                             this.waitForActionOfGroup(
-                                truth$,
+                                nextTruth$,
                                 ActionType.CancelUpdating,
                                 group.uid
                             ),
                             pickResponseBody<UpdateGroupResponse<200>>(200, null, true),
-                            map<ToDosGroup, ToDosGroupTeaser>(createTodoGroupTeaser),
+                            map<ToDoGroup, ToDoGroupTeaser>(createTodoGroupTeaser),
                             catchError(() => of(group))
                         )
                 )).pipe(map(groups =>
@@ -248,12 +249,12 @@ export class TodosGroupStore {
                 ).pipe(
                     // Take until it get canceled
                     this.waitForActionOfGroup(
-                        truth$,
+                        nextTruth$,
                         ActionType.CancelUpdating,
                         truth.editedGroup.uid
                     ),
                     pickResponseBody<UpdateGroupResponse<200>>(200, null, true),
-                    map<ToDosGroup, ComponentContext>(group => ({
+                    map<ToDoGroup, ComponentContext>(group => ({
                         ...truth,
                         editedGroup: markGroupTeaserAs(
                             group,
@@ -271,7 +272,7 @@ export class TodosGroupStore {
                     })
                 );
 
-            case ActionType.RemoveItem:
+            case ActionType.DeleteItem:
 
                 return this.deleteGroupService.request(
                     null,
@@ -442,19 +443,19 @@ export class TodosGroupStore {
                     )
                 };
 
-            case ActionType.RemoveItem:
+            case ActionType.DeleteItem:
 
                 return {
                     ...context,
                     ...truth,
-                    groups: (truth.removedGroup as ToDosGroupTeaser).failed
+                    groups: (truth.removedGroup as ToDoGroupTeaser).failed
                         // deleting was failed
-                        ? updateGroupsListItem(context.groups, truth.removedGroup)
+                        ? updateGroupsListItem(context.groups, truth.removedGroup, 'clear')
                         // successfully deleted
                         : removeGroupFromList(context.groups, truth.removedGroup.uid)
                 };
 
-            case ActionType.RemoveItemOptimistic:
+            case ActionType.DeleteItemOptimistic:
 
                 return {
                     ...context,
@@ -487,12 +488,20 @@ export class TodosGroupStore {
         context.areAllIncomplete = (context.summaryTaskCount === 0);
         context.isBottomPanelDisabled = _.findIndex(
             context.groups,
-            (group: ToDosGroupTeaser) => group.optimistic || group.removing || group.removing
+            (group: ToDoGroupTeaser) => group.optimistic || group.removing || group.removing
         ) !== -1;
 
         return context;
     }
 
+    /**
+     * fixme localTruth.removedGroup.uid === uid
+     *
+     * @param {Observable<ComponentTruth>} truth$
+     * @param {ActionType} actionType
+     * @param {number} uid
+     * @return {MonoTypeOperatorFunction<any>}
+     */
     private waitForActionOfGroup(
         truth$: Observable<ComponentTruth>,
         actionType: ActionType,

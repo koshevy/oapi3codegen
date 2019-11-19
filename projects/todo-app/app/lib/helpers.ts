@@ -5,7 +5,7 @@
 
 // *** imports
 import * as _ from 'lodash';
-import { ToDosItemBlank } from '../../app/api/typings';
+import { ToDoTaskBlank } from '../../app/api/typings';
 import { FormControl } from '@angular/forms';
 
 /**
@@ -22,14 +22,14 @@ const taskTextReg = /^\s{0,128}\[\s{0,12}(x|X)\s{0,8}\]\s{0,128}((\S+).+)/;
  * [x] Close reviews of Andromeda and Big Dipper
  * Do planing of sprint Cassiopeia
  * ```
- * to array of {@link ToDosItemBlank}.
+ * to array of {@link ToDoTaskBlank}.
  */
-export function todosItemsFromText(tasksText: string): ToDosItemBlank[] {
+export function ToDoTasksFromText(tasksText: string): ToDoTaskBlank[] {
     if (!tasksText) {
         return [];
     }
 
-    const items = _.map<string, ToDosItemBlank>(
+    const items = _.map<string, ToDoTaskBlank>(
         (tasksText || '').split('\n'),
         (srcLine) => {
             const item = {
@@ -53,10 +53,10 @@ export function todosItemsFromText(tasksText: string): ToDosItemBlank[] {
     return items;
 }
 
-export function textFromTodosItems(items: ToDosItemBlank[]): string {
-    return _.map<ToDosItemBlank[], string>(
+export function textFromToDoTasks(items: ToDoTaskBlank[]): string {
+    return _.map<ToDoTaskBlank[], string>(
         items || [],
-        (item: ToDosItemBlank) => `${item.isDone ? '[x] ' : ''}${item.title}`
+        (item: ToDoTaskBlank) => `${item.isDone ? '[x] ' : ''}${item.title}`
     ).join('\n');
 }
 

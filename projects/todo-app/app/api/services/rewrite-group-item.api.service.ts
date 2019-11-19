@@ -21,7 +21,7 @@ import {
   RewriteGroupItemRequest
 } from '../typings';
 // Schemas
-import { schema as domainSchema } from './schema.3ebc53a18cb5a06777c416';
+import { schema as domainSchema } from './schema.bab11a745173add3a0f9df';
 
 /**
  * Service for angular based on ApiAgent solution.
@@ -56,7 +56,7 @@ export class RewriteGroupItemService extends ApiService<
    * API servers.
    */
   protected get servers(): string[] {
-    return ['http://localhost'];
+    return ['http://localhost:3000'];
   }
 
   /**
@@ -74,8 +74,12 @@ export class RewriteGroupItemService extends ApiService<
     return {
       params: {
         properties: {
-          groupId: { type: 'number' },
-          itemId: { type: 'number' },
+          groupId: {
+            $ref: 'schema.bab11a745173add3a0f9df#/components/schemas/Uid'
+          },
+          itemId: {
+            $ref: 'schema.bab11a745173add3a0f9df#/components/schemas/Uid'
+          },
           forceSave: { type: ['boolean', 'null'], default: null }
         },
         required: ['groupId', 'itemId'],
@@ -84,37 +88,37 @@ export class RewriteGroupItemService extends ApiService<
       request: {
         'application/json': {
           $ref:
-            'schema.3ebc53a18cb5a06777c416#/components/schemas/ToDosItemBlank'
+            'schema.bab11a745173add3a0f9df#/components/schemas/ToDoTaskBlank'
         }
       },
       response: {
         '200': {
           'application/json': {
-            $ref: 'schema.3ebc53a18cb5a06777c416#/components/schemas/ToDosItem'
+            $ref: 'schema.bab11a745173add3a0f9df#/components/schemas/ToDoTask'
           }
         },
         '400': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorBadRequest'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorBadRequest'
           }
         },
         '404': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorNotFound'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorNotFound'
           }
         },
         '409': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorConflict'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorConflict'
           }
         },
         '500': {
           'application/json': {
             $ref:
-              'schema.3ebc53a18cb5a06777c416#/components/schemas/HttpErrorServer'
+              'schema.bab11a745173add3a0f9df#/components/schemas/HttpErrorServer'
           }
         }
       }
