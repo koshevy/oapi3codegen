@@ -1,16 +1,13 @@
 import * as _ from 'lodash';
 import { GlobalPartial as Partial } from 'lodash/common/common';
 
-import {
-    assertUniqueTitle,
-    createGroupFromBlank
-} from './helpers';
+import { assertUniqueTitle, createGroupFromBlank } from './helpers';
 
 import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
-    NotFoundException,
+    NotFoundException
 } from '@nestjs/common';
 
 import {
@@ -19,7 +16,7 @@ import {
     GetGroupsResponse,
     ToDoGroup,
     ToDoGroupBlank,
-    ToDoTask,
+    ToDoTask
 } from './schema/typings';
 
 import { defaultGroups } from './defaults';
@@ -31,7 +28,6 @@ import { defaultGroups } from './defaults';
  */
 @Injectable()
 export class TodoStorageService {
-
     public session;
 
     constructor() {
@@ -56,10 +52,10 @@ export class TodoStorageService {
 
         return _(result)
             .filter((group: ToDoGroup) =>
-                filters.isComplete ? group.isComplete : true,
+                filters.isComplete ? group.isComplete : true
             )
             .map((group: ToDoGroup) =>
-                (filters.withItems === false) ? {...group, items: []} : group,
+                filters.withItems === false ? { ...group, items: [] } : group
             )
             .value();
     }
@@ -69,11 +65,18 @@ export class TodoStorageService {
      * @return
      * @throws NotFoundException
      */
-    getGroup(groupUid: string): ToDoGroup {
+    getGroupById(groupUid: string): ToDoGroup {
         const groups = this.getGroups();
-        const alreadyExists = this.getGroupById(groupUid);
+        const foundGroup = _.find(
+            groups,
+            (group: ToDoGroup) => group.uid === groupUid
+        );
 
-        return alreadyExists;
+        if (!foundGroup) {
+            throw new NotFoundException(`Group with uid=${groupUid} not found`);
+        }
+
+        return foundGroup;
     }
 
     /**
@@ -103,9 +106,7 @@ export class TodoStorageService {
          * Omitted options of `ToDoGroupBlank`:
          * if `items` not set in blank, ignoring in result group too.
          */
-        const omitOptions = groupBlank.items
-            ? ['uid']
-            : ['uid', 'items'];
+        const omitOptions = groupBlank.items ? ['uid'] : ['uid', 'items'];
 
         const group: ToDoGroup = createGroupFromBlank(groupBlank);
         const patch: Partial<ToDoGroup> = _.omit(group, omitOptions);
@@ -127,19 +128,19 @@ export class TodoStorageService {
         return alreadyExistsGroup;
     }
 
-    // *** Private
-
-    private getGroupById(groupUid: string): ToDoGroup {
-        const groups = this.getGroups();
-        const foundGroup = _.find(
-            groups,
-            (group: ToDoGroup) => group.uid === groupUid,
+    deleteGroup(groupUid: string): void {
+        const foundIndex = _.findIndex(
+            this.getGroups(),
+            (group: ToDoGroup) => group.uid === groupUid
         );
 
-        if (!foundGroup) {
+        if (foundIndex === -1) {
             throw new NotFoundException(`Group with uid=${groupUid} not found`);
         }
 
-        return foundGroup;
+        const groups = this.getGroups();
+        groups.splice(foundIndex, 1);
+        this.session.groups = groups;
     }
+
 }

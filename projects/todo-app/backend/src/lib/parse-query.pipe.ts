@@ -1,13 +1,11 @@
 import * as _ from 'lodash';
-import {
-    ArgumentMetadata,
-    PipeTransform,
-} from '@nestjs/common';
+import { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 
 /**
  * Parses numbers and booleans in query.
  */
-export class TransformQueryPipe<T extends object = object> implements PipeTransform<object> {
+export class ParseQueryPipe<T extends object = object>
+    implements PipeTransform<object> {
     /**
      * Method that accesses and performs optional transformation on argument for
      * in-flight requests.
@@ -21,7 +19,7 @@ export class TransformQueryPipe<T extends object = object> implements PipeTransf
 }
 
 function parseValuesOfObject<T extends object>(data: object): T {
-    return _.mapValues<object, any>(data, (value) => {
+    return _.mapValues<object, any>(data, value => {
         if (!value) {
             return null;
         }
@@ -29,7 +27,7 @@ function parseValuesOfObject<T extends object>(data: object): T {
         if (_.includes(['true', 'false'], value)) {
             return {
                 true: true,
-                false: false,
+                false: false
             }[value];
         }
 

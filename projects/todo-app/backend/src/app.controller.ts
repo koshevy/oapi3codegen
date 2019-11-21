@@ -1,10 +1,8 @@
-import { asyncScheduler, of, Observable } from 'rxjs';
-import { observeOn } from 'rxjs/operators';
-
 import {
     BadRequestException,
     Body,
     Controller,
+    Delete,
     Get,
     HttpCode,
     HttpStatus,
@@ -16,14 +14,16 @@ import {
     Req,
     Res,
     Session,
-    ParseIntPipe,
+    ParseIntPipe
 } from '@nestjs/common';
 import { Response } from 'express';
 
-import { TransformQueryPipe } from './lib/transform-query.pipe';
+import { ParseQueryPipe } from './lib/parse-query.pipe';
 import {
     CreateGroupRequest,
     CreateGroupResponse,
+    DeleteGroupParameters,
+    DeleteGroupResponse,
     GetGroupParameters,
     GetGroupResponse,
     GetGroupsResponse,
@@ -34,9 +34,10 @@ import {
     UpdateGroupResponse,
     RewriteGroupParameters,
     RewriteGroupRequest,
-    RewriteGroupResponse,
+    RewriteGroupResponse
 } from './schema/typings';
-import { TodoStorageService } from './todoStorageService';
+
+import { TodoStorageService } from './todo-storage.service';
 
 @Controller('group')
 export class AppController {
@@ -46,40 +47,40 @@ export class AppController {
 
     @Get()
     getGroups(
-        @Query(TransformQueryPipe) query: GetGroupsParameters,
-        @Session() session,
+        @Query(ParseQueryPipe) query: GetGroupsParameters,
+        @Session() session
     ): GetGroupsResponse<HttpStatus.OK> {
         return this.appService
-            .setSession(session)
-            .getGroups(query);
+          .setSession(session)
+          .getGroups(query);
     }
 
     @Get(':groupId')
     getGroup(
-        @Param(TransformQueryPipe) params: GetGroupParameters,
-        @Session() session,
+        @Param(ParseQueryPipe) params: GetGroupParameters,
+        @Session() session
     ): GetGroupResponse<HttpStatus.OK> {
         return this.appService
-            .setSession(session)
-            .getGroup(params.groupId);
+          .setSession(session)
+          .getGroupById(params.groupId);
     }
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     postGroup(
         @Body() body: CreateGroupRequest,
-        @Session() session,
+        @Session() session
     ): CreateGroupResponse<HttpStatus.CREATED> {
         return this.appService
-            .setSession(session)
-            .createGroup(body);
+          .setSession(session)
+          .createGroup(body);
     }
 
     @Put(':groupId')
     rewriteGroup(
-        @Param(TransformQueryPipe) params: RewriteGroupParameters,
+        @Param(ParseQueryPipe) params: RewriteGroupParameters,
         @Body() body: RewriteGroupRequest,
-        @Session() session,
+        @Session() session
     ): RewriteGroupResponse<HttpStatus.OK> {
         return this.appService
             .setSession(session)
@@ -88,12 +89,26 @@ export class AppController {
 
     @Patch(':groupId')
     patchGroup(
-        @Param(TransformQueryPipe) params: UpdateGroupParameters,
+        @Param(ParseQueryPipe) params: UpdateGroupParameters,
         @Body() body: UpdateGroupRequest,
-        @Session() session,
+        @Session() session
     ): UpdateGroupResponse<HttpStatus.OK> {
         return this.appService
             .setSession(session)
             .patchGroup(params.groupId, body);
+    }
+
+    @Delete(':groupId')
+    @HttpCode(HttpStatus.ACCEPTED)
+    deleteGroup(
+        @Param(ParseQueryPipe) params: UpdateGroupParameters,
+        @Body() body: UpdateGroupRequest,
+        @Session() session
+    ): DeleteGroupResponse<HttpStatus.ACCEPTED> {
+        this.appService
+            .setSession(session)
+            .deleteGroup(params.groupId);
+
+        return null;
     }
 }
