@@ -24,6 +24,10 @@ function parseValuesOfObject<T extends object>(data: object): T {
             return null;
         }
 
+        if ('object' === typeof value) {
+            return parseValuesOfObject(value);
+        }
+
         if (_.includes(['true', 'false'], value)) {
             return {
                 true: true,
@@ -31,16 +35,12 @@ function parseValuesOfObject<T extends object>(data: object): T {
             }[value];
         }
 
-        if ('object' === typeof value) {
-            return parseValuesOfObject(value);
-        }
-
         const numValue = Number(value);
 
         if (!Number.isNaN(numValue)) {
             return numValue;
-        } else {
-            return value;
         }
+
+        return value;
     }) as T;
 }
