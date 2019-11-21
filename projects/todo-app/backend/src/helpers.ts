@@ -35,13 +35,13 @@ export function createGroupFromBlank(groupBlank: ToDoGroupBlank): ToDoGroup {
         },
     );
 
-    return {
+    return updateIsCompleteStatus({
         ...groupBlank,
         dateChanged: nowISO,
         dateCreated: nowISO,
         items,
         uid: groupUid,
-    };
+    });
 }
 
 /**
@@ -81,7 +81,7 @@ export function assertUniqueTitle(
     items: Array<ToDoGroup | ToDoTask>,
     title: string,
     excludeUid?: string,
-) {
+): void {
     const alreadyExists = _.find(
         items,
         (item: ToDoGroup | ToDoTask) =>
@@ -95,4 +95,23 @@ export function assertUniqueTitle(
             `There are alreay exists error with id=${alreadyExists.uid}`,
         ].join('\n'));
     }
+}
+
+/**
+ * Recalculate `isComplete` property of {@link ToDoGroup}-object.
+ * Mutates object.
+ *
+ * @param group
+ */
+export function updateIsCompleteStatus(group: ToDoGroup): ToDoGroup {
+    group.isComplete = _.reduce<ToDoTask[], boolean>(
+        group.items,
+        (result, task: ToDoTask) =>
+            !task.isDone
+                ? false
+                : (result === null) ? true : result,
+        null
+    );
+
+    return group;
 }
