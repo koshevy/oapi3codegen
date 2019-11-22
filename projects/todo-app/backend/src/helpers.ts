@@ -8,8 +8,6 @@ import {
 } from './schema/typings';
 import { BadRequestException } from "@nestjs/common";
 
-const nowISO = getNowISO();
-
 export function getNowISO(): string {
     const date = new Date();
     return date.toISOString();
@@ -23,6 +21,7 @@ export function getNowISO(): string {
  * @return
  */
 export function createGroupFromBlank(groupBlank: ToDoGroupBlank): ToDoGroup {
+    const nowISO = getNowISO();
     const groupUid = generateUid();
     const items = _.map(
         (groupBlank.items || []),
@@ -58,6 +57,7 @@ export function createTaskFromBlank(
     position?: number,
     groupUid?: string,
 ): ToDoTask {
+    const nowISO = getNowISO();
     const newTask: ToDoTask = {
         ...blank,
         dateChanged: nowISO,
@@ -66,7 +66,7 @@ export function createTaskFromBlank(
         position: 0,
     };
 
-    if (position) {
+    if (Number.isInteger(position) && (position >= 0)) {
         newTask.position = position;
     }
 
