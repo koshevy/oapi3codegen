@@ -17,6 +17,7 @@ import {
     ParseIntPipe
 } from '@nestjs/common';
 import { Response } from 'express';
+import { GlobalPartial as Partial } from 'lodash/common/common';
 
 import { ParseQueryPipe } from './lib/parse-query.pipe';
 import {
@@ -39,7 +40,10 @@ import {
     UpdateGroupResponse,
     RewriteGroupParameters,
     RewriteGroupRequest,
-    RewriteGroupResponse
+    RewriteGroupResponse,
+    RewriteGroupItemParameters,
+    RewriteGroupItemRequest,
+    RewriteGroupItemResponse,
 } from './schema/typings';
 
 import { TodoStorageService } from './todo-storage.service';
@@ -62,12 +66,12 @@ export class AppController {
 
     @Get(':groupId')
     getGroup(
-        @Param(ParseQueryPipe) params: GetGroupParameters,
+        @Param(ParseQueryPipe) { groupId }: GetGroupParameters,
         @Session() session
     ): GetGroupResponse<HttpStatus.OK> {
         return this.appService
           .setSession(session)
-          .getGroupByUid(params.groupId);
+          .getGroupByUid(groupId);
     }
 
     @Post()
@@ -83,61 +87,83 @@ export class AppController {
 
     @Put(':groupId')
     rewriteGroup(
-        @Param(ParseQueryPipe) params: RewriteGroupParameters,
+        @Param(ParseQueryPipe) { groupId }: RewriteGroupParameters,
         @Body() body: RewriteGroupRequest,
         @Session() session
     ): RewriteGroupResponse<HttpStatus.OK> {
         return this.appService
             .setSession(session)
-            .rewriteGroup(params.groupId, body);
+            .rewriteGroup(groupId, body);
     }
 
     @Patch(':groupId')
     patchGroup(
-        @Param(ParseQueryPipe) params: UpdateGroupParameters,
+        @Param(ParseQueryPipe) { groupId }: UpdateGroupParameters,
         @Body() body: UpdateGroupRequest,
         @Session() session
     ): UpdateGroupResponse<HttpStatus.OK> {
         return this.appService
             .setSession(session)
-            .patchGroup(params.groupId, body);
+            .patchGroup(groupId, body);
     }
 
     @Delete(':groupId')
     @HttpCode(HttpStatus.ACCEPTED)
     deleteGroup(
-        @Param(ParseQueryPipe) params: UpdateGroupParameters,
+        @Param(ParseQueryPipe) { groupId }: UpdateGroupParameters,
         @Body() body: UpdateGroupRequest,
         @Session() session
     ): DeleteGroupResponse<HttpStatus.ACCEPTED> {
         this.appService
             .setSession(session)
-            .deleteGroup(params.groupId);
+            .deleteGroup(groupId);
 
         return null;
     }
 
-    /**
-     * todo support filters (isComplete)
-     */
     @Get(':groupId/item')
     getTasks(
-        @Param(ParseQueryPipe) params: GetGroupItemsParameters,
+        @Param(ParseQueryPipe) params: Partial<GetGroupItemsParameters>,
+        @Query(ParseQueryPipe) query: Partial<GetGroupsParameters>,
         @Session() session
     ): GetGroupItemsResponse<HttpStatus.OK> {
+        const {groupId, isComplete} = {...query, ...params} as GetGroupItemsParameters;
+
         return this.appService
             .setSession(session)
-            .getTasksOfGroup(params.groupId);
+            .getTasksOfGroup(groupId, isComplete);
     }
 
     @Post(':groupId/item')
     createTask(
-        @Param(ParseQueryPipe) params: CreateGroupItemParameters,
+        @Param(ParseQueryPipe) { groupId }: CreateGroupItemParameters,
         @Body() body: CreateGroupItemRequest,
         @Session() session
     ): CreateGroupItemResponse<HttpStatus.CREATED> {
         return this.appService
             .setSession(session)
-            .createTaskOfGroup(params.groupId, body);
+            .createTaskOfGroup(groupId, body);
+    }
+
+    @Put(':groupId/item/:itemId')
+    putTask(
+        @Param(ParseQueryPipe) {groupId, itemId}: RewriteGroupItemParameters,
+        @Body() body: RewriteGroupItemRequest,
+        @Session() session
+    ): RewriteGroupItemResponse<HttpStatus.OK> {
+        return this.appService
+            .setSession(session)
+            .patchTask(groupId, itemId, body);
+    }
+
+    @Patch(':groupId/item/:itemId')
+    patchTask(
+        @Param(ParseQueryPipe) {groupId, itemId}: RewriteGroupItemParameters,
+        @Body() body: Partial<RewriteGroupItemRequest>,
+        @Session() session
+    ): RewriteGroupItemResponse<HttpStatus.OK> {
+        return this.appService
+            .setSession(session)
+            .patchTask(groupId, itemId, body);
     }
 }

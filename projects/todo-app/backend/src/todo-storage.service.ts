@@ -105,8 +105,6 @@ export class TodoStorageService {
 
     /**
      * @param groupBlank
-     * @return
-     * @throws InternalServerErrorException
      * @return Created group with assigned UID and meta-data
      */
     createGroup(groupBlank: ToDoGroupBlank): ToDoGroup {
@@ -126,6 +124,7 @@ export class TodoStorageService {
      * @param groupUid
      * @param groupBlank
      * @return Updated group data
+     * @throws NotFoundException
      */
     rewriteGroup(groupUid: string, groupBlank: ToDoGroupBlank): ToDoGroup {
         const alreadyExistsGroup = this.getGroupByUid(groupUid);
@@ -137,21 +136,20 @@ export class TodoStorageService {
          * if `items` not set in blank, ignoring in result group too.
          */
         const omitOptions = groupBlank.items
-            ? ['uid']
-            : ['uid', 'items'];
+            ? ['dateCreated', 'uid']
+            : ['dateCreated', 'items', 'uid'];
 
         const group: ToDoGroup = createGroupFromBlank(groupBlank);
         const patch: Partial<ToDoGroup> = _.omit(group, omitOptions);
 
-        _.assign(alreadyExistsGroup, patch);
-
-        return alreadyExistsGroup;
+        return _.assign(alreadyExistsGroup, patch);
     }
 
     /**
      * @param groupUid
      * @param patch
      * @return Updated group data
+     * @throws NotFoundException
      */
     patchGroup(groupUid: string, patch: Partial<ToDoGroupBlank>): ToDoGroup {
         const alreadyExistsGroup = this.getGroupByUid(groupUid);
@@ -160,13 +158,15 @@ export class TodoStorageService {
             assertUniqueTitle(this.getGroups(), patch.title, groupUid);
         }
 
-        _.assign(alreadyExistsGroup, _.omit(patch, ['uid', 'items']));
-
-        return alreadyExistsGroup;
+        return _.assign(
+            alreadyExistsGroup,
+            _.omit(patch, ['uid', 'dateCreated', 'items'])
+        );
     }
 
     /**
      * @param groupUid
+     * @throws NotFoundException
      */
     deleteGroup(groupUid: string): void {
         const foundIndex = _.findIndex(
@@ -184,20 +184,26 @@ export class TodoStorageService {
     }
 
     /**
-     * todo support filters (isComplete)
-     *
      * @param groupId
-     * @return
-     * Filtered tasks of group
+     * @param isComplete
+     * @return Filtered tasks of group
+     * @throws NotFoundException
      */
-    getTasksOfGroup(groupId: string): ToDoTask[] {
-        return this.getGroupByUid(groupId).items;
+    getTasksOfGroup(groupUid: string, isComplete?: boolean): ToDoTask[] {
+        return _.filter(
+            this.getGroupByUid(groupUid).items,
+            (task: ToDoTask) =>
+                ('boolean' === typeof isComplete)
+                    ? (task.isDone === isComplete)
+                    : true
+        );
     }
 
     /**
      * @param groupUid
      * @param taskBlank
      * @return Created task with assigned uid and meta-data
+     * @throws NotFoundException
      */
     createTaskOfGroup(groupUid: string, taskBlank: ToDoTaskBlank): ToDoTask {
         const group = this.getGroupByUid(groupUid);
@@ -210,5 +216,53 @@ export class TodoStorageService {
         group.items = [...group.items as ToDoTask[], newTask];
 
         return newTask;
+    }
+
+    /**
+     * @param groupUid
+     * @param taskUid
+     * @param taskBlank Partial task data
+     * @return Updated task
+     * @throws NotFoundException
+     */
+    patchTask(groupUid: string, taskUid: string, taskBlank: Partial<ToDoTaskBlank>): ToDoTask {
+        const task = this.getTask(groupUid, taskUid);
+        const updatedData = createTaskFromBlank(
+            {...task, ...taskBlank},
+            null,
+            groupUid
+        );
+
+        return _.assign(
+            task,
+            _.omit(updatedData, [
+                'dateCreated',
+                'position',
+                'uid',
+            ])
+        )
+    }
+
+    // *** Private
+
+    /**
+     * @param {string} groupUid
+     * @param {string} taskUid
+     * @throws NotFoundException
+     */
+    private getTask(groupUid: string, taskUid: string): ToDoTask {
+        const group = this.getGroupByUid(groupUid);
+        const foundTask = _.find(
+            group.items,
+            (task: ToDoTask) => task.uid === taskUid
+        );
+
+        if (!foundTask) {
+            throw new NotFoundException(
+                `Task with uid=${taskUid} not found in group ${groupUid}`
+            );
+        }
+
+        return foundTask;
     }
 }
