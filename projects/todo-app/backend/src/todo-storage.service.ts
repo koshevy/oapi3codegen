@@ -1,7 +1,11 @@
 import * as _ from 'lodash';
 import { GlobalPartial as Partial } from 'lodash/common/common';
 
-import { assertUniqueTitle, createGroupFromBlank } from './helpers';
+import {
+    assertUniqueTitle,
+    createGroupFromBlank,
+    createTaskFromBlank
+} from './helpers';
 
 import {
     BadRequestException,
@@ -16,7 +20,8 @@ import {
     GetGroupsResponse,
     ToDoGroup,
     ToDoGroupBlank,
-    ToDoTask
+    ToDoTask,
+    ToDoTaskBlank
 } from './schema/typings';
 
 import { defaultGroups } from './defaults';
@@ -34,11 +39,29 @@ export class TodoStorageService {
         // ...
     }
 
+    /**
+     * Set session injected to controller action.
+     * Session should be set before first using of service:
+     *
+     * @example
+     * ```
+     * return this.appService
+     *     .setSession(session)
+     *     .patchGroup(params.groupId, body);
+     * ```
+     *
+     * @param session
+     * @return
+     */
     setSession(session): TodoStorageService {
         this.session = session;
         return this;
     }
 
+    /**
+     * @param filters
+     * @return Array of found groups
+     */
     getGroups(filters: GetGroupsParameters = {}): ToDoGroup[] {
         let result = defaultGroups;
 
@@ -64,8 +87,9 @@ export class TodoStorageService {
      * @param
      * @return
      * @throws NotFoundException
+     * @return Found group
      */
-    getGroupById(groupUid: string): ToDoGroup {
+    getGroupByUid(groupUid: string): ToDoGroup {
         const groups = this.getGroups();
         const foundGroup = _.find(
             groups,
@@ -83,6 +107,7 @@ export class TodoStorageService {
      * @param groupBlank
      * @return
      * @throws InternalServerErrorException
+     * @return Created group with assigned UID and meta-data
      */
     createGroup(groupBlank: ToDoGroupBlank): ToDoGroup {
         groupBlank.title = (groupBlank.title || '').trim();
@@ -97,8 +122,13 @@ export class TodoStorageService {
         return newGroup;
     }
 
+    /**
+     * @param groupUid
+     * @param groupBlank
+     * @return Updated group data
+     */
     rewriteGroup(groupUid: string, groupBlank: ToDoGroupBlank): ToDoGroup {
-        const alreadyExistsGroup = this.getGroupById(groupUid);
+        const alreadyExistsGroup = this.getGroupByUid(groupUid);
 
         assertUniqueTitle(this.getGroups(), groupBlank.title, groupUid);
 
@@ -106,7 +136,9 @@ export class TodoStorageService {
          * Omitted options of `ToDoGroupBlank`:
          * if `items` not set in blank, ignoring in result group too.
          */
-        const omitOptions = groupBlank.items ? ['uid'] : ['uid', 'items'];
+        const omitOptions = groupBlank.items
+            ? ['uid']
+            : ['uid', 'items'];
 
         const group: ToDoGroup = createGroupFromBlank(groupBlank);
         const patch: Partial<ToDoGroup> = _.omit(group, omitOptions);
@@ -116,8 +148,13 @@ export class TodoStorageService {
         return alreadyExistsGroup;
     }
 
+    /**
+     * @param groupUid
+     * @param patch
+     * @return Updated group data
+     */
     patchGroup(groupUid: string, patch: Partial<ToDoGroupBlank>): ToDoGroup {
-        const alreadyExistsGroup = this.getGroupById(groupUid);
+        const alreadyExistsGroup = this.getGroupByUid(groupUid);
 
         if (patch.title) {
             assertUniqueTitle(this.getGroups(), patch.title, groupUid);
@@ -128,6 +165,9 @@ export class TodoStorageService {
         return alreadyExistsGroup;
     }
 
+    /**
+     * @param groupUid
+     */
     deleteGroup(groupUid: string): void {
         const foundIndex = _.findIndex(
             this.getGroups(),
@@ -143,4 +183,32 @@ export class TodoStorageService {
         this.session.groups = groups;
     }
 
+    /**
+     * todo support filters (isComplete)
+     *
+     * @param groupId
+     * @return
+     * Filtered tasks of group
+     */
+    getTasksOfGroup(groupId: string): ToDoTask[] {
+        return this.getGroupByUid(groupId).items;
+    }
+
+    /**
+     * @param groupUid
+     * @param taskBlank
+     * @return Created task with assigned uid and meta-data
+     */
+    createTaskOfGroup(groupUid: string, taskBlank: ToDoTaskBlank): ToDoTask {
+        const group = this.getGroupByUid(groupUid);
+        const newTask = createTaskFromBlank(
+            taskBlank,
+            group.items.length,
+            groupUid
+        );
+
+        group.items = [...group.items as ToDoTask[], newTask];
+
+        return newTask;
+    }
 }

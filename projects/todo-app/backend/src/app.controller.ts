@@ -22,12 +22,17 @@ import { ParseQueryPipe } from './lib/parse-query.pipe';
 import {
     CreateGroupRequest,
     CreateGroupResponse,
+    CreateGroupItemParameters,
+    CreateGroupItemRequest,
+    CreateGroupItemResponse,
     DeleteGroupParameters,
     DeleteGroupResponse,
     GetGroupParameters,
     GetGroupResponse,
     GetGroupsResponse,
     GetGroupsParameters,
+    GetGroupItemsParameters,
+    GetGroupItemsResponse,
     ToDoGroup,
     UpdateGroupParameters,
     UpdateGroupRequest,
@@ -62,7 +67,7 @@ export class AppController {
     ): GetGroupResponse<HttpStatus.OK> {
         return this.appService
           .setSession(session)
-          .getGroupById(params.groupId);
+          .getGroupByUid(params.groupId);
     }
 
     @Post()
@@ -110,5 +115,29 @@ export class AppController {
             .deleteGroup(params.groupId);
 
         return null;
+    }
+
+    /**
+     * todo support filters (isComplete)
+     */
+    @Get(':groupId/item')
+    getTasks(
+        @Param(ParseQueryPipe) params: GetGroupItemsParameters,
+        @Session() session
+    ): GetGroupItemsResponse<HttpStatus.OK> {
+        return this.appService
+            .setSession(session)
+            .getTasksOfGroup(params.groupId);
+    }
+
+    @Post(':groupId/item')
+    createTask(
+        @Param(ParseQueryPipe) params: CreateGroupItemParameters,
+        @Body() body: CreateGroupItemRequest,
+        @Session() session
+    ): CreateGroupItemResponse<HttpStatus.CREATED> {
+        return this.appService
+            .setSession(session)
+            .createTaskOfGroup(params.groupId, body);
     }
 }
