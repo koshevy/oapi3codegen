@@ -14,6 +14,9 @@
   "paths": {
     "/group": {
       "get": {
+        "tags": [
+          "groups"
+        ],
         "summary": "Get all TODO's groups",
         "operationId": "getGroups",
         "description": "Returns all TODO's group with their items or without. By default skips items, suggesting you want to get top level meta-data. It could be filtered by `isComplete` status.",
@@ -48,6 +51,9 @@
         }
       },
       "post": {
+        "tags": [
+          "groups"
+        ],
         "operationId": "createGroup",
         "summary": "Create a new TODO's group",
         "description": "Creates new group with exists items, or without",
@@ -77,6 +83,9 @@
     },
     "/group/{groupId}": {
       "get": {
+        "tags": [
+          "groups"
+        ],
         "operationId": "getGroup",
         "summary": "Get TODO's group by id",
         "description": "Returns specified group by `groupId`",
@@ -236,6 +245,9 @@
     "/group/{groupId}/item": {
       "summary": "Group item",
       "get": {
+        "tags": [
+          "tasks"
+        ],
         "operationId": "getGroupItems",
         "summary": "Get items of specified TODO's group",
         "description": "Returns array with items of specified TODO's group",
@@ -273,6 +285,9 @@
         }
       },
       "post": {
+        "tags": [
+          "tasks"
+        ],
         "operationId": "createGroupItem",
         "summary": "Create new group item",
         "parameters": [
@@ -322,6 +337,9 @@
     },
     "/group/{groupId}/item/{itemId}": {
       "put": {
+        "tags": [
+          "tasks"
+        ],
         "operationId": "rewriteGroupItem",
         "summary": "Rewrite group item",
         "parameters": [
@@ -365,6 +383,9 @@
         }
       },
       "patch": {
+        "tags": [
+          "tasks"
+        ],
         "operationId": "updateGroupItem",
         "summary": "Update group item",
         "parameters": [
