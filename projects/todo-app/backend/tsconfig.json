@@ -12,7 +12,8 @@
     "incremental": true,
     "types": [
       "lodash",
-      "node"
+      "node",
+      "jest"
     ]
   },
   "exclude": [
